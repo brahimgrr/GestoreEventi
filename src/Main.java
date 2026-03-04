@@ -6,5 +6,8 @@ public class Main {
 
         // prova commit 2
         System.out.printf("Hello and welcome !");
+
+        int n = 1;
+        System.out.println("stampa: " + n);
     }
 }
