@@ -1,13 +1,12 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
+
+
 public class Main {
     public static void main(String[] args) {
-
-
-        // prova commit 2
-        System.out.printf("Hello and welcome !");
-
-        int n = 2;
-        System.out.println("stampa: " + n);
+        App applicazione = new App();
+        applicazione.init();
     }
 }
