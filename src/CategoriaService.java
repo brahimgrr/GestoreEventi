@@ -1,89 +1,105 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-
-public final class CategoriaService {
+public final class CategoriaService
+{
     private final DatabaseService db;
     private final AppData data;
 
-    public CategoriaService(DatabaseService db, AppData data) {
-        this.db = (DatabaseService)Objects.requireNonNull(db);
-        this.data = (AppData)Objects.requireNonNull(data);
+    public CategoriaService(DatabaseService db, AppData data)
+    {
+        this.db = Objects.requireNonNull(db);
+        this.data = Objects.requireNonNull(data);
     }
 
-    public void fissareCampiBase(List<String> nomiCampiBase) {
-        if (this.data.isCampiBaseFissati()) {
+    // ---------- Campi base ----------
+    public void fissareCampiBase(List<String> nomiCampiBase)
+    {
+        if (data.isCampiBaseFissati())
             throw new IllegalStateException("I campi base sono già stati fissati e sono immutabili.");
-        } else {
-            Objects.requireNonNull(nomiCampiBase);
-            List<String> cleaned = new ArrayList();
 
-            for(String s : nomiCampiBase) {
-                if (s != null && !s.isBlank()) {
-                    cleaned.add(s.trim());
-                }
-            }
+        Objects.requireNonNull(nomiCampiBase);
 
-            if (cleaned.isEmpty()) {
-                throw new IllegalArgumentException("Lista campi base vuota.");
-            } else {
-                Set<String> set = new HashSet();
+        List<String> clean = new ArrayList<>();
 
-                for(String n : cleaned) {
-                    String key = n.toLowerCase();
-                    if (!set.add(key)) {
-                        throw new IllegalArgumentException("Nome campo base duplicato: " + n);
-                    }
-                }
+        for (String s : nomiCampiBase)
+        {
+            if (s == null || s.isBlank())
+                continue;
 
-                this.data.getCampiBase().clear();
+            clean.add(s.trim());
+        }
 
-                for(String n : cleaned) {
-                    this.data.getCampiBase().add(new Campo(n, FieldScope.BASE, true));
-                }
+        if (clean.isEmpty())
+            throw new IllegalArgumentException("Lista campi base vuota.");
 
-                this.data.getCampiBase().sort(Comparator.comparing((c) -> c.getNome().toLowerCase()));
-                this.data.setCampiBaseFissati(true);
-                this.db.save(this.data);
-            }
+        // Nomi univoci => uso Set (case-insensitive)
+        Set<String> set = new HashSet<>();
+
+        for (String n : clean)
+        {
+            String key = n.toLowerCase();
+
+            if (!set.add(key))
+                throw new IllegalArgumentException("Nome campo base duplicato: " + n);
+        }
+
+        data.getCampiBase().clear();
+
+        for (String n : clean)
+            data.getCampiBase().add(new Campo(n, TipoCampo.BASE, true)); // tutti obbligatori
+
+        //data.getCampiBase().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
+        data.setCampiBaseFissati(true);
+        db.save(data);
+    }
+
+    public List<Campo> getCampiBase()
+    {
+        return Collections.unmodifiableList(data.getCampiBase());
+    }
+
+    // ---------- Campi comuni ----------
+    public void addCampoComune(String nome, boolean obbligatorio)
+    {
+        Campo c = new Campo(nome, TipoCampo.COMUNE, obbligatorio);
+        assicuraCampoComuneUnico(nome);
+        data.getCampiComuni().add(c);
+        sortCampiComuni();
+        db.save(data);
+    }
+
+    private void assicuraCampoComuneUnico(String nome)
+    {
+        for (Campo c : data.getCampiComuni())
+        {
+            if (c.getNome().equalsIgnoreCase(nome))
+                throw new IllegalArgumentException("Esiste già un campo comune con questo nome.");
         }
     }
 
-    public List<Campo> getCampiBase() {
-        return Collections.unmodifiableList(this.data.getCampiBase());
+    private void sortCampiComuni()
+    {
+        data.getCampiComuni().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
     }
 
-    public void addCampoComune(String nome, boolean obbligatorio) {
-        Campo c = new Campo(nome, FieldScope.COMUNE, obbligatorio);
-        this.assicuraCampoComuneUnico(nome);
-        this.data.getCampiComuni().add(c);
-        this.sortCampiComuni();
-        this.db.save(this.data);
-    }
+    public boolean removeCampoComune(String nome)
+    {
+        boolean removed = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(nome));
 
-    public boolean removeCampoComune(String nome) {
-        boolean removed = this.data.getCampiComuni().removeIf((c) -> c.getNome().equalsIgnoreCase(nome));
-        if (removed) {
-            this.db.save(this.data);
-        }
+        if (removed)
+            db.save(data);
 
         return removed;
     }
 
-    public boolean setObbligatorietaCampoComune(String nome, boolean obbligatorio) {
-        for(Campo c : this.data.getCampiComuni()) {
-            if (c.getNome().equalsIgnoreCase(nome)) {
+    public boolean setObbligatorietaCampoComune(String nome, boolean obbligatorio)
+    {
+        for (Campo c : data.getCampiComuni())
+        {
+            if (c.getNome().equalsIgnoreCase(nome))
+            {
                 c.setObbligatorio(obbligatorio);
-                this.db.save(this.data);
+                db.save(data);
                 return true;
             }
         }
@@ -91,113 +107,112 @@ public final class CategoriaService {
         return false;
     }
 
-    public List<Campo> getCampiComuni() {
-        return Collections.unmodifiableList(this.data.getCampiComuni());
+    public List<Campo> getCampiComuni()
+    {
+        return Collections.unmodifiableList(data.getCampiComuni());
     }
 
-    private void assicuraCampoComuneUnico(String nome) {
-        for(Campo c : this.data.getCampiComuni()) {
-            if (c.getNome().equalsIgnoreCase(nome)) {
-                throw new IllegalArgumentException("Esiste già un campo comune con questo nome.");
-            }
-        }
 
-    }
-
-    private void sortCampiComuni() {
-        this.data.getCampiComuni().sort(Comparator.comparing((c) -> c.getNome().toLowerCase()));
-    }
-
-    public Categoria createCategoria(String nomeCategoria) {
-        if (this.data.findCategoria(nomeCategoria) != null) {
+    // ---------- Categorie ----------
+    public Categoria createCategoria(String nomeCategoria)
+    {
+        if (data.findCategoria(nomeCategoria) != null)
             throw new IllegalArgumentException("Categoria già esistente.");
-        } else {
-            Categoria cat = new Categoria(nomeCategoria);
-            this.data.getCategorie().add(cat);
-            this.sortCategorie();
-            this.db.save(this.data);
-            return cat;
-        }
+
+
+        Categoria cat = new Categoria(nomeCategoria);
+        data.getCategorie().add(cat);
+        sortCategorie();
+        db.save(data);
+        return cat;
     }
 
-    public boolean removeCategoria(String nomeCategoria) {
-        boolean removed = this.data.getCategorie().removeIf((c) -> c.getNome().equalsIgnoreCase(nomeCategoria));
-        if (removed) {
-            this.db.save(this.data);
+    public boolean removeCategoria(String nomeCategoria)
+    {
+        boolean removed = data.getCategorie().removeIf(c -> c.getNome().equalsIgnoreCase(nomeCategoria));
+
+        if (removed)
+        {
+            db.save(data);
         }
 
         return removed;
     }
 
-    public List<Categoria> getCategorie() {
-        return Collections.unmodifiableList(this.data.getCategorie());
+    public List<Categoria> getCategorie()
+    {
+        return Collections.unmodifiableList(data.getCategorie());
     }
 
-    public Categoria getCategoriaOrThrow(String nomeCategoria) {
-        if (this.data.findCategoria(nomeCategoria) == null) {
+    public Categoria getCategoriaOrThrow(String nomeCategoria)
+    {
+        if (data.findCategoria(nomeCategoria) == null)
+        {
             throw new IllegalArgumentException("Categoria non trovata.");
-        } else {
-            return this.data.findCategoria(nomeCategoria);
         }
+
+        return data.findCategoria(nomeCategoria);
     }
 
-    public void addCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio) {
-        Categoria c = this.getCategoriaOrThrow(nomeCategoria);
-        c.addCampoSpecifico(new Campo(nomeCampo, FieldScope.SPECIFICO, obbligatorio));
-        this.db.save(this.data);
+    public void addCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
+    {
+        Categoria c = getCategoriaOrThrow(nomeCategoria);
+        c.addCampoSpecifico(new Campo(nomeCampo, TipoCampo.SPECIFICO, obbligatorio));
+        db.save(data);
     }
 
-    public boolean removeCampoSpecifico(String nomeCategoria, String nomeCampo) {
-        Categoria c = this.getCategoriaOrThrow(nomeCategoria);
+    public boolean removeCampoSpecifico(String nomeCategoria, String nomeCampo)
+    {
+        Categoria c = getCategoriaOrThrow(nomeCategoria);
         boolean removed = c.removeCampoSpecifico(nomeCampo);
-        if (removed) {
-            this.db.save(this.data);
-        }
+
+        if (removed)
+            db.save(data);
 
         return removed;
     }
 
-    public boolean setObbligatorietaCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio) {
-        Categoria c = this.getCategoriaOrThrow(nomeCategoria);
+    public boolean setObbligatorietaCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
+    {
+        Categoria c = getCategoriaOrThrow(nomeCategoria);
         boolean ok = c.setObbligatorietaCampoSpecifico(nomeCampo, obbligatorio);
-        if (ok) {
-            this.db.save(this.data);
-        }
+
+        if (ok)
+            db.save(data);
 
         return ok;
     }
 
-    private void sortCategorie() {
-        this.data.getCategorie().sort(Comparator.comparing((c) -> c.getNome().toLowerCase()));
+    private void sortCategorie()
+    {
+        data.getCategorie().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
     }
 
-    public String renderSchemaPerCategoria(String nomeCategoria) {
-        Categoria cat = this.getCategoriaOrThrow(nomeCategoria);
+    // ---------- Visualizzazione unificata ----------
+    public String toStringCategoriaService(String nomeCategoria)
+    {
+        Categoria cat = getCategoriaOrThrow(nomeCategoria);
+
         StringBuilder sb = new StringBuilder();
         sb.append("Categoria: ").append(cat.getNome()).append("\n");
-        sb.append("  Campi BASE (immutabili):\n");
 
-        for(Campo c : this.data.getCampiBase()) {
+        sb.append("  Campi BASE (immutabili):\n");
+        for (Campo c : data.getCampiBase())
             sb.append("   - ").append(c).append("\n");
-        }
 
         sb.append("  Campi COMUNI:\n");
-        if (this.data.getCampiComuni().isEmpty()) {
+        if (data.getCampiComuni().isEmpty())
             sb.append("   (nessuno)\n");
-        }
 
-        for(Campo c : this.data.getCampiComuni()) {
+        for (Campo c : data.getCampiComuni())
             sb.append("   - ").append(c).append("\n");
-        }
 
         sb.append("  Campi SPECIFICI:\n");
-        if (cat.getCampiSpecifici().isEmpty()) {
+        if (cat.getCampiSpecifici().isEmpty())
             sb.append("   (nessuno)\n");
-        }
 
-        for(Campo c : cat.getCampiSpecifici()) {
+        for (Campo c : cat.getCampiSpecifici())
             sb.append("   - ").append(c).append("\n");
-        }
 
         return sb.toString();
     }

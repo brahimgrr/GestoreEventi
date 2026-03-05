@@ -1,48 +1,58 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
-
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public final class AppData implements Serializable {
+public final class AppData implements Serializable
+{
     private static final long serialVersionUID = 1L;
-    private final Map<String, String> configuratori = new HashMap();
-    private final List<Campo> campiBase = new ArrayList();
+
+    // Mappa con username e password (NON SICURA ma sicurezza non richiesta)
+    private final Map<String, String> configuratori = new HashMap<>();
+
+    // Campi base: immutabili una volta fissati
+    private final List<Campo> campiBase = new ArrayList<>();
     private boolean campiBaseFissati = false;
-    private final List<Campo> campiComuni = new ArrayList();
-    private final List<Categoria> categorie = new ArrayList();
 
-    public Map<String, String> getConfiguratori() {
-        return this.configuratori;
+    // Campi comuni: modificabili
+    private final List<Campo> campiComuni = new ArrayList<>();
+
+    // Categorie
+    private final List<Categoria> categorie = new ArrayList<>();
+
+    public Map<String, String> getConfiguratori()
+    {
+        return configuratori;
     }
 
-    public List<Campo> getCampiBase() {
-        return this.campiBase;
+    public List<Campo> getCampiBase()
+    {
+        return campiBase;
     }
 
-    public boolean isCampiBaseFissati() {
-        return this.campiBaseFissati;
+    public boolean isCampiBaseFissati()
+    {
+        return campiBaseFissati;
     }
 
-    public void setCampiBaseFissati(boolean campiBaseFissati) {
+    public void setCampiBaseFissati(boolean campiBaseFissati)
+    {
         this.campiBaseFissati = campiBaseFissati;
     }
 
-    public List<Campo> getCampiComuni() {
-        return this.campiComuni;
+    public List<Campo> getCampiComuni()
+    {
+        return campiComuni;
     }
 
-    public List<Categoria> getCategorie() {
-        return this.categorie;
+    public List<Categoria> getCategorie()
+    {
+        return categorie;
     }
 
-    public Categoria findCategoria(String nome) {
-        return (Categoria)this.categorie.stream().filter((c) -> c.getNome().equalsIgnoreCase(nome)).findFirst().orElse((Categoria) null);
+    public Categoria findCategoria(String nome)
+    {
+        return categorie.stream()
+                        .filter(c -> c.getNome().equalsIgnoreCase(nome))
+                        .findFirst()
+                        .orElse(null);
     }
 }
