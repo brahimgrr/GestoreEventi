@@ -1,3 +1,5 @@
+package it.unibs.ingsoft.v1.persistence;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,10 +22,8 @@ public final class DatabaseService
                 return (AppData) obj;
 
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException("Errore nel caricamento dei dati.", e);
             }
-
-            return new AppData();
         }
 
         return new AppData();
