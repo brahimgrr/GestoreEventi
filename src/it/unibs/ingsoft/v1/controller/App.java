@@ -1,9 +1,41 @@
+package it.unibs.ingsoft.v1.controller;
+
+import it.unibs.ingsoft.v1.model.Categoria;
+import it.unibs.ingsoft.v1.model.Configuratore;
+import it.unibs.ingsoft.v1.persistence.AppData;
+import it.unibs.ingsoft.v1.persistence.DatabaseService;
+import it.unibs.ingsoft.v1.service.AuthenticationService;
+import it.unibs.ingsoft.v1.service.CategoriaService;
+import it.unibs.ingsoft.v1.ui.ConsoleUI;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Scanner;
 
 public final class App
 {
+    public static final String [] VOCI_MENU_PRINCIPALE = {  "Gestire campi COMUNI",
+                                                            "Gestire CATEGORIE e campi SPECIFICI",
+                                                            "Visualizzare categorie e campi"};
+
+    public static final String [] VOCI_MENU_CAMPI_BASE = {  "Fissare campi BASE (solo se non ancora fissati)",
+                                                            "Gestire campi COMUNI",
+                                                            "Gestire CATEGORIE e campi SPECIFICI",
+                                                            "Visualizzare categorie e campi"};
+
+
+    public static final String [] VOCI_MENU_CAMPI_COMUNI = {"Aggiungi campo comune",
+                                                            "Rimuovi campo comune",
+                                                            "Cambia obbligatorietà campo comune",};
+
+    public static final String [] VOCI_MENU_CATEGORIE = {"Crea categoria",
+                                                         "Rimuovi categoria",
+                                                         "Gestisci campi specifici di una categoria"};
+
+    public static final String[] VOCI_MENU_CAMPI_SPECIFICI = {  "Aggiungi campo specifico",
+                                                                "Rimuovi campo specifico",
+                                                                "Cambia obbligatorietà campo specifico"};
+
     public void init ()
     {
         Path storage = Path.of("data", "appdata.ser");
@@ -19,13 +51,29 @@ public final class App
             ConsoleUI ui = new ConsoleUI(sc);
 
             ui.header("Iniziative - Versione 1 (solo configuratore)");
-            Configuratore logged = doLoginFlow(ui, auth);
 
-            ui.stampa("Benvenuto, " + logged.getUsername() + "!");
-            ui.newLine();
+            while (true)
+            {
+                Configuratore logged = doLoginFlow(ui, auth);
 
-            mainMenu(ui, catService);
-            ui.stampa("Arrivederci!");
+                ui.stampa("Benvenuto, " + logged.getUsername() + "!");
+                ui.newLine();
+
+                if (catService.getCampiBase().isEmpty())
+                {
+                    ui.header("PRIMA CONFIGURAZIONE");
+
+                    ui.stampa("Non sono ancora stati definiti i campi base.");
+                    ui.stampa("Il primo configuratore deve inserirli.");
+
+                    menuCampiBase(ui, catService);
+                }
+
+                mainMenu(ui, catService);
+
+                ui.stampa("Logout effettuato.");
+                ui.newLine();
+            }
         }
     }
 
@@ -85,32 +133,29 @@ public final class App
     {
         while (true)
         {
-            ui.header("MENU PRINCIPALE");
-            ui.stampa("1) Fissare campi BASE (solo se non ancora fissati)");
-            ui.stampa("2) Gestire campi COMUNI");
-            ui.stampa("3) Gestire CATEGORIE e campi SPECIFICI");
-            ui.stampa("4) Visualizzare categorie e campi");
-            ui.stampa("0) Esci");
-            ui.newLine();
+            ui.stampaMenu("MENU PRINCIPALE", VOCI_MENU_PRINCIPALE);
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 4);
+            int choice = ui.acquisisciIntero("Scelta: ", 0, VOCI_MENU_PRINCIPALE.length);
             ui.newLine();
 
             switch (choice)
             {
+                /*
                 case 1:
                     menuCampiBase(ui, cs);
                     break;
 
-                case 2:
+                 */
+
+                case 1:
                     menuCampiComuni(ui, cs);
                     break;
 
-                case 3:
+                case 2:
                     menuCategorie(ui, cs);
                     break;
 
-                case 4:
+                case 3:
                     menuVisualizza(ui, cs);
                     break;
 
@@ -126,11 +171,9 @@ public final class App
 
         if (!cs.getCampiBase().isEmpty())
         {
-            ui.stampa("Stato: " + "FISSATI (immutabili)");
-            ui.stampa("Elenco campi base:");
-
-            cs.getCampiBase().forEach(c -> ui.stampa(" - " + c));
-
+            ui.stampa("Stato: FISSATI (immutabili)");
+            ui.stampaSezione("Elenco campi base");
+            ui.stampaCampi(cs.getCampiBase());
             ui.newLine();
             return;
         }
@@ -157,20 +200,11 @@ public final class App
         while (true)
         {
             ui.header("CAMPI COMUNI");
-            ui.stampa("Campi comuni attuali:");
 
-            if (cs.getCampiComuni().isEmpty())
-                ui.stampa(" (nessuno)");
+            ui.stampaSezione("Campi comuni attuali");
+            ui.stampaCampi(cs.getCampiComuni());
 
-            cs.getCampiComuni().forEach(c -> ui.stampa(" - " + c));
-
-            ui.newLine();
-
-            ui.stampa("1) Aggiungi campo comune");
-            ui.stampa("2) Rimuovi campo comune");
-            ui.stampa("3) Cambia obbligatorietà campo comune");
-            ui.stampa("0) Indietro");
-            ui.newLine();
+            ui.stampaMenu("", VOCI_MENU_CAMPI_COMUNI);
 
             int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
             ui.newLine();
@@ -183,7 +217,7 @@ public final class App
 
                     try {
                         cs.addCampoComune(nome1, obbl1);
-                        ui.stampa("Campo comune aggiunto.");
+                        ui.stampa("it.unibs.ingsoft.v1.model.Campo comune aggiunto.");
 
                     } catch (IllegalArgumentException e) {
                         ui.stampa("Errore: " + e.getMessage());
@@ -196,7 +230,7 @@ public final class App
                 case 2:
                     String nome2 = ui.acquisisciStringa("Nome campo da rimuovere: ");
                     boolean ok2 = cs.removeCampoComune(nome2);
-                    ui.stampa(ok2 ? "Rimosso." : "Campo non trovato.");
+                    ui.stampa(ok2 ? "Rimosso." : "it.unibs.ingsoft.v1.model.Campo non trovato.");
                     ui.newLine();
                     ui.acquisisciStringa("Premi INVIO per continuare...");
                     break;
@@ -205,7 +239,7 @@ public final class App
                     String nome3 = ui.acquisisciStringa("Nome campo: ");
                     boolean obbl3 = ui.acquisisciSiNo("Impostare come obbligatorio?");
                     boolean ok3 = cs.setObbligatorietaCampoComune(nome3, obbl3);
-                    ui.stampa(ok3 ? "Aggiornato." : "Campo non trovato.");
+                    ui.stampa(ok3 ? "Aggiornato." : "it.unibs.ingsoft.v1.model.Campo non trovato.");
                     ui.newLine();
                     ui.acquisisciStringa("Premi INVIO per continuare...");
                     break;
@@ -221,20 +255,11 @@ public final class App
         while (true)
         {
             ui.header("CATEGORIE");
-            ui.stampa("Categorie attuali:");
 
-            if (cs.getCategorie().isEmpty())
-                ui.stampa(" (nessuna)");
+            ui.stampaSezione("Categorie attuali");
+            ui.stampaCategorie(cs.getCategorie());
 
-            cs.getCategorie().forEach(c -> ui.stampa(" - " + c));
-
-            ui.newLine();
-
-            ui.stampa("1) Crea categoria");
-            ui.stampa("2) Rimuovi categoria");
-            ui.stampa("3) Gestisci campi specifici di una categoria");
-            ui.stampa("0) Indietro");
-            ui.newLine();
+            ui.stampaMenu("CATEGORIE", VOCI_MENU_CATEGORIE);
 
             int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
             ui.newLine();
@@ -247,7 +272,7 @@ public final class App
                     try
                     {
                         cs.createCategoria(nome1);
-                        ui.stampa("Categoria creata.");
+                        ui.stampa("it.unibs.ingsoft.v1.model.Categoria creata.");
 
                     } catch (IllegalArgumentException e) {
                         ui.stampa("Errore: " + e.getMessage());
@@ -260,7 +285,7 @@ public final class App
                 case 2 :
                     String nome2 = ui.acquisisciStringa("Nome categoria da rimuovere: ");
                     boolean ok2 = cs.removeCategoria(nome2);
-                    ui.stampa(ok2 ? "Rimossa." : "Categoria non trovata.");
+                    ui.stampa(ok2 ? "Rimossa." : "it.unibs.ingsoft.v1.model.Categoria non trovata.");
                     ui.newLine();
                     ui.acquisisciStringa("Premi INVIO per continuare...");
                     break;
@@ -298,14 +323,21 @@ public final class App
     {
         while (true)
         {
+            Categoria cat = cs.getCategoria(nomeCategoria);
+
             ui.header("CAMPI SPECIFICI - " + nomeCategoria);
-            ui.stampa(cs.toStringCategoriaService(nomeCategoria));
+
+            ui.stampaSezione("Campi BASE");
+            ui.stampaCampi(cs.getCampiBase());
+
+            ui.stampaSezione("Campi COMUNI");
+            ui.stampaCampi(cs.getCampiComuni());
+
+            ui.stampaSezione("Campi SPECIFICI");
+            ui.stampaCampi(cat.getCampiSpecifici());
             ui.newLine();
 
-            ui.stampa("1) Aggiungi campo specifico");
-            ui.stampa("2) Rimuovi campo specifico");
-            ui.stampa("3) Cambia obbligatorietà campo specifico");
-            ui.stampa("0) Indietro");
+            ui.stampaMenu("CAMPI SPECIFICI", VOCI_MENU_CAMPI_SPECIFICI);
             ui.newLine();
 
             int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
@@ -318,7 +350,7 @@ public final class App
                     boolean obbl1 = ui.acquisisciSiNo("Obbligatorio?");
                     try {
                         cs.addCampoSpecifico(nomeCategoria, nomeCampo1, obbl1);
-                        ui.stampa("Campo specifico aggiunto.");
+                        ui.stampa("it.unibs.ingsoft.v1.model.Campo specifico aggiunto.");
 
                     } catch (IllegalArgumentException e) {
                         ui.stampa("Errore: " + e.getMessage());
@@ -331,7 +363,7 @@ public final class App
                 case 2:
                     String nomeCampo2 = ui.acquisisciStringa("Nome campo specifico da rimuovere: ");
                     boolean ok2 = cs.removeCampoSpecifico(nomeCategoria, nomeCampo2);
-                    ui.stampa(ok2 ? "Rimosso." : "Campo non trovato.");
+                    ui.stampa(ok2 ? "Rimosso." : "it.unibs.ingsoft.v1.model.Campo non trovato.");
                     ui.newLine();
                     ui.acquisisciStringa("Premi INVIO per continuare...");
                     break;
@@ -340,7 +372,7 @@ public final class App
                     String nomeCampo3 = ui.acquisisciStringa("Nome campo specifico: ");
                     boolean obbl3 = ui.acquisisciSiNo("Impostare come obbligatorio?");
                     boolean ok3 = cs.setObbligatorietaCampoSpecifico(nomeCategoria, nomeCampo3, obbl3);
-                    ui.stampa(ok3 ? "Aggiornato." : "Campo non trovato.");
+                    ui.stampa(ok3 ? "Aggiornato." : "it.unibs.ingsoft.v1.model.Campo non trovato.");
                     ui.newLine();
                     ui.acquisisciStringa("Premi INVIO per continuare...");
                     break;
@@ -355,33 +387,15 @@ public final class App
     private static void menuVisualizza(ConsoleUI ui, CategoriaService cs)
     {
         ui.header("VISUALIZZAZIONE");
-        ui.stampa("Campi BASE:");
 
-        if (cs.getCampiBase().isEmpty())
-            ui.stampa(" (non fissati)");
+        ui.stampaSezione("Campi BASE");
+        ui.stampaCampi(cs.getCampiBase());
 
-        cs.getCampiBase().forEach(c -> ui.stampa(" - " + c));
+        ui.stampaSezione("Campi COMUNI");
+        ui.stampaCampi(cs.getCampiComuni());
 
-        ui.newLine();
-
-        ui.stampa("Campi COMUNI:");
-
-        if (cs.getCampiComuni().isEmpty())
-            ui.stampa(" (nessuno)");
-
-        cs.getCampiComuni().forEach(c -> ui.stampa(" - " + c));
-        ui.newLine();
-
-        ui.stampa("Categorie:");
-
-        if (cs.getCategorie().isEmpty())
-            ui.stampa(" (nessuna)");
-
-        for (var cat : cs.getCategorie())
-        {
-            ui.newLine();
-            ui.stampa(cs.toStringCategoriaService(cat.getNome()));
-        }
+        ui.stampaSezione("Categorie");
+        ui.stampaCategorie(cs.getCategorie());
 
         ui.newLine();
         ui.acquisisciStringa("Premi INVIO per continuare...");

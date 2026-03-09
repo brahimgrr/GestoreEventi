@@ -1,3 +1,5 @@
+package it.unibs.ingsoft.v1.model;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -26,7 +28,7 @@ public final class Categoria implements Serializable
 
     public void addCampoSpecifico(Campo campoSpecifico)
     {
-        Objects.requireNonNull(campoSpecifico, "Campo nullo.");
+        Objects.requireNonNull(campoSpecifico, "it.unibs.ingsoft.v1.model.Campo nullo.");
 
         if (campoSpecifico.getScope() != TipoCampo.SPECIFICO)
             throw new IllegalArgumentException("Il campo deve avere scope SPECIFICO.");
@@ -71,8 +73,7 @@ public final class Categoria implements Serializable
     @Override
     public String toString()
     {
-        return "Categoria{" +
-                "nome='" + nome + '\'' +
+        return  "nome='" + nome + '\'' +
                 ", campiSpecifici=" + campiSpecifici +
                 '}';
     }

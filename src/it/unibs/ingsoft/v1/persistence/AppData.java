@@ -1,3 +1,8 @@
+package it.unibs.ingsoft.v1.persistence;
+
+import it.unibs.ingsoft.v1.model.Campo;
+import it.unibs.ingsoft.v1.model.Categoria;
+
 import java.io.Serializable;
 import java.util.*;
 
