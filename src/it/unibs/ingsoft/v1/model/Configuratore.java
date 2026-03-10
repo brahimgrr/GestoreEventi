@@ -1,3 +1,5 @@
+package it.unibs.ingsoft.v1.model;
+
 public final class Configuratore extends Persona
 {
     private static final long serialVersionUID = 1L;

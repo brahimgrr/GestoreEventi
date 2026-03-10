@@ -1,3 +1,9 @@
+package it.unibs.ingsoft.v1.service;
+
+import it.unibs.ingsoft.v1.model.Configuratore;
+import it.unibs.ingsoft.v1.persistence.AppData;
+import it.unibs.ingsoft.v1.persistence.DatabaseService;
+
 import java.util.Objects;
 
 public final class AuthenticationService

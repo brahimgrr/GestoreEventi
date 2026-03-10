@@ -1,3 +1,5 @@
+package it.unibs.ingsoft.v1.model;
+
 import java.io.Serializable;
 import java.util.Objects;
 
