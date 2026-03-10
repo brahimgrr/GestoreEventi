@@ -18,11 +18,12 @@ public final class App
                                                             "Gestire CATEGORIE e campi SPECIFICI",
                                                             "Visualizzare categorie e campi"};
 
+    /*
     public static final String [] VOCI_MENU_CAMPI_BASE = {  "Fissare campi BASE (solo se non ancora fissati)",
                                                             "Gestire campi COMUNI",
                                                             "Gestire CATEGORIE e campi SPECIFICI",
                                                             "Visualizzare categorie e campi"};
-
+    */
 
     public static final String [] VOCI_MENU_CAMPI_COMUNI = {"Aggiungi campo comune",
                                                             "Rimuovi campo comune",
