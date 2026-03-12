@@ -14,6 +14,7 @@ public class Proposta implements Serializable
     private LocalDate                    dataPubblicazione;
     private LocalDate                    termineIscrizione;
     private LocalDate                    dataEvento;
+    private LocalDate                    dataConclus;
 
     // NEW IN V3
     private final List<Iscrizione>              iscrizioni     = new ArrayList<>();
@@ -34,10 +35,12 @@ public class Proposta implements Serializable
     public LocalDate getDataPubblicazione()           { return dataPubblicazione; }
     public LocalDate getTermineIscrizione()           { return termineIscrizione; }
     public LocalDate getDataEvento()                  { return dataEvento; }
+    public LocalDate getDataConclus()                 { return dataConclus; }
 
     public void setDataPubblicazione(LocalDate d)     { this.dataPubblicazione = d; }
     public void setTermineIscrizione(LocalDate d)     { this.termineIscrizione = d; }
     public void setDataEvento(LocalDate d)            { this.dataEvento = d; }
+    public void setDataConclus(LocalDate d)           { this.dataConclus = d; }
 
     /**
      * Changes state and records the transition date in the history.

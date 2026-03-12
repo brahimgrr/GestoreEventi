@@ -45,7 +45,10 @@ public final class AuthenticationService
         validaCredenziali(newUsername, newPassword);
 
         if (data.getConfiguratori().containsKey(newUsername))
-            throw new IllegalArgumentException("Username già esistente.");
+            throw new IllegalArgumentException("Username già esistente (usato da un configuratore).");
+
+        if (data.getFruitori().containsKey(newUsername))
+            throw new IllegalArgumentException("Username già esistente (usato da un fruitore).");
 
         //NON ACCETTO CONFIG COME USERNAME
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(newUsername))
