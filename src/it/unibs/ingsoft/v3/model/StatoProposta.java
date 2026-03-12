@@ -6,5 +6,6 @@ public enum StatoProposta
     VALIDA,
     APERTA,
     CONFERMATA,
-    ANNULLATA
+    ANNULLATA,
+    CONCLUSA
 }

@@ -58,6 +58,19 @@ public final class IscrizioneService
             modificato = true;
         }
 
+        for (Proposta p : data.getProposte())
+        {
+            if (p.getStato() != StatoProposta.CONFERMATA)
+                continue;
+
+            LocalDate dataConclus = p.getDataEvento(); // or parse from valoriCampi "Data conclusiva"
+            if (dataConclus != null && oggi.isAfter(dataConclus))
+            {
+                p.setStato(StatoProposta.CONCLUSA, oggi);
+                modificato = true;
+            }
+        }
+
         if (modificato)
             db.save(data);
     }

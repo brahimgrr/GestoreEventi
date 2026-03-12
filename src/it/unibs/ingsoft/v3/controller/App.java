@@ -108,6 +108,12 @@ public final class App
                 else
                 {
                     Fruitore logged = doLoginFruitore(ui, fruService);
+
+                    if (logged == null) {
+                        ui.newLine();
+                        continue;
+                    }
+
                     ui.stampa("Benvenuto, " + logged.getUsername());
                     ui.newLine();
 
@@ -177,7 +183,11 @@ public final class App
             ui.stampa("LOGIN / REGISTRAZIONE FRUITORE");
             ui.stampa("1) Login");
             ui.stampa("2) Registrati");
-            int scelta = ui.acquisisciIntero("Scelta: ", 1, 2);
+            ui.stampa("0) Torna indietro");
+            int scelta = ui.acquisisciIntero("Scelta: ", 0, 2);
+
+            if (scelta == 0)
+                return null;
 
             String u = ui.acquisisciStringa("Username: ").trim();
             String p = ui.acquisisciStringa("Password: ").trim();

@@ -108,6 +108,7 @@ public class PropostaService
             // Aggiorna i campi data nella proposta per comodità futura
             p.setTermineIscrizione(termineIscr);
             p.setDataEvento(dataEvento);
+            p.setDataConclus(dataConclus);
             p.setStato(StatoProposta.VALIDA, LocalDate.now());
         }
 
