@@ -39,10 +39,7 @@ public class Proposta implements Serializable
         return stato;
     }
 
-    public void setStato(StatoProposta stato)
-    {
-        this.stato = stato;
-    }
+    public void setStato(StatoProposta stato) { this.stato = stato; }
 
     public LocalDate getDataPubblicazione()
     {

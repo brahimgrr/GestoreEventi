@@ -158,6 +158,24 @@ public class PropostaService
         if (p.getStato() != StatoProposta.VALIDA)
             throw new IllegalStateException("La proposta deve essere in stato VALIDA per essere pubblicata.");
 
+        // Duplicate check: same Titolo + Data + Ora + Luogo = same event
+        String titolo = p.getValoriCampi().getOrDefault("Titolo", "").trim().toLowerCase();
+        String dataStr   = p.getValoriCampi().getOrDefault("Data", "").trim();
+        String ora    = p.getValoriCampi().getOrDefault("Ora", "").trim().toLowerCase();
+        String luogo  = p.getValoriCampi().getOrDefault("Luogo", "").trim().toLowerCase();
+
+        boolean duplicato = data.getProposte().stream()
+                .anyMatch(existing ->
+                        existing.getValoriCampi().getOrDefault("Titolo", "").trim().equalsIgnoreCase(titolo) &&
+                                existing.getValoriCampi().getOrDefault("Data",   "").trim().equals(dataStr)             &&
+                                existing.getValoriCampi().getOrDefault("Ora",    "").trim().equalsIgnoreCase(ora)    &&
+                                existing.getValoriCampi().getOrDefault("Luogo",  "").trim().equalsIgnoreCase(luogo)
+                );
+
+        if (duplicato)
+            throw new IllegalStateException(
+                    "Esiste già una proposta con lo stesso Titolo, Data, Ora e Luogo.");
+
         p.setStato(StatoProposta.APERTA);
         p.setDataPubblicazione(LocalDate.now());
 
