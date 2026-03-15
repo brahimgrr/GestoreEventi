@@ -1,12 +1,12 @@
-package it.unibs.ingsoft.v4.service;
+package it.unibs.ingsoft.v5.service;
 
-import it.unibs.ingsoft.v4.model.Campo;
-import it.unibs.ingsoft.v4.model.Categoria;
-import it.unibs.ingsoft.v4.model.Proposta;
-import it.unibs.ingsoft.v4.model.StatoProposta;
-import it.unibs.ingsoft.v4.persistence.AppData;
-import it.unibs.ingsoft.v4.persistence.DatabaseService;
-import it.unibs.ingsoft.v4.view.ConsoleUI;
+import it.unibs.ingsoft.v5.model.Campo;
+import it.unibs.ingsoft.v5.model.Categoria;
+import it.unibs.ingsoft.v5.model.Proposta;
+import it.unibs.ingsoft.v5.model.StatoProposta;
+import it.unibs.ingsoft.v5.persistence.AppData;
+import it.unibs.ingsoft.v5.persistence.DatabaseService;
+import it.unibs.ingsoft.v5.view.ConsoleUI;
 
 import java.time.LocalDate;
 import java.util.*;
