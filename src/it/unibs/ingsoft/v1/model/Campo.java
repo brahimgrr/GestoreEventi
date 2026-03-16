@@ -1,31 +1,38 @@
 package it.unibs.ingsoft.v1.model;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 public final class Campo implements Serializable
 {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private final String nome;
+
+    private final String    nome;
     private final TipoCampo tipo;
-    private boolean obbligatorio;
+    private boolean         obbligatorio;
 
     public Campo(String nome, TipoCampo tipo, boolean obbligatorio)
     {
         if (nome == null || nome.isBlank())
             throw new IllegalArgumentException("Nome campo non valido.");
 
-        this.nome = nome.trim();
-        this.tipo = Objects.requireNonNull(tipo, "Tipo nullo.");
+        this.nome         = nome.trim();
+        this.tipo         = Objects.requireNonNull(tipo, "TipoCampo nullo.");
         this.obbligatorio = obbligatorio;
     }
+
+    // ---------------------------------------------------------------
+    // GETTER / SETTER
+    // ---------------------------------------------------------------
 
     public String getNome()
     {
         return nome;
     }
 
-    public TipoCampo getScope()
+    public TipoCampo getTipo()
     {
         return tipo;
     }
@@ -40,17 +47,20 @@ public final class Campo implements Serializable
         this.obbligatorio = obbligatorio;
     }
 
+    // ---------------------------------------------------------------
+    // EQUALS / HASHCODE / TOSTRING
+    // ---------------------------------------------------------------
+
     @Override
     public boolean equals(Object o)
     {
         if (this == o)
             return true;
 
-        if (!(o instanceof Campo))
+        if (!(o instanceof Campo campo))
             return false;
 
-        Campo campo = (Campo) o;
-        return (nome.equalsIgnoreCase(campo.nome) && tipo == campo.tipo);
+        return nome.equalsIgnoreCase(campo.nome) && tipo == campo.tipo;
     }
 
     @Override

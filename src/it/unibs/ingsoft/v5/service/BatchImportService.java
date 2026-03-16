@@ -1,6 +1,5 @@
 package it.unibs.ingsoft.v5.service;
 
-import it.unibs.ingsoft.v5.model.Campo;
 import it.unibs.ingsoft.v5.model.TipoDato;
 
 import java.io.IOException;
@@ -59,7 +58,7 @@ public final class BatchImportService
 
             try
             {
-                categoriaService.addCampoComune(nome, tipo, obbligat);
+                categoriaService.aggiungiCampoComune(nome, tipo, obbligat);
                 report.add("OK campo comune: " + nome);
             }
             catch (Exception e)
@@ -119,7 +118,7 @@ public final class BatchImportService
 
                 try
                 {
-                    categoriaService.createCategoria(nomeCategoria);
+                    categoriaService.creaCategoria(nomeCategoria);
                     report.add("OK categoria: " + nomeCategoria);
                 }
                 catch (Exception e)
@@ -149,7 +148,7 @@ public final class BatchImportService
 
                 try
                 {
-                    categoriaService.addCampoSpecifico(nomeCategoria, nome, tipo, obbligat);
+                    categoriaService.aggiungiCampoSpecifico(nomeCategoria, nome, tipo, obbligat);
                     report.add("  OK campo specifico \"" + nome + "\" -> " + nomeCategoria);
                 }
                 catch (Exception e)

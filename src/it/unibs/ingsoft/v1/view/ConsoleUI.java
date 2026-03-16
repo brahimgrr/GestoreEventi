@@ -1,14 +1,13 @@
-package it.unibs.ingsoft.v1.ui;
+package it.unibs.ingsoft.v1.view;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.stream.IntStream;
 
-/*
+/**
  * Classe che fornisce output formattato e lettura sicura dell'input.
  */
-
 public final class ConsoleUI
 {
     private final Scanner scanner;
@@ -18,10 +17,35 @@ public final class ConsoleUI
         this.scanner = scanner;
     }
 
+    // ---------------------------------------------------------------
+    // OUTPUT BASE
+    // ---------------------------------------------------------------
+
     public void stampa(String msg)
     {
         System.out.println(msg);
     }
+
+    public void newLine()
+    {
+        System.out.println();
+    }
+
+    public void header(String titolo)
+    {
+        System.out.println("==================================================");
+        System.out.println(titolo);
+        System.out.println("==================================================");
+    }
+
+    public void stampaSezione(String titolo)
+    {
+        stampa("----- " + titolo + " -----");
+    }
+
+    // ---------------------------------------------------------------
+    // INPUT BASE
+    // ---------------------------------------------------------------
 
     public String acquisisciStringa(String prompt)
     {
@@ -34,6 +58,7 @@ public final class ConsoleUI
         while (true)
         {
             String s = acquisisciStringa(prompt);
+
             try
             {
                 int v = Integer.parseInt(s.trim());
@@ -45,7 +70,6 @@ public final class ConsoleUI
                 }
 
                 return v;
-
             }
             catch (NumberFormatException e)
             {
@@ -59,8 +83,10 @@ public final class ConsoleUI
         while (true)
         {
             String s = acquisisciStringa(prompt + " (s/n): ").trim().toLowerCase();
+
             if (s.equals("s") || s.equals("si") || s.equals("sì"))
                 return true;
+
             if (s.equals("n") || s.equals("no"))
                 return false;
 
@@ -73,7 +99,8 @@ public final class ConsoleUI
         stampa(titolo);
         stampa("Inserisci un nome per riga. Riga vuota per terminare.");
         newLine();
-        List<String> list = new ArrayList<>();
+
+        List<String> lista = new ArrayList<>();
 
         while (true)
         {
@@ -82,66 +109,54 @@ public final class ConsoleUI
             if (s == null || s.isBlank())
                 break;
 
-            list.add(s.trim());
+            lista.add(s.trim());
         }
 
-        return list;
+        return lista;
     }
 
-    public void newLine()
-    {
-        System.out.println();
-    }
+    // ---------------------------------------------------------------
+    // STAMPA LISTE
+    // ---------------------------------------------------------------
 
-    public void header(String title)
+    public void stampaLista(List<?> elementi, String messaggioVuoto)
     {
-        System.out.println("==================================================");
-        System.out.println(title);
-        System.out.println("==================================================");
+        if (elementi == null || elementi.isEmpty())
+        {
+            stampa(messaggioVuoto);
+            return;
+        }
+
+        for (Object e : elementi)
+            stampa(" - " + e);
     }
 
     public void stampaCampi(List<?> campi)
     {
-        if (campi.isEmpty())
-        {
-            stampa(" (nessuno)");
-            return;
-        }
-
-        for (Object c : campi)
-            stampa(" - " + c);
+        stampaLista(campi, " (nessuno)");
     }
 
     public void stampaCategorie(List<?> categorie)
     {
-        if (categorie.isEmpty())
-        {
-            stampa(" (nessuna)");
-            return;
-        }
-
-        for (Object c : categorie)
-            stampa(" - " + c);
+        stampaLista(categorie, " (nessuna)");
     }
 
-    public void stampaSezione(String titolo)
-    {
-        stampa("----- " + titolo + " -----");
-    }
+    // ---------------------------------------------------------------
+    // MENU
+    // ---------------------------------------------------------------
 
-    public void stampaMenu (String titolo, String[] lista)
+    public void stampaMenu(String titolo, String[] voci)
     {
-        if (!titolo.isBlank())
+        if (titolo != null && !titolo.isBlank())
             header(titolo);
 
-        if (lista.length == 0)
+        if (voci == null || voci.length == 0)
             return;
 
-        IntStream.range(0, lista.length)
-                .forEach(i -> stampa((i+1) + ") " + lista[i]));
+        IntStream.range(0, voci.length)
+                .forEach(i -> stampa((i + 1) + ") " + voci[i]));
 
-        stampa(0+") Esci");
-
+        stampa("0) Esci");
         newLine();
     }
 }

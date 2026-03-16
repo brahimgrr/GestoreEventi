@@ -108,7 +108,7 @@ public final class CategoriaService
     // CAMPI COMUNI
     // ---------------------------------------------------------------
 
-    public void addCampoComune(String nome, TipoDato tipoDato, boolean obbligatorio)
+    public void aggiungiCampoComune(String nome, TipoDato tipoDato, boolean obbligatorio)
     {
         nome = normalizza(nome);
 
@@ -120,12 +120,12 @@ public final class CategoriaService
         db.save(data);
     }
 
-    public boolean removeCampoComune(String nome)
+    public boolean rimuoviCampoComune(String nome)
     {
         final String n = normalizza(nome);
-        boolean removed = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(n));
-        if (removed) db.save(data);
-        return removed;
+        boolean rimosso = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(n));
+        if (rimosso) db.save(data);
+        return rimosso;
     }
 
     public boolean setObbligatorietaCampoComune(String nome, boolean obbligatorio)
@@ -154,7 +154,7 @@ public final class CategoriaService
     // CATEGORIE
     // ---------------------------------------------------------------
 
-    public Categoria createCategoria(String nomeCategoria)
+    public void creaCategoria(String nomeCategoria)
     {
         nomeCategoria = normalizza(nomeCategoria);
 
@@ -165,19 +165,18 @@ public final class CategoriaService
         data.getCategorie().add(cat);
         sortCategorie();
         db.save(data);
-        return cat;
     }
 
-    public boolean removeCategoria(String nomeCategoria)
+    public boolean rimuoviCategoria(String nomeCategoria)
     {
         final String n = normalizza(nomeCategoria);
-        boolean removed = data.getCategorie()
+        boolean rimossa = data.getCategorie()
                 .removeIf(c -> c.getNome().equalsIgnoreCase(n));
 
-        if (removed)
+        if (rimossa)
             db.save(data);
 
-        return removed;
+        return rimossa;
     }
 
     public List<Categoria> getCategorie()
@@ -205,7 +204,7 @@ public final class CategoriaService
     // CAMPI SPECIFICI
     // ---------------------------------------------------------------
 
-    public void addCampoSpecifico(String nomeCategoria, String nomeCampo, TipoDato tipoDato, boolean obbligatorio)
+    public void aggiungiCampoSpecifico(String nomeCategoria, String nomeCampo, TipoDato tipoDato, boolean obbligatorio)
     {
         nomeCampo = normalizza(nomeCampo);
 
@@ -217,7 +216,7 @@ public final class CategoriaService
         db.save(data);
     }
 
-    public boolean removeCampoSpecifico(String nomeCategoria, String nomeCampo)
+    public boolean rimuoviCampoSpecifico(String nomeCategoria, String nomeCampo)
     {
         nomeCampo = normalizza(nomeCampo);
         Categoria c = getCategoriaOrThrow(nomeCategoria);
@@ -280,17 +279,4 @@ public final class CategoriaService
         if (s == null) throw new IllegalArgumentException("Nome non valido (null).");
         return s.trim();
     }
-
-
-    // ---------------------------------------------------------------
-    // RECORD DI SUPPORTO (NON UTILIZZO)
-    // ---------------------------------------------------------------
-
-    /**
-     * Coppia (nome campo, tipo dato) usata per la creazione di campi extra/comuni/specifici.
-     *
-     public record NomeTipo(String nome, TipoDato tipoDato)
-     {
-     }
-     */
 }
