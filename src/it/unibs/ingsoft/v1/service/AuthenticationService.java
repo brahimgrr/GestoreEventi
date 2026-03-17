@@ -10,43 +10,53 @@ public final class AuthenticationService
 {
     public static final String USERNAME_PREDEFINITO = "config";
     public static final String PASSWORD_PREDEFINITA = "config";
+
     private final DatabaseService db;
-    private final AppData data;
+    private final AppData         data;
 
     public AuthenticationService(DatabaseService db, AppData data)
     {
-        this.db = Objects.requireNonNull(db);
+        this.db   = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
     }
+
+    // ---------------------------------------------------------------
+    // LOGIN
+    // ---------------------------------------------------------------
 
     public Configuratore login(String username, String password)
     {
         if (username == null || password == null)
             return null;
 
-        //CASO CREDENZIALI PREDEFINITE
+        // Credenziali predefinite
         if (username.equals(USERNAME_PREDEFINITO) && password.equals(PASSWORD_PREDEFINITA))
             return new Configuratore(USERNAME_PREDEFINITO);
 
-        // CASO: CREDENZIALI SALVATE
+        // Credenziali salvate
         String passSalvata = data.getConfiguratori().get(username);
+
         if (passSalvata != null && passSalvata.equals(password))
             return new Configuratore(username);
 
         return null;
     }
 
-    //REGISTRAZIONE NUOVO CONFIGURATORE
-    //Da chiamare subito dopo il login con credenziali predefinite.
+    // ---------------------------------------------------------------
+    // REGISTRAZIONE
+    // ---------------------------------------------------------------
+
+    /**
+     * Registra un nuovo configuratore con credenziali personalizzate.
+     * Da chiamare subito dopo il primo login con credenziali predefinite.
+     */
     public Configuratore registraNuovoConfiguratore(String newUsername, String newPassword)
     {
-        //Username almeno 3 caratteri e password almeno 3 caratteri
         validaCredenziali(newUsername, newPassword);
 
         if (data.getConfiguratori().containsKey(newUsername))
             throw new IllegalArgumentException("Username già esistente.");
 
-        //NON ACCETTO CONFIG COME USERNAME
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(newUsername))
             throw new IllegalArgumentException("Username non consentito (riservato).");
 
@@ -60,6 +70,10 @@ public final class AuthenticationService
     {
         return !data.getConfiguratori().isEmpty();
     }
+
+    // ---------------------------------------------------------------
+    // UTILITY
+    // ---------------------------------------------------------------
 
     private static void validaCredenziali(String username, String password)
     {

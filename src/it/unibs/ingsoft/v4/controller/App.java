@@ -14,7 +14,7 @@ import java.util.Scanner;
 
 public final class App
 {
-    // ---- Configuratore menus ----
+    // ---- Menu configuratore ----
     public static final String[] MENU_PRINCIPALE =
             {
                     "Gestire campi COMUNI",
@@ -46,7 +46,7 @@ public final class App
                     "Cambia obbligatorietà campo specifico"
             };
 
-    // ---- Fruitore menus ----
+    // ---- Menu fruitore ----
     public static final String[] MENU_FRUITORE =
             {
                     "Visualizzare la bacheca",
@@ -60,27 +60,26 @@ public final class App
                     "Elimina una notifica"
             };
 
-    // ===== INITIALIZATION =====
+    // ===== INIZIALIZZAZIONE =====
 
     public void inizializzazione()
     {
         Path storage = Path.of("data", "appdata4.ser");
 
-        DatabaseService db          = new DatabaseService(storage);
-        AppData data        = db.loadOrCreate();
+        DatabaseService       db          = new DatabaseService(storage);
+        AppData               data        = db.loadOrCreate();
         AuthenticationService auth        = new AuthenticationService(db, data);
-        CategoriaService catService  = new CategoriaService(db, data);
-        PropostaService propService = new PropostaService(db, data);
-        FruitoreService fruService  = new FruitoreService(db, data);
-        IscrizioneService iscService  = new IscrizioneService(db, data, fruService);
+        CategoriaService      catService  = new CategoriaService(db, data);
+        PropostaService       propService = new PropostaService(db, data);
+        FruitoreService       fruService  = new FruitoreService(db, data);
+        IscrizioneService     iscService  = new IscrizioneService(db, data, fruService);
 
-        // Check expired proposals on every startup
         iscService.controllaScadenzeAlAvvio();
 
         try (Scanner sc = new Scanner(System.in))
         {
             ConsoleUI ui = new ConsoleUI(sc);
-            ui.header("Iniziative - Versione 3");
+            ui.header("Iniziative - Versione 4");
 
             while (true)
             {
@@ -97,7 +96,7 @@ public final class App
                 if (tipoUtente == 1)
                 {
                     Configuratore logged = doLoginConfiguratore(ui, auth);
-                    ui.stampa("Benvenuto, " + logged.getUsername());
+                    ui.stampa("Benvenuto, " + logged.getUsername() + "!");
                     ui.newLine();
 
                     if (!catService.isCampiBaseFissati())
@@ -111,12 +110,13 @@ public final class App
                 {
                     Fruitore logged = doLoginFruitore(ui, fruService);
 
-                    if (logged == null) {
+                    if (logged == null)
+                    {
                         ui.newLine();
                         continue;
                     }
 
-                    ui.stampa("Benvenuto, " + logged.getUsername());
+                    ui.stampa("Benvenuto, " + logged.getUsername() + "!");
                     ui.newLine();
 
                     mainMenuFruitore(ui, logged, propService, iscService, fruService);
@@ -127,7 +127,7 @@ public final class App
         }
     }
 
-    // ===== CONFIGURATORE LOGIN =====
+    // ===== LOGIN CONFIGURATORE =====
 
     private static Configuratore doLoginConfiguratore(ConsoleUI ui, AuthenticationService auth)
     {
@@ -151,12 +151,13 @@ public final class App
             {
                 ui.newLine();
                 ui.stampa("Primo accesso con credenziali predefinite.");
-                ui.stampa("Devi scegliere credenziali personali.");
+                ui.stampa("Devi scegliere credenziali personali per poter operare.");
 
                 while (true)
                 {
                     String newU = ui.acquisisciStringa("Nuovo username: ").trim();
                     String newP = ui.acquisisciStringa("Nuova password: ").trim();
+
                     try
                     {
                         Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
@@ -176,7 +177,7 @@ public final class App
         }
     }
 
-    // ===== FRUITORE LOGIN =====
+    // ===== LOGIN FRUITORE =====
 
     private static Fruitore doLoginFruitore(ConsoleUI ui, FruitoreService fruService)
     {
@@ -226,7 +227,7 @@ public final class App
         }
     }
 
-    // ===== FRUITORE MAIN MENU =====
+    // ===== MENU FRUITORE =====
 
     private static void mainMenuFruitore(
             ConsoleUI ui,
@@ -254,6 +255,7 @@ public final class App
                 case 3:
                     menuDisdici(ui, fruitore, ps, is);
                     break;
+
                 case 4:
                     menuSpazioPersonale(ui, fruitore, fs);
                     break;
@@ -341,8 +343,7 @@ public final class App
         }
 
         ui.newLine();
-        int scelta = ui.acquisisciIntero(
-                "Scegli proposta (0 per annullare): ", 0, tutte.size());
+        int scelta = ui.acquisisciIntero("Scegli proposta (0 per annullare): ", 0, tutte.size());
 
         if (scelta == 0)
             return;
@@ -353,6 +354,61 @@ public final class App
         {
             is.iscrivi(fruitore, sceltaProposta);
             ui.stampa("Iscrizione completata!");
+        }
+        catch (IllegalStateException e)
+        {
+            ui.stampa("Errore: " + e.getMessage());
+        }
+
+        ui.newLine();
+        ui.acquisisciStringa("Premi INVIO per continuare...");
+    }
+
+    // ===== DISDICI ISCRIZIONE =====
+
+    private static void menuDisdici(
+            ConsoleUI ui,
+            Fruitore fruitore,
+            PropostaService ps,
+            IscrizioneService is)
+    {
+        ui.header("DISDICI ISCRIZIONE");
+
+        List<Proposta> iscritte = ps.getBacheca().stream()
+                .filter(p -> p.isIscrittoFruitore(fruitore.getUsername()))
+                .toList();
+
+        if (iscritte.isEmpty())
+        {
+            ui.stampa("Non sei iscritto a nessuna proposta aperta.");
+            ui.newLine();
+            ui.acquisisciStringa("Premi INVIO per continuare...");
+            return;
+        }
+
+        ui.stampa("Le tue iscrizioni attive:");
+        ui.newLine();
+
+        for (int i = 0; i < iscritte.size(); i++)
+        {
+            Proposta p    = iscritte.get(i);
+            String titolo = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
+            ui.stampa("  " + (i + 1) + ") " + titolo +
+                    " | Termine: " + p.getTermineIscrizione());
+        }
+
+        ui.newLine();
+        int scelta = ui.acquisisciIntero("Scegli proposta da disdire (0 per annullare): ", 0, iscritte.size());
+
+        if (scelta == 0)
+            return;
+
+        Proposta sceltaProposta = iscritte.get(scelta - 1);
+
+        try
+        {
+            is.disdici(fruitore, sceltaProposta);
+            ui.stampa("Iscrizione disdetta con successo.");
         }
         catch (IllegalStateException e)
         {
@@ -399,8 +455,7 @@ public final class App
                         break;
                     }
 
-                    int idx = ui.acquisisciIntero(
-                            "Numero notifica da eliminare: ", 1, notifiche.size());
+                    int idx = ui.acquisisciIntero("Numero notifica da eliminare: ", 1, notifiche.size());
                     boolean ok = fs.eliminaNotifica(fruitore.getUsername(), idx - 1);
                     ui.stampa(ok ? "Notifica eliminata." : "Errore nell'eliminazione.");
                     break;
@@ -414,9 +469,13 @@ public final class App
         }
     }
 
-    // ===== CONFIGURATORE MENUS (unchanged from V2) =====
+    // ===== MENU CONFIGURATORE =====
 
-    private static void mainMenuConfiguratore(ConsoleUI ui, CategoriaService cs, PropostaService ps, IscrizioneService is)
+    private static void mainMenuConfiguratore(
+            ConsoleUI ui,
+            CategoriaService cs,
+            PropostaService ps,
+            IscrizioneService is)
     {
         while (true)
         {
@@ -450,6 +509,8 @@ public final class App
         }
     }
 
+    // ===== PRIMA CONFIGURAZIONE: CAMPI BASE EXTRA =====
+
     private static void menuCampiBaseExtra(ConsoleUI ui, CategoriaService cs)
     {
         ui.header("PRIMA CONFIGURAZIONE – Campi base");
@@ -482,6 +543,7 @@ public final class App
         {
             String nome = ui.acquisisciStringa("Nome campo (INVIO per terminare): ").trim();
             if (nome.isBlank()) break;
+
             TipoDato tipo = ui.acquisisciTipoDato("Tipo del campo \"" + nome + "\":");
             nomi.add(nome);
             tipi.add(tipo);
@@ -510,6 +572,8 @@ public final class App
         ui.acquisisciStringa("Premi INVIO per continuare...");
     }
 
+    // ===== CAMPI COMUNI =====
+
     private static void menuCampiComuni(ConsoleUI ui, CategoriaService cs)
     {
         while (true)
@@ -519,18 +583,19 @@ public final class App
             ui.stampaCampi(cs.getCampiComuni());
             ui.stampaMenu("", MENU_CAMPI_COMUNI);
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI_COMUNI.length);
             ui.newLine();
 
             switch (choice)
             {
                 case 1:
-                    String nome = ui.acquisisciStringa("Nome campo: ").trim();
-                    TipoDato td = ui.acquisisciTipoDato("Tipo del campo \"" + nome + "\":");
-                    boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
+                    String nome1  = ui.acquisisciStringa("Nome campo: ").trim();
+                    TipoDato td1  = ui.acquisisciTipoDato("Tipo del campo \"" + nome1 + "\":");
+                    boolean obbl1 = ui.acquisisciSiNo("Obbligatorio?");
+
                     try
                     {
-                        cs.addCampoComune(nome, td, obbl);
+                        cs.aggiungiCampoComune(nome1, td1, obbl1);
                         ui.stampa("Campo comune aggiunto.");
                     }
                     catch (Exception e)
@@ -541,14 +606,13 @@ public final class App
 
                 case 2:
                     String nome2 = ui.acquisisciStringa("Nome campo da rimuovere: ");
-                    ui.stampa(cs.removeCampoComune(nome2) ? "Rimosso." : "Campo non trovato.");
+                    ui.stampa(cs.rimuoviCampoComune(nome2) ? "Rimosso." : "Campo non trovato.");
                     break;
 
                 case 3:
                     String nome3  = ui.acquisisciStringa("Nome campo: ");
                     boolean obbl3 = ui.acquisisciSiNo("Impostare come obbligatorio?");
-                    ui.stampa(cs.setObbligatorietaCampoComune(nome3, obbl3) ?
-                            "Aggiornato." : "Campo non trovato.");
+                    ui.stampa(cs.setObbligatorietaCampoComune(nome3, obbl3) ? "Aggiornato." : "Campo non trovato.");
                     break;
 
                 case 0:
@@ -560,6 +624,8 @@ public final class App
         }
     }
 
+    // ===== CATEGORIE =====
+
     private static void menuCategorie(ConsoleUI ui, CategoriaService cs)
     {
         while (true)
@@ -567,18 +633,19 @@ public final class App
             ui.header("CATEGORIE");
             ui.stampaSezione("Categorie attuali");
             ui.stampaCategorie(cs.getCategorie());
-            ui.stampaMenu("CATEGORIE", MENU_CATEGORIE);
+            ui.stampaMenu("", MENU_CATEGORIE);
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CATEGORIE.length);
             ui.newLine();
 
             switch (choice)
             {
                 case 1:
-                    String nome = ui.acquisisciStringa("Nome nuova categoria: ");
+                    String nomeNuova = ui.acquisisciStringa("Nome nuova categoria: ").trim();
+
                     try
                     {
-                        cs.createCategoria(nome);
+                        cs.creaCategoria(nomeNuova);
                         ui.stampa("Categoria creata.");
                     }
                     catch (Exception e)
@@ -588,8 +655,8 @@ public final class App
                     break;
 
                 case 2:
-                    String nome2 = ui.acquisisciStringa("Nome categoria da rimuovere: ");
-                    ui.stampa(cs.removeCategoria(nome2) ? "Rimossa." : "Categoria non trovata.");
+                    String nomeRimuovi = ui.acquisisciStringa("Nome categoria da rimuovere: ");
+                    ui.stampa(cs.rimuoviCategoria(nomeRimuovi) ? "Rimossa." : "Categoria non trovata.");
                     break;
 
                 case 3:
@@ -598,7 +665,9 @@ public final class App
                         ui.stampa("Nessuna categoria presente.");
                         break;
                     }
+
                     String nomeCat = ui.acquisisciStringa("Nome categoria: ");
+
                     try
                     {
                         cs.getCategoriaOrThrow(nomeCat);
@@ -619,28 +688,38 @@ public final class App
         }
     }
 
+    // ===== CAMPI SPECIFICI =====
+
     private static void menuCampiSpecifici(ConsoleUI ui, CategoriaService cs, String nomeCategoria)
     {
         while (true)
         {
             Categoria cat = cs.getCategoria(nomeCategoria);
+
             ui.header("CAMPI SPECIFICI - " + nomeCategoria);
+            ui.stampaSezione("Campi BASE");
+            ui.stampaCampi(cs.getCampiBase());
+            ui.stampaSezione("Campi COMUNI");
+            ui.stampaCampi(cs.getCampiComuni());
             ui.stampaSezione("Campi SPECIFICI");
             ui.stampaCampi(cat.getCampiSpecifici());
-            ui.stampaMenu("CAMPI SPECIFICI", MENU_CAMPI_SPECIFICI);
+            ui.newLine();
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            ui.stampaMenu("", MENU_CAMPI_SPECIFICI);
+
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI_SPECIFICI.length);
             ui.newLine();
 
             switch (choice)
             {
                 case 1:
-                    String nome  = ui.acquisisciStringa("Nome campo specifico: ").trim();
-                    TipoDato td  = ui.acquisisciTipoDato("Tipo del campo \"" + nome + "\":");
-                    boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
+                    String nome1  = ui.acquisisciStringa("Nome campo specifico: ").trim();
+                    TipoDato td1  = ui.acquisisciTipoDato("Tipo del campo \"" + nome1 + "\":");
+                    boolean obbl1 = ui.acquisisciSiNo("Obbligatorio?");
+
                     try
                     {
-                        cs.addCampoSpecifico(nomeCategoria, nome, td, obbl);
+                        cs.aggiungiCampoSpecifico(nomeCategoria, nome1, td1, obbl1);
                         ui.stampa("Campo specifico aggiunto.");
                     }
                     catch (Exception e)
@@ -651,15 +730,13 @@ public final class App
 
                 case 2:
                     String nome2 = ui.acquisisciStringa("Nome campo specifico da rimuovere: ");
-                    ui.stampa(cs.removeCampoSpecifico(nomeCategoria, nome2) ?
-                            "Rimosso." : "Campo non trovato.");
+                    ui.stampa(cs.rimuoviCampoSpecifico(nomeCategoria, nome2) ? "Rimosso." : "Campo non trovato.");
                     break;
 
                 case 3:
                     String nome3  = ui.acquisisciStringa("Nome campo specifico: ");
                     boolean obbl3 = ui.acquisisciSiNo("Impostare come obbligatorio?");
-                    ui.stampa(cs.setObbligatorietaCampoSpecifico(nomeCategoria, nome3, obbl3) ?
-                            "Aggiornato." : "Campo non trovato.");
+                    ui.stampa(cs.setObbligatorietaCampoSpecifico(nomeCategoria, nome3, obbl3) ? "Aggiornato." : "Campo non trovato.");
                     break;
 
                 case 0:
@@ -671,18 +748,36 @@ public final class App
         }
     }
 
+    // ===== VISUALIZZA =====
+
     private static void menuVisualizza(ConsoleUI ui, CategoriaService cs)
     {
-        ui.header("VISUALIZZAZIONE");
+        ui.header("RIEPILOGO CATEGORIE E CAMPI");
+
         ui.stampaSezione("Campi BASE");
         ui.stampaCampi(cs.getCampiBase());
+        ui.newLine();
+
         ui.stampaSezione("Campi COMUNI");
         ui.stampaCampi(cs.getCampiComuni());
-        ui.stampaSezione("Categorie");
-        ui.stampaCategorie(cs.getCategorie());
         ui.newLine();
+
+        ui.stampaSezione("CATEGORIE");
+        List<Categoria> categorie = cs.getCategorie();
+        ui.stampaCategorie(categorie);
+        ui.newLine();
+
+        for (Categoria cat : categorie)
+        {
+            ui.stampaSezione("Campi specifici di: " + cat.getNome());
+            ui.stampaCampi(cat.getCampiSpecifici());
+            ui.newLine();
+        }
+
         ui.acquisisciStringa("Premi INVIO per continuare...");
     }
+
+    // ===== CREA PROPOSTA =====
 
     private static void menuCreaProposta(ConsoleUI ui, CategoriaService cs, PropostaService ps)
     {
@@ -740,10 +835,12 @@ public final class App
 
             ui.newLine();
             ui.stampa("La proposta NON è valida per i seguenti motivi:");
+
             for (String err : errori)
                 ui.stampa("  - " + err);
 
             ui.newLine();
+
             boolean correggi = ui.acquisisciSiNo("Vuoi correggere i campi?");
 
             if (!correggi)
@@ -779,6 +876,8 @@ public final class App
         ui.acquisisciStringa("Premi INVIO per continuare...");
     }
 
+    // ===== BACHECA CONFIGURATORE =====
+
     private static void menuBachecaConfiguratore(ConsoleUI ui, PropostaService ps)
     {
         ui.header("BACHECA");
@@ -802,8 +901,7 @@ public final class App
             for (int i = 0; i < proposte.size(); i++)
             {
                 Proposta p = proposte.get(i);
-                ui.stampa("  [Proposta #" + (i + 1) + "]  Pubblicata il: " +
-                        p.getDataPubblicazione());
+                ui.stampa("  [Proposta #" + (i + 1) + "]  Pubblicata il: " + p.getDataPubblicazione());
 
                 for (Campo c : ps.getTuttiCampi(p))
                 {
@@ -818,60 +916,7 @@ public final class App
         ui.acquisisciStringa("Premi INVIO per continuare...");
     }
 
-    private static void menuDisdici(
-            ConsoleUI ui,
-            Fruitore fruitore,
-            PropostaService ps,
-            IscrizioneService is)
-    {
-        ui.header("DISDICI ISCRIZIONE");
-
-        // Show only proposals the fruitore is actually subscribed to
-        List<Proposta> iscritte = ps.getBacheca().stream()
-                .filter(p -> p.isIscrittoFruitore(fruitore.getUsername()))
-                .toList();
-
-        if (iscritte.isEmpty())
-        {
-            ui.stampa("Non sei iscritto a nessuna proposta aperta.");
-            ui.newLine();
-            ui.acquisisciStringa("Premi INVIO per continuare...");
-            return;
-        }
-
-        ui.stampa("Le tue iscrizioni attive:");
-        ui.newLine();
-
-        for (int i = 0; i < iscritte.size(); i++)
-        {
-            Proposta p    = iscritte.get(i);
-            String titolo = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
-            ui.stampa("  " + (i + 1) + ") " + titolo +
-                    " | Termine: " + p.getTermineIscrizione());
-        }
-
-        ui.newLine();
-        int scelta = ui.acquisisciIntero(
-                "Scegli proposta da disdire (0 per annullare): ", 0, iscritte.size());
-
-        if (scelta == 0)
-            return;
-
-        Proposta scelta_p = iscritte.get(scelta - 1);
-
-        try
-        {
-            is.disdici(fruitore, scelta_p);
-            ui.stampa("Iscrizione disdetta con successo.");
-        }
-        catch (IllegalStateException e)
-        {
-            ui.stampa("Errore: " + e.getMessage());
-        }
-
-        ui.newLine();
-        ui.acquisisciStringa("Premi INVIO per continuare...");
-    }
+    // ===== RITIRA PROPOSTA =====
 
     private static void menuRitiraProposta(
             ConsoleUI ui,
@@ -880,7 +925,6 @@ public final class App
     {
         ui.header("RITIRA PROPOSTA");
 
-        // Show all proposals that are APERTA or CONFERMATA
         List<Proposta> ritirabili = ps.getProposte().stream()
                 .filter(p -> p.getStato() == StatoProposta.APERTA ||
                         p.getStato() == StatoProposta.CONFERMATA)
@@ -906,17 +950,16 @@ public final class App
         }
 
         ui.newLine();
-        int scelta = ui.acquisisciIntero(
-                "Scegli proposta da ritirare (0 per annullare): ", 0, ritirabili.size());
+        int scelta = ui.acquisisciIntero("Scegli proposta da ritirare (0 per annullare): ", 0, ritirabili.size());
 
         if (scelta == 0)
             return;
 
-        Proposta scelta_p = ritirabili.get(scelta - 1);
+        Proposta sceltaProposta = ritirabili.get(scelta - 1);
 
         try
         {
-            is.ritira(scelta_p);
+            is.ritira(sceltaProposta);
             ui.stampa("Proposta ritirata con successo. Tutti gli iscritti sono stati notificati.");
         }
         catch (IllegalStateException e)
@@ -927,6 +970,4 @@ public final class App
         ui.newLine();
         ui.acquisisciStringa("Premi INVIO per continuare...");
     }
-
-
 }

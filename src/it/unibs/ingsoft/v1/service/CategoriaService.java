@@ -11,15 +11,18 @@ import java.util.*;
 public final class CategoriaService
 {
     private final DatabaseService db;
-    private final AppData data;
+    private final AppData         data;
 
     public CategoriaService(DatabaseService db, AppData data)
     {
-        this.db = Objects.requireNonNull(db);
+        this.db   = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
     }
 
-    // ---------- Campi base ----------
+    // ---------------------------------------------------------------
+    // CAMPI BASE
+    // ---------------------------------------------------------------
+
     public void fissareCampiBase(List<String> nomiCampiBase)
     {
         if (data.isCampiBaseFissati())
@@ -27,23 +30,22 @@ public final class CategoriaService
 
         Objects.requireNonNull(nomiCampiBase);
 
-        List<String> clean = new ArrayList<>();
+        List<String> puliti = new ArrayList<>();
 
         for (String s : nomiCampiBase)
         {
             if (s == null || s.isBlank())
                 continue;
 
-            clean.add(s.trim());
+            puliti.add(s.trim());
         }
 
-        if (clean.isEmpty())
+        if (puliti.isEmpty())
             throw new IllegalArgumentException("Lista campi base vuota.");
 
-        // Nomi univoci => uso Set (case-insensitive)
         Set<String> set = new HashSet<>();
 
-        for (String n : clean)
+        for (String n : puliti)
         {
             String key = n.toLowerCase();
 
@@ -56,10 +58,9 @@ public final class CategoriaService
 
         data.getCampiBase().clear();
 
-        for (String n : clean)
-            data.getCampiBase().add(new Campo(n, TipoCampo.BASE, true)); // tutti obbligatori
+        for (String n : puliti)
+            data.getCampiBase().add(new Campo(n, TipoCampo.BASE, true));
 
-        //data.getCampiBase().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
         data.setCampiBaseFissati(true);
         db.save(data);
     }
@@ -69,46 +70,37 @@ public final class CategoriaService
         return Collections.unmodifiableList(data.getCampiBase());
     }
 
-    // ---------- Campi comuni ----------
-    public void addCampoComune(String nome, boolean obbligatorio)
+    // ---------------------------------------------------------------
+    // CAMPI COMUNI
+    // ---------------------------------------------------------------
+
+    public void aggiungiCampoComune(String nome, boolean obbligatorio)
     {
+        nome = normalizza(nome);
+
         if (nomeCampoGiaEsistente(nome))
             throw new IllegalArgumentException("Esiste già un campo con questo nome.");
 
-        Campo c = new Campo(nome, TipoCampo.COMUNE, obbligatorio);
-        data.getCampiComuni().add(c);
+        data.getCampiComuni().add(new Campo(nome, TipoCampo.COMUNE, obbligatorio));
         sortCampiComuni();
         db.save(data);
     }
 
-    /*
-    private void assicuraCampoComuneUnico(String nome)
+    public boolean rimuoviCampoComune(String nome)
     {
-        for (Campo c : data.getCampiComuni())
-        {
-            if (c.getNome().equalsIgnoreCase(nome))
-                throw new IllegalArgumentException("Esiste già un campo comune con questo nome.");
-        }
-    }
-    */
+        final String n = normalizza(nome);
+        boolean rimosso = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(n));
 
-    private void sortCampiComuni()
-    {
-        data.getCampiComuni().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
-    }
-
-    public boolean removeCampoComune(String nome)
-    {
-        boolean removed = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(nome));
-
-        if (removed)
+        if (rimosso)
             db.save(data);
 
-        return removed;
+        return rimosso;
     }
 
     public boolean setObbligatorietaCampoComune(String nome, boolean obbligatorio)
     {
+        nome = normalizza(nome);
+
         for (Campo c : data.getCampiComuni())
         {
             if (c.getNome().equalsIgnoreCase(nome))
@@ -127,30 +119,32 @@ public final class CategoriaService
         return Collections.unmodifiableList(data.getCampiComuni());
     }
 
+    // ---------------------------------------------------------------
+    // CATEGORIE
+    // ---------------------------------------------------------------
 
-    // ---------- Categorie ----------
-    public Categoria createCategoria(String nomeCategoria)
+    public void creaCategoria(String nomeCategoria)
     {
+        nomeCategoria = normalizza(nomeCategoria);
+
         if (data.findCategoria(nomeCategoria) != null)
-            throw new IllegalArgumentException("it.unibs.ingsoft.v1.model.Categoria già esistente.");
+            throw new IllegalArgumentException("Categoria già esistente.");
 
         Categoria cat = new Categoria(nomeCategoria);
         data.getCategorie().add(cat);
         sortCategorie();
         db.save(data);
-        return cat;
     }
 
-    public boolean removeCategoria(String nomeCategoria)
+    public boolean rimuoviCategoria(String nomeCategoria)
     {
-        boolean removed = data.getCategorie().removeIf(c -> c.getNome().equalsIgnoreCase(nomeCategoria));
+        final String n = normalizza(nomeCategoria);
+        boolean rimossa = data.getCategorie().removeIf(c -> c.getNome().equalsIgnoreCase(n));
 
-        if (removed)
-        {
+        if (rimossa)
             db.save(data);
-        }
 
-        return removed;
+        return rimossa;
     }
 
     public List<Categoria> getCategorie()
@@ -165,16 +159,23 @@ public final class CategoriaService
 
     public Categoria getCategoriaOrThrow(String nomeCategoria)
     {
-        if (data.findCategoria(nomeCategoria) == null)
-        {
-            throw new IllegalArgumentException("it.unibs.ingsoft.v1.model.Categoria non trovata.");
-        }
+        nomeCategoria = normalizza(nomeCategoria);
+        Categoria c = data.findCategoria(nomeCategoria);
 
-        return data.findCategoria(nomeCategoria);
+        if (c == null)
+            throw new IllegalArgumentException("Categoria non trovata: \"" + nomeCategoria + "\".");
+
+        return c;
     }
 
-    public void addCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
+    // ---------------------------------------------------------------
+    // CAMPI SPECIFICI
+    // ---------------------------------------------------------------
+
+    public void aggiungiCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
     {
+        nomeCampo = normalizza(nomeCampo);
+
         if (nomeCampoGiaEsistente(nomeCampo))
             throw new IllegalArgumentException("Esiste già un campo con questo nome.");
 
@@ -183,19 +184,21 @@ public final class CategoriaService
         db.save(data);
     }
 
-    public boolean removeCampoSpecifico(String nomeCategoria, String nomeCampo)
+    public boolean rimuoviCampoSpecifico(String nomeCategoria, String nomeCampo)
     {
+        nomeCampo = normalizza(nomeCampo);
         Categoria c = getCategoriaOrThrow(nomeCategoria);
-        boolean removed = c.removeCampoSpecifico(nomeCampo);
+        boolean rimosso = c.removeCampoSpecifico(nomeCampo);
 
-        if (removed)
+        if (rimosso)
             db.save(data);
 
-        return removed;
+        return rimosso;
     }
 
     public boolean setObbligatorietaCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
     {
+        nomeCampo = normalizza(nomeCampo);
         Categoria c = getCategoriaOrThrow(nomeCategoria);
         boolean ok = c.setObbligatorietaCampoSpecifico(nomeCampo, obbligatorio);
 
@@ -205,6 +208,15 @@ public final class CategoriaService
         return ok;
     }
 
+    // ---------------------------------------------------------------
+    // UTILITY
+    // ---------------------------------------------------------------
+
+    private void sortCampiComuni()
+    {
+        data.getCampiComuni().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
+    }
+
     private void sortCategorie()
     {
         data.getCategorie().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
@@ -212,55 +224,32 @@ public final class CategoriaService
 
     private boolean nomeCampoGiaEsistente(String nome)
     {
-        String key = nome.toLowerCase();
+        nome = normalizza(nome);
 
-        // controlla campi base
-        for (Campo c : data.getCampiBase())
-            if (c.getNome().equalsIgnoreCase(key))
+        for (Campo c : getTuttiICampi())
+            if (c.getNome().equalsIgnoreCase(nome))
                 return true;
-
-        // controlla campi comuni
-        for (Campo c : data.getCampiComuni())
-            if (c.getNome().equalsIgnoreCase(key))
-                return true;
-
-        // controlla campi specifici di tutte le categorie
-        for (Categoria cat : data.getCategorie())
-            for (Campo c : cat.getCampiSpecifici())
-                if (c.getNome().equalsIgnoreCase(key))
-                    return true;
 
         return false;
     }
 
-    /*
-    // ---------- Visualizzazione unificata ----------
-    public String toStringCategoriaService(String nomeCategoria)
+    private List<Campo> getTuttiICampi()
     {
-        Categoria cat = getCategoriaOrThrow(nomeCategoria);
+        List<Campo> tutti = new ArrayList<>();
+        tutti.addAll(data.getCampiBase());
+        tutti.addAll(data.getCampiComuni());
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("it.unibs.ingsoft.v1.model.Categoria: ").append(cat.getNome()).append("\n");
+        for (Categoria cat : data.getCategorie())
+            tutti.addAll(cat.getCampiSpecifici());
 
-        sb.append("  Campi BASE (immutabili):\n");
-        for (Campo c : data.getCampiBase())
-            sb.append("   - ").append(c).append("\n");
-
-        sb.append("  Campi COMUNI:\n");
-        if (data.getCampiComuni().isEmpty())
-            sb.append("   (nessuno)\n");
-
-        for (Campo c : data.getCampiComuni())
-            sb.append("   - ").append(c).append("\n");
-
-        sb.append("  Campi SPECIFICI:\n");
-        if (cat.getCampiSpecifici().isEmpty())
-            sb.append("   (nessuno)\n");
-
-        for (Campo c : cat.getCampiSpecifici())
-            sb.append("   - ").append(c).append("\n");
-
-        return sb.toString();
+        return tutti;
     }
-    */
+
+    private String normalizza(String s)
+    {
+        if (s == null)
+            throw new IllegalArgumentException("Nome non valido (null).");
+
+        return s.trim();
+    }
 }

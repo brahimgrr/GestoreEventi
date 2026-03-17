@@ -26,9 +26,10 @@ public final class ConsoleUI
         this.scanner = scanner;
     }
 
-    /*
-     * OUTPUT BASE
-     */
+    // ---------------------------------------------------------------
+    // OUTPUT BASE
+    // ---------------------------------------------------------------
+
     public void stampa(String msg)
     {
         System.out.println(msg);
@@ -39,10 +40,10 @@ public final class ConsoleUI
         System.out.println();
     }
 
-    public void header(String title)
+    public void header(String titolo)
     {
         System.out.println("==================================================");
-        System.out.println(title);
+        System.out.println(titolo);
         System.out.println("==================================================");
     }
 
@@ -51,13 +52,13 @@ public final class ConsoleUI
         stampa("----- " + titolo + " -----");
     }
 
-    /*
-     * INPUT BASE
-     */
+    // ---------------------------------------------------------------
+    // INPUT BASE
+    // ---------------------------------------------------------------
+
     public String acquisisciStringa(String prompt)
     {
         System.out.print(prompt);
-
         return scanner.nextLine();
     }
 
@@ -78,8 +79,9 @@ public final class ConsoleUI
                 }
 
                 return v;
-
-            }	catch (NumberFormatException e) {
+            }
+            catch (NumberFormatException e)
+            {
                 stampa("Inserisci un intero valido.");
             }
         }
@@ -110,16 +112,18 @@ public final class ConsoleUI
             try
             {
                 return LocalDate.parse(s, DATE_FMT);
-
-            }	catch (DateTimeParseException e) {
+            }
+            catch (DateTimeParseException e)
+            {
                 stampa("Data non valida. Usa il formato gg/mm/aaaa.");
             }
         }
     }
 
-    /**
-     * SCELTA TIPO DATO
-     */
+    // ---------------------------------------------------------------
+    // SCELTA TIPO DATO
+    // ---------------------------------------------------------------
+
     private static final TipoDato[] TIPI = TipoDato.values();
 
     /**
@@ -146,14 +150,62 @@ public final class ConsoleUI
         stampa(titolo);
         stampa("Inserisci un nome per riga. Riga vuota per terminare.");
         newLine();
-        List<String> list = new ArrayList<>();
+
+        List<String> lista = new ArrayList<>();
+
         while (true)
         {
             String s = acquisisciStringa("> ");
             if (s == null || s.isBlank()) break;
-            list.add(s.trim());
+            lista.add(s.trim());
         }
-        return list;
+
+        return lista;
+    }
+
+    // ---------------------------------------------------------------
+    // STAMPA LISTE
+    // ---------------------------------------------------------------
+
+    public void stampaLista(List<?> elementi, String messaggioVuoto)
+    {
+        if (elementi == null || elementi.isEmpty())
+        {
+            stampa(messaggioVuoto);
+            return;
+        }
+
+        for (Object e : elementi)
+            stampa(" - " + e);
+    }
+
+    public void stampaCampi(List<?> campi)
+    {
+        stampaLista(campi, " (nessuno)");
+    }
+
+    public void stampaCategorie(List<?> categorie)
+    {
+        stampaLista(categorie, " (nessuna)");
+    }
+
+    // ---------------------------------------------------------------
+    // MENU
+    // ---------------------------------------------------------------
+
+    public void stampaMenu(String titolo, String[] voci)
+    {
+        if (titolo != null && !titolo.isBlank())
+            header(titolo);
+
+        if (voci == null || voci.length == 0)
+            return;
+
+        IntStream.range(0, voci.length)
+                .forEach(i -> stampa((i + 1) + ") " + voci[i]));
+
+        stampa("0) Esci");
+        newLine();
     }
 
     // ---------------------------------------------------------------
@@ -162,15 +214,14 @@ public final class ConsoleUI
 
     /**
      * Guida il configuratore nella compilazione dei campi di una proposta,
-     * suddivisi per sezione (base -> comuni -> specifici).
+     * suddivisi per sezione (base → comuni → specifici).
      * Usa il TipoDato di ciascun campo per validare l'input.
      */
     public void compilaCampiProposta(
             Map<String, String> valoriCampi,
             List<Campo> campiBase,
             List<Campo> campiComuni,
-            List<Campo> campiSpecifici
-    )
+            List<Campo> campiSpecifici)
     {
         if (!campiBase.isEmpty())
         {
@@ -178,7 +229,6 @@ public final class ConsoleUI
 
             for (Campo c : campiBase)
                 acquisisciValoreCampo(valoriCampi, c);
-
         }
 
         if (!campiComuni.isEmpty())
@@ -188,7 +238,6 @@ public final class ConsoleUI
 
             for (Campo c : campiComuni)
                 acquisisciValoreCampo(valoriCampi, c);
-
         }
 
         if (!campiSpecifici.isEmpty())
@@ -198,15 +247,14 @@ public final class ConsoleUI
 
             for (Campo c : campiSpecifici)
                 acquisisciValoreCampo(valoriCampi, c);
-
         }
     }
 
     /**
      * Acquisisce e valida il valore per un singolo campo in base al suo TipoDato.
-     * - Campi obbligatori: non accetta input vuoto.
-     * - Campi facoltativi: INVIO senza testo = non compilato.
-     * - Mostra il valore attuale tra parentesi se gia presente (utile in fase di correzione).
+     * Campi obbligatori: non accetta input vuoto.
+     * Campi facoltativi: INVIO senza testo = non compilato.
+     * Mostra il valore attuale tra parentesi se già presente (utile in fase di correzione).
      */
     public void acquisisciValoreCampo(Map<String, String> valoriCampi, Campo c)
     {
@@ -217,7 +265,6 @@ public final class ConsoleUI
         {
             String input = acquisisciStringa(etichetta + ": ").trim();
 
-            // Campo facoltativo lasciato vuoto: mantieni eventuale valore precedente
             if (input.isBlank())
             {
                 if (c.isObbligatorio())
@@ -229,8 +276,8 @@ public final class ConsoleUI
                 break;
             }
 
-            // Valida in base al tipo
             String errore = validaInput(input, c.getTipoDato());
+
             if (errore != null)
             {
                 stampa("  " + errore);
@@ -248,7 +295,7 @@ public final class ConsoleUI
 
     /**
      * Valida una stringa rispetto al TipoDato.
-     * Restituisce null se il valore e valido, oppure un messaggio d'errore.
+     * Restituisce null se il valore è valido, oppure un messaggio d'errore.
      */
     public static String validaInput(String valore, TipoDato tipo)
     {
@@ -257,8 +304,7 @@ public final class ConsoleUI
 
         return switch (tipo)
         {
-            case STRINGA ->
-                    null;
+            case STRINGA -> null;
 
             case INTERO ->
             {
@@ -266,8 +312,9 @@ public final class ConsoleUI
                 {
                     Integer.parseInt(valore.trim());
                     yield null;
-
-                }	catch (NumberFormatException e) {
+                }
+                catch (NumberFormatException e)
+                {
                     yield "Valore non valido per tipo INTERO (es. 10).";
                 }
             }
@@ -278,8 +325,9 @@ public final class ConsoleUI
                 {
                     Double.parseDouble(valore.trim().replace(',', '.'));
                     yield null;
-
-                }	catch (NumberFormatException e) {
+                }
+                catch (NumberFormatException e)
+                {
                     yield "Valore non valido per tipo DECIMALE (es. 15.50 o 15,50).";
                 }
             }
@@ -290,8 +338,9 @@ public final class ConsoleUI
                 {
                     LocalDate.parse(valore.trim(), DATE_FMT);
                     yield null;
-
-                }	catch (DateTimeParseException e) {
+                }
+                catch (DateTimeParseException e)
+                {
                     yield "Formato data non valido. Usa gg/mm/aaaa (es. 25/12/2025).";
                 }
             }
@@ -310,52 +359,6 @@ public final class ConsoleUI
     }
 
     // ---------------------------------------------------------------
-    // STAMPA LISTE
-    // ---------------------------------------------------------------
-
-    public void stampaLista(List<?> elementi, String emptyMessage)
-    {
-        if (elementi == null || elementi.isEmpty())
-        {
-            stampa(emptyMessage);
-            return;
-        }
-
-        for (Object e : elementi)
-            stampa(" - " + e);
-
-    }
-
-    public void stampaCampi(List<?> campi)
-    {
-        stampaLista(campi, " (nessuno)");
-    }
-
-    public void stampaCategorie(List<?> cat)
-    {
-        stampaLista(cat, " (nessuna)");
-    }
-
-    // ---------------------------------------------------------------
-    // MENU
-    // ---------------------------------------------------------------
-
-    public void stampaMenu(String titolo, String[] lista)
-    {
-        if (titolo != null && !titolo.isBlank())
-            header(titolo);
-
-        if (lista == null || lista.length == 0)
-            return;
-
-        IntStream.range(0, lista.length)
-                .forEach(i -> stampa((i + 1) + ") " + lista[i]));
-
-        stampa("0) Esci");
-        newLine();
-    }
-
-    // ---------------------------------------------------------------
     // UTILITY PRIVATE
     // ---------------------------------------------------------------
 
@@ -365,8 +368,10 @@ public final class ConsoleUI
         sb.append(c.getNome());
         sb.append(c.isObbligatorio() ? " (*)" : " (facoltativo)");
         sb.append(" [").append(c.getTipoDato()).append("]");
+
         if (valoreAttuale != null && !valoreAttuale.isBlank())
             sb.append(" [attuale: ").append(valoreAttuale).append("]");
+
         return sb.toString();
     }
 }

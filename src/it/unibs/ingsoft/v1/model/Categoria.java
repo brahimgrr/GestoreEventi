@@ -1,20 +1,28 @@
 package it.unibs.ingsoft.v1.model;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
 public final class Categoria implements Serializable
 {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private final String nome; //DEV'ESSERE UNICO
+
+    private final String      nome;
     private final List<Campo> campiSpecifici = new ArrayList<>();
 
     public Categoria(String nome)
     {
         if (nome == null || nome.isBlank())
             throw new IllegalArgumentException("Nome categoria non valido.");
+
         this.nome = nome.trim();
     }
+
+    // ---------------------------------------------------------------
+    // GETTER
+    // ---------------------------------------------------------------
 
     public String getNome()
     {
@@ -26,18 +34,22 @@ public final class Categoria implements Serializable
         return Collections.unmodifiableList(campiSpecifici);
     }
 
+    // ---------------------------------------------------------------
+    // GESTIONE CAMPI SPECIFICI
+    // ---------------------------------------------------------------
+
     public void addCampoSpecifico(Campo campoSpecifico)
     {
-        Objects.requireNonNull(campoSpecifico, "it.unibs.ingsoft.v1.model.Campo nullo.");
+        Objects.requireNonNull(campoSpecifico, "Campo nullo.");
 
-        if (campoSpecifico.getScope() != TipoCampo.SPECIFICO)
-            throw new IllegalArgumentException("Il campo deve avere scope SPECIFICO.");
+        if (campoSpecifico.getTipo() != TipoCampo.SPECIFICO)
+            throw new IllegalArgumentException("Il campo deve avere tipo SPECIFICO.");
 
         if (containsCampo(campoSpecifico.getNome()))
             throw new IllegalArgumentException("Esiste già un campo specifico con questo nome nella categoria.");
 
         campiSpecifici.add(campoSpecifico);
-        //campiSpecifici.sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
+        campiSpecifici.sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
     }
 
     public boolean removeCampoSpecifico(String nomeCampo)
@@ -70,12 +82,15 @@ public final class Categoria implements Serializable
         return false;
     }
 
+    // ---------------------------------------------------------------
+    // EQUALS / HASHCODE / TOSTRING
+    // ---------------------------------------------------------------
+
     @Override
     public String toString()
     {
-        return  "nome='" + nome + '\'' +
-                ", campiSpecifici=" + campiSpecifici +
-                '}';
+        return "nome='" + nome + '\'' +
+                ", campiSpecifici=" + campiSpecifici + '}';
     }
 
     @Override
@@ -84,10 +99,8 @@ public final class Categoria implements Serializable
         if (this == o)
             return true;
 
-        if (!(o instanceof Categoria))
+        if (!(o instanceof Categoria categoria))
             return false;
-
-        Categoria categoria = (Categoria) o;
 
         return nome.equalsIgnoreCase(categoria.nome);
     }

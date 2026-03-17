@@ -5,7 +5,6 @@ import it.unibs.ingsoft.v2.persistence.AppData;
 import it.unibs.ingsoft.v2.persistence.DatabaseService;
 import it.unibs.ingsoft.v2.service.AuthenticationService;
 import it.unibs.ingsoft.v2.service.CategoriaService;
-//import it.unibs.ingsoft.v2.service.CategoriaService.NomeTipo;
 import it.unibs.ingsoft.v2.service.PropostaService;
 import it.unibs.ingsoft.v2.view.ConsoleUI;
 
@@ -53,11 +52,11 @@ public final class App
     {
         Path storage = Path.of("data", "appdata2.ser");
 
-        DatabaseService  db          = new DatabaseService(storage);
-        AppData          data        = db.loadOrCreate();
-        AuthenticationService auth   = new AuthenticationService(db, data);
-        CategoriaService  catService = new CategoriaService(db, data);
-        PropostaService   propService = new PropostaService(db, data);
+        DatabaseService       db          = new DatabaseService(storage);
+        AppData               data        = db.loadOrCreate();
+        AuthenticationService auth        = new AuthenticationService(db, data);
+        CategoriaService      catService  = new CategoriaService(db, data);
+        PropostaService       propService = new PropostaService(db, data);
 
         try (Scanner sc = new Scanner(System.in))
         {
@@ -65,10 +64,9 @@ public final class App
 
             ui.header("Iniziative - Versione 2");
 
-            while (true)
-            {
+            do {
                 Configuratore logged = doLoginFlow(ui, auth);
-                ui.stampa("Benvenuto, " + logged.getUsername());
+                ui.stampa("Benvenuto, " + logged.getUsername() + "!");
                 ui.newLine();
 
                 // Primo avvio: i campi base fissi sono già stati inseriti da CategoriaService.
@@ -80,7 +78,8 @@ public final class App
 
                 ui.stampa("Logout effettuato.");
                 ui.newLine();
-            }
+
+            } while (ui.acquisisciSiNo("Vuoi accedere di nuovo?"));
         }
     }
 
@@ -93,6 +92,7 @@ public final class App
             ui.stampa("LOGIN CONFIGURATORE");
             String u = ui.acquisisciStringa("Username: ").trim();
             String p = ui.acquisisciStringa("Password: ").trim();
+
             Configuratore opt = auth.login(u, p);
 
             if (opt == null)
@@ -108,12 +108,13 @@ public final class App
             {
                 ui.newLine();
                 ui.stampa("Primo accesso con credenziali predefinite.");
-                ui.stampa("Devi scegliere credenziali personali.");
+                ui.stampa("Devi scegliere credenziali personali per poter operare.");
 
                 while (true)
                 {
                     String newU = ui.acquisisciStringa("Nuovo username: ").trim();
                     String newP = ui.acquisisciStringa("Nuova password: ").trim();
+
                     try
                     {
                         Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
@@ -121,7 +122,10 @@ public final class App
                         ui.newLine();
                         return registered;
                     }
-                    catch (IllegalArgumentException e) { ui.stampa("Errore: " + e.getMessage()); }
+                    catch (IllegalArgumentException e)
+                    {
+                        ui.stampa("Errore: " + e.getMessage());
+                    }
                 }
             }
 
@@ -141,11 +145,9 @@ public final class App
     {
         ui.header("PRIMA CONFIGURAZIONE – Campi base");
         ui.newLine();
-
         ui.stampa("I seguenti campi base sono già presenti (definiti dalla traccia):");
         ui.stampaCampi(cs.getCampiBase());
         ui.newLine();
-
         ui.stampa("Puoi aggiungere campi base EXTRA (obbligatori e immutabili).");
         ui.stampa("Questi campi NON potranno essere modificati o rimossi in futuro.");
         ui.newLine();
@@ -181,14 +183,16 @@ public final class App
         {
             cs.fissaCampiBaseSenzaExtra();
             ui.stampa("Nessun campo extra inserito. Configurazione completata.");
-
-        }	else {
+        }
+        else
+        {
             try
             {
                 cs.aggiungiCampiBaseExtra(nomi, tipi);
                 ui.stampa("Campi base extra aggiunti e salvati.");
-
-            }	catch (IllegalArgumentException e) {
+            }
+            catch (IllegalArgumentException e)
+            {
                 ui.stampa("Errore: " + e.getMessage());
                 cs.fissaCampiBaseSenzaExtra();
             }
@@ -232,7 +236,6 @@ public final class App
 
                 case 0:
                     return;
-
             }
         }
     }
@@ -248,29 +251,30 @@ public final class App
             ui.stampaCampi(cs.getCampiComuni());
             ui.stampaMenu("", MENU_CAMPI_COMUNI);
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI_COMUNI.length);
             ui.newLine();
 
             switch (choice)
             {
                 case 1:
-                    String nome  = ui.acquisisciStringa("Nome campo: ").trim();
-                    TipoDato td  = ui.acquisisciTipoDato("Tipo del campo \"" + nome + "\":");
-                    boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
+                    String nome1  = ui.acquisisciStringa("Nome campo: ").trim();
+                    TipoDato td1  = ui.acquisisciTipoDato("Tipo del campo \"" + nome1 + "\":");
+                    boolean obbl1 = ui.acquisisciSiNo("Obbligatorio?");
 
                     try
                     {
-                        cs.addCampoComune(nome, td, obbl);
+                        cs.aggiungiCampoComune(nome1, td1, obbl1);
                         ui.stampa("Campo comune aggiunto.");
-
-                    }	catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         ui.stampa("Errore: " + e.getMessage());
                     }
                     break;
 
                 case 2:
                     String nome2 = ui.acquisisciStringa("Nome campo da rimuovere: ");
-                    ui.stampa(cs.removeCampoComune(nome2) ? "Rimosso." : "Campo non trovato.");
+                    ui.stampa(cs.rimuoviCampoComune(nome2) ? "Rimosso." : "Campo non trovato.");
                     break;
 
                 case 3:
@@ -297,29 +301,30 @@ public final class App
             ui.header("CATEGORIE");
             ui.stampaSezione("Categorie attuali");
             ui.stampaCategorie(cs.getCategorie());
-            ui.stampaMenu("CATEGORIE", MENU_CATEGORIE);
+            ui.stampaMenu("", MENU_CATEGORIE);
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CATEGORIE.length);
             ui.newLine();
 
             switch (choice)
             {
                 case 1:
-                    String nome = ui.acquisisciStringa("Nome nuova categoria: ");
+                    String nomeNuova = ui.acquisisciStringa("Nome nuova categoria: ").trim();
 
                     try
                     {
-                        cs.createCategoria(nome);
+                        cs.creaCategoria(nomeNuova);
                         ui.stampa("Categoria creata.");
-
-                    }	catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         ui.stampa("Errore: " + e.getMessage());
                     }
                     break;
 
                 case 2:
-                    String nome2 = ui.acquisisciStringa("Nome categoria da rimuovere: ");
-                    ui.stampa(cs.removeCategoria(nome2) ? "Rimossa." : "Categoria non trovata.");
+                    String nomeRimuovi = ui.acquisisciStringa("Nome categoria da rimuovere: ");
+                    ui.stampa(cs.rimuoviCategoria(nomeRimuovi) ? "Rimossa." : "Categoria non trovata.");
                     break;
 
                 case 3:
@@ -335,7 +340,9 @@ public final class App
                     {
                         cs.getCategoriaOrThrow(nomeCat);
                         menuCampiSpecifici(ui, cs, nomeCat);
-                    }	catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         ui.stampa("Errore: " + e.getMessage());
                     }
                     break;
@@ -349,6 +356,8 @@ public final class App
         }
     }
 
+    // ===== CAMPI SPECIFICI =====
+
     private static void menuCampiSpecifici(ConsoleUI ui, CategoriaService cs, String nomeCategoria)
     {
         while (true)
@@ -356,33 +365,40 @@ public final class App
             Categoria cat = cs.getCategoria(nomeCategoria);
 
             ui.header("CAMPI SPECIFICI - " + nomeCategoria);
+            ui.stampaSezione("Campi BASE");
+            ui.stampaCampi(cs.getCampiBase());
+            ui.stampaSezione("Campi COMUNI");
+            ui.stampaCampi(cs.getCampiComuni());
             ui.stampaSezione("Campi SPECIFICI");
             ui.stampaCampi(cat.getCampiSpecifici());
-            ui.stampaMenu("CAMPI SPECIFICI", MENU_CAMPI_SPECIFICI);
+            ui.newLine();
 
-            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            ui.stampaMenu("", MENU_CAMPI_SPECIFICI);
+
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI_SPECIFICI.length);
             ui.newLine();
 
             switch (choice)
             {
                 case 1:
-                    String nome  = ui.acquisisciStringa("Nome campo specifico: ").trim();
-                    TipoDato td  = ui.acquisisciTipoDato("Tipo del campo \"" + nome + "\":");
-                    boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
+                    String nome1  = ui.acquisisciStringa("Nome campo specifico: ").trim();
+                    TipoDato td1  = ui.acquisisciTipoDato("Tipo del campo \"" + nome1 + "\":");
+                    boolean obbl1 = ui.acquisisciSiNo("Obbligatorio?");
 
                     try
                     {
-                        cs.addCampoSpecifico(nomeCategoria, nome, td, obbl);
+                        cs.aggiungiCampoSpecifico(nomeCategoria, nome1, td1, obbl1);
                         ui.stampa("Campo specifico aggiunto.");
-
-                    }	catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         ui.stampa("Errore: " + e.getMessage());
                     }
                     break;
 
                 case 2:
                     String nome2 = ui.acquisisciStringa("Nome campo specifico da rimuovere: ");
-                    ui.stampa(cs.removeCampoSpecifico(nomeCategoria, nome2) ? "Rimosso." : "Campo non trovato.");
+                    ui.stampa(cs.rimuoviCampoSpecifico(nomeCategoria, nome2) ? "Rimosso." : "Campo non trovato.");
                     break;
 
                 case 3:
@@ -404,17 +420,27 @@ public final class App
 
     private static void menuVisualizza(ConsoleUI ui, CategoriaService cs)
     {
-        ui.header("VISUALIZZAZIONE");
+        ui.header("RIEPILOGO CATEGORIE E CAMPI");
 
         ui.stampaSezione("Campi BASE");
         ui.stampaCampi(cs.getCampiBase());
+        ui.newLine();
 
         ui.stampaSezione("Campi COMUNI");
         ui.stampaCampi(cs.getCampiComuni());
-
-        ui.stampaSezione("Categorie");
-        ui.stampaCategorie(cs.getCategorie());
         ui.newLine();
+
+        ui.stampaSezione("CATEGORIE");
+        List<Categoria> categorie = cs.getCategorie();
+        ui.stampaCategorie(categorie);
+        ui.newLine();
+
+        for (Categoria cat : categorie)
+        {
+            ui.stampaSezione("Campi specifici di: " + cat.getNome());
+            ui.stampaCampi(cat.getCampiSpecifici());
+            ui.newLine();
+        }
 
         ui.acquisisciStringa("Premi INVIO per continuare...");
     }
@@ -429,33 +455,29 @@ public final class App
         {
             ui.stampa("Nessuna categoria disponibile. Crea almeno una categoria prima.");
             ui.newLine();
-
             ui.acquisisciStringa("Premi INVIO per continuare...");
             return;
         }
 
-        // Scelta categoria
         ui.stampaSezione("Categorie disponibili");
         ui.stampaCategorie(cs.getCategorie());
         ui.newLine();
 
         String nomeCategoria = ui.acquisisciStringa("Nome categoria per la proposta: ").trim();
-
         Proposta proposta;
 
         try
         {
             proposta = ps.creaProposta(nomeCategoria);
-
-        }	catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e)
+        {
             ui.stampa("Errore: " + e.getMessage());
             ui.newLine();
             ui.acquisisciStringa("Premi INVIO per continuare...");
-
             return;
         }
 
-        // Loop compilazione + validazione
         while (true)
         {
             ui.newLine();
@@ -480,8 +502,7 @@ public final class App
             }
 
             ui.newLine();
-
-            ui.stampa("La proposta NON e' valida per i seguenti motivi:");
+            ui.stampa("La proposta NON è valida per i seguenti motivi:");
 
             for (String err : errori)
                 ui.stampa("  - " + err);
@@ -495,12 +516,10 @@ public final class App
                 ui.stampa("Proposta scartata.");
                 ui.newLine();
                 ui.acquisisciStringa("Premi INVIO per continuare...");
-
                 return;
             }
         }
 
-        // Pubblicazione
         ui.newLine();
         boolean pubblica = ui.acquisisciSiNo("Vuoi pubblicare la proposta in bacheca?");
 
@@ -510,13 +529,15 @@ public final class App
             {
                 ps.pubblicaProposta(proposta);
                 ui.stampa("Proposta pubblicata in bacheca!");
-
-            }	catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 ui.stampa("Errore: " + e.getMessage());
             }
-
-        }	else {
-            ui.stampa("Proposta non pubblicata. Verra' scartata alla fine della sessione.");
+        }
+        else
+        {
+            ui.stampa("Proposta non pubblicata. Verrà scartata alla fine della sessione.");
         }
 
         ui.newLine();
@@ -533,10 +554,9 @@ public final class App
 
         if (bacheca.isEmpty())
         {
-            ui.stampa("La bacheca e' vuota: nessuna proposta aperta.");
+            ui.stampa("La bacheca è vuota: nessuna proposta aperta.");
             ui.newLine();
             ui.acquisisciStringa("Premi INVIO per continuare...");
-
             return;
         }
 
@@ -545,6 +565,7 @@ public final class App
             ui.stampaSezione("Categoria: " + entry.getKey());
 
             List<Proposta> proposte = entry.getValue();
+
             for (int i = 0; i < proposte.size(); i++)
             {
                 Proposta p = proposte.get(i);
@@ -557,6 +578,7 @@ public final class App
                     if (valore != null && !valore.isBlank())
                         ui.stampa("    " + c.getNome() + ": " + valore);
                 }
+
                 ui.newLine();
             }
         }

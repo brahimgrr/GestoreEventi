@@ -3,25 +3,40 @@ package it.unibs.ingsoft.v1.persistence;
 import it.unibs.ingsoft.v1.model.Campo;
 import it.unibs.ingsoft.v1.model.Categoria;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 
 public final class AppData implements Serializable
 {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    // Mappa con username e password (NON SICURA ma sicurezza non richiesta)
+    // ---------------------------------------------------------------
+    // DATI UTENTI
+    // ---------------------------------------------------------------
+
+    /** Mappa username → password dei configuratori registrati (sicurezza non richiesta). */
     private final Map<String, String> configuratori = new HashMap<>();
 
-    // Campi base: immutabili una volta fissati
-    private final List<Campo> campiBase = new ArrayList<>();
-    private boolean campiBaseFissati = false;
+    // ---------------------------------------------------------------
+    // CAMPI
+    // ---------------------------------------------------------------
 
-    // Campi comuni: modificabili
+    private final List<Campo> campiBase   = new ArrayList<>();
+    private boolean           campiBaseFissati = false;
+
     private final List<Campo> campiComuni = new ArrayList<>();
 
-    // Categorie
+    // ---------------------------------------------------------------
+    // CATEGORIE
+    // ---------------------------------------------------------------
+
     private final List<Categoria> categorie = new ArrayList<>();
+
+    // ---------------------------------------------------------------
+    // GETTER / SETTER
+    // ---------------------------------------------------------------
 
     public Map<String, String> getConfiguratori()
     {
@@ -53,11 +68,15 @@ public final class AppData implements Serializable
         return categorie;
     }
 
+    // ---------------------------------------------------------------
+    // UTILITY
+    // ---------------------------------------------------------------
+
     public Categoria findCategoria(String nome)
     {
         return categorie.stream()
-                        .filter(c -> c.getNome().equalsIgnoreCase(nome))
-                        .findFirst()
-                        .orElse(null);
+                .filter(c -> c.getNome().equalsIgnoreCase(nome))
+                .findFirst()
+                .orElse(null);
     }
 }
