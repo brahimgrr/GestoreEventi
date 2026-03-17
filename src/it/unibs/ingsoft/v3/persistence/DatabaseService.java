@@ -6,8 +6,9 @@ import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
-public final class DatabaseService
+public final class DatabaseService implements IPersistenceService
 {
     private final Path storagePath;
 
@@ -41,12 +42,24 @@ public final class DatabaseService
             throw new UncheckedIOException("Impossibile creare la cartella dati.", e);
         }
 
-        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(storagePath)))
+        Path tmp = storagePath.resolveSibling(storagePath.getFileName() + ".tmp");
+
+        try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(tmp)))
         {
             out.writeObject(data);
 
         } catch (IOException e) {
             throw new UncheckedIOException("Errore nel salvataggio dei dati.", e);
+        }
+
+        try
+        {
+            Files.move(tmp, storagePath,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+
+        } catch (IOException e) {
+            throw new UncheckedIOException("Errore nel commit del salvataggio.", e);
         }
     }
 }

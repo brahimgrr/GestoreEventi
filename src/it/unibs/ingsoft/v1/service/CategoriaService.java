@@ -4,22 +4,37 @@ import it.unibs.ingsoft.v1.model.Campo;
 import it.unibs.ingsoft.v1.model.Categoria;
 import it.unibs.ingsoft.v1.model.TipoCampo;
 import it.unibs.ingsoft.v1.persistence.AppData;
-import it.unibs.ingsoft.v1.persistence.DatabaseService;
+import it.unibs.ingsoft.v1.persistence.IPersistenceService;
 
 import java.util.*;
 
 public final class CategoriaService
 {
-    private final DatabaseService db;
+    private final IPersistenceService db;
     private final AppData data;
 
-    public CategoriaService(DatabaseService db, AppData data)
+    /**
+     * @pre db   != null
+     * @pre data != null
+     */
+    public CategoriaService(IPersistenceService db, AppData data)
     {
         this.db = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
     }
 
     // ---------- Campi base ----------
+
+    /**
+     * Fixes the base fields for the first and only time.
+     *
+     * @pre  !data.isCampiBaseFissati()
+     * @pre  nomiCampiBase != null &amp;&amp; !nomiCampiBase.isEmpty()
+     * @post data.isCampiBaseFissati()
+     * @post getCampiBase().size() == (number of non-blank entries in nomiCampiBase)
+     * @throws IllegalStateException    if base fields have already been fixed
+     * @throws IllegalArgumentException if the list is empty or contains duplicates
+     */
     public void fissareCampiBase(List<String> nomiCampiBase)
     {
         if (data.isCampiBaseFissati())
@@ -54,12 +69,11 @@ public final class CategoriaService
                 throw new IllegalArgumentException("Esiste già un campo con questo nome: " + n);
         }
 
-        data.getCampiBase().clear();
+        data.clearCampiBase();
 
         for (String n : clean)
-            data.getCampiBase().add(new Campo(n, TipoCampo.BASE, true)); // tutti obbligatori
+            data.addCampoBase(new Campo(n, TipoCampo.BASE, true)); // tutti obbligatori
 
-        //data.getCampiBase().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
         data.setCampiBaseFissati(true);
         db.save(data);
     }
@@ -70,14 +84,21 @@ public final class CategoriaService
     }
 
     // ---------- Campi comuni ----------
+
+    /**
+     * Adds a new common field shared by all categories.
+     *
+     * @pre  nome != null &amp;&amp; !nome.isBlank()
+     * @pre  no existing field (base, common, or specific) has the same name (case-insensitive)
+     * @post getCampiComuni() contains a field with the given name
+     * @throws IllegalArgumentException if a field with the same name already exists
+     */
     public void addCampoComune(String nome, boolean obbligatorio)
     {
         if (nomeCampoGiaEsistente(nome))
             throw new IllegalArgumentException("Esiste già un campo con questo nome.");
 
-        Campo c = new Campo(nome, TipoCampo.COMUNE, obbligatorio);
-        data.getCampiComuni().add(c);
-        sortCampiComuni();
+        data.addCampoComune(new Campo(nome, TipoCampo.COMUNE, obbligatorio));
         db.save(data);
     }
 
@@ -92,14 +113,16 @@ public final class CategoriaService
     }
     */
 
-    private void sortCampiComuni()
-    {
-        data.getCampiComuni().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
-    }
-
+    /**
+     * Removes the common field with the given name (case-insensitive).
+     *
+     * @pre  nome != null
+     * @post getCampiComuni() no longer contains a field whose name equals {@code nome} (case-insensitive)
+     * @return {@code true} if the field was found and removed, {@code false} otherwise
+     */
     public boolean removeCampoComune(String nome)
     {
-        boolean removed = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(nome));
+        boolean removed = data.removeCampoComune(nome);
 
         if (removed)
             db.save(data);
@@ -107,6 +130,13 @@ public final class CategoriaService
         return removed;
     }
 
+    /**
+     * Changes the mandatory flag of an existing common field.
+     *
+     * @pre  nome != null
+     * @post if the field exists, its {@code obbligatorio} flag equals {@code obbligatorio}
+     * @return {@code true} if the field was found and updated, {@code false} otherwise
+     */
     public boolean setObbligatorietaCampoComune(String nome, boolean obbligatorio)
     {
         for (Campo c : data.getCampiComuni())
@@ -129,21 +159,36 @@ public final class CategoriaService
 
 
     // ---------- Categorie ----------
+
+    /**
+     * Creates a new category with the given name.
+     *
+     * @pre  nomeCategoria != null &amp;&amp; !nomeCategoria.isBlank()
+     * @pre  no category with this name already exists (case-insensitive)
+     * @post getCategorie() contains a category named {@code nomeCategoria}
+     * @throws IllegalArgumentException if a category with the same name already exists
+     */
     public Categoria createCategoria(String nomeCategoria)
     {
-        if (data.findCategoria(nomeCategoria) != null)
-            throw new IllegalArgumentException("it.unibs.ingsoft.v1.model.Categoria già esistente.");
+        if (data.findCategoria(nomeCategoria).isPresent())
+            throw new IllegalArgumentException("Categoria già esistente.");
 
         Categoria cat = new Categoria(nomeCategoria);
-        data.getCategorie().add(cat);
-        sortCategorie();
+        data.addCategoria(cat);
         db.save(data);
         return cat;
     }
 
+    /**
+     * Removes the category with the given name (case-insensitive), including all its specific fields.
+     *
+     * @pre  nomeCategoria != null
+     * @post getCategorie() no longer contains a category named {@code nomeCategoria}
+     * @return {@code true} if the category was found and removed, {@code false} otherwise
+     */
     public boolean removeCategoria(String nomeCategoria)
     {
-        boolean removed = data.getCategorie().removeIf(c -> c.getNome().equalsIgnoreCase(nomeCategoria));
+        boolean removed = data.removeCategoria(nomeCategoria);
 
         if (removed)
         {
@@ -158,31 +203,47 @@ public final class CategoriaService
         return Collections.unmodifiableList(data.getCategorie());
     }
 
-    public Categoria getCategoria(String nomeCategoria)
-    {
-        return getCategoriaOrThrow(nomeCategoria);
-    }
-
     public Categoria getCategoriaOrThrow(String nomeCategoria)
     {
-        if (data.findCategoria(nomeCategoria) == null)
-        {
-            throw new IllegalArgumentException("it.unibs.ingsoft.v1.model.Categoria non trovata.");
-        }
-
-        return data.findCategoria(nomeCategoria);
+        return data.findCategoria(nomeCategoria)
+                   .orElseThrow(() -> new IllegalArgumentException("Categoria non trovata."));
     }
 
+    /**
+     * Adds a specific field to the given category.
+     *
+     * @pre  nomeCategoria != null &amp;&amp; the category exists
+     * @pre  nomeCampo != null &amp;&amp; !nomeCampo.isBlank()
+     * @pre  no base or common field has the same name (case-insensitive)
+     * @pre  the category does not already have a specific field with the same name
+     * @post the category's specific fields contain a field named {@code nomeCampo}
+     * @throws IllegalArgumentException if category not found, or name conflicts with existing field
+     */
     public void addCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
     {
-        if (nomeCampoGiaEsistente(nomeCampo))
+        // Global check: base and common fields must not be shadowed
+        if (nomeCampoBaseOComuneGiaEsistente(nomeCampo))
             throw new IllegalArgumentException("Esiste già un campo con questo nome.");
 
         Categoria c = getCategoriaOrThrow(nomeCategoria);
+
+        // Per-category check: unique within this category's specific fields
+        if (c.getCampiSpecifici().stream().anyMatch(f -> f.getNome().equalsIgnoreCase(nomeCampo)))
+            throw new IllegalArgumentException("Esiste già un campo specifico con questo nome in questa categoria.");
+
         c.addCampoSpecifico(new Campo(nomeCampo, TipoCampo.SPECIFICO, obbligatorio));
         db.save(data);
     }
 
+    /**
+     * Removes a specific field from the given category.
+     *
+     * @pre  nomeCategoria != null
+     * @pre  nomeCampo != null
+     * @post the category no longer contains a specific field named {@code nomeCampo}
+     * @return {@code true} if the field was found and removed, {@code false} otherwise
+     * @throws IllegalArgumentException if the category is not found
+     */
     public boolean removeCampoSpecifico(String nomeCategoria, String nomeCampo)
     {
         Categoria c = getCategoriaOrThrow(nomeCategoria);
@@ -194,6 +255,15 @@ public final class CategoriaService
         return removed;
     }
 
+    /**
+     * Changes the mandatory flag of a specific field in the given category.
+     *
+     * @pre  nomeCategoria != null
+     * @pre  nomeCampo != null
+     * @post if the field exists, its {@code obbligatorio} flag equals {@code obbligatorio}
+     * @return {@code true} if the field was found and updated, {@code false} otherwise
+     * @throws IllegalArgumentException if the category is not found
+     */
     public boolean setObbligatorietaCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
     {
         Categoria c = getCategoriaOrThrow(nomeCategoria);
@@ -203,11 +273,6 @@ public final class CategoriaService
             db.save(data);
 
         return ok;
-    }
-
-    private void sortCategorie()
-    {
-        data.getCategorie().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
     }
 
     private boolean nomeCampoGiaEsistente(String nome)
@@ -229,6 +294,22 @@ public final class CategoriaService
             for (Campo c : cat.getCampiSpecifici())
                 if (c.getNome().equalsIgnoreCase(key))
                     return true;
+
+        return false;
+    }
+
+    // Checks only base and common fields (used for specific-field uniqueness within a category)
+    private boolean nomeCampoBaseOComuneGiaEsistente(String nome)
+    {
+        String key = nome.toLowerCase();
+
+        for (Campo c : data.getCampiBase())
+            if (c.getNome().equalsIgnoreCase(key))
+                return true;
+
+        for (Campo c : data.getCampiComuni())
+            if (c.getNome().equalsIgnoreCase(key))
+                return true;
 
         return false;
     }

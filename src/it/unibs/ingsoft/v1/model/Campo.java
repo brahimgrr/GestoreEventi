@@ -25,7 +25,7 @@ public final class Campo implements Serializable
         return nome;
     }
 
-    public TipoCampo getScope()
+    public TipoCampo getTipo()
     {
         return tipo;
     }

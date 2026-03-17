@@ -30,7 +30,7 @@ public final class Categoria implements Serializable
     {
         Objects.requireNonNull(campoSpecifico, "it.unibs.ingsoft.v1.model.Campo nullo.");
 
-        if (campoSpecifico.getScope() != TipoCampo.SPECIFICO)
+        if (campoSpecifico.getTipo() != TipoCampo.SPECIFICO)
             throw new IllegalArgumentException("Il campo deve avere scope SPECIFICO.");
 
         if (containsCampo(campoSpecifico.getNome()))

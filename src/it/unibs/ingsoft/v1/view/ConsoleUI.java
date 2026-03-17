@@ -1,4 +1,4 @@
-package it.unibs.ingsoft.v1.ui;
+package it.unibs.ingsoft.v1.view;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -9,8 +9,23 @@ import java.util.stream.IntStream;
  * Classe che fornisce output formattato e lettura sicura dell'input.
  */
 
-public final class ConsoleUI
+public final class ConsoleUI implements IAppView
 {
+    public static final String CANCEL_KEYWORD = "annulla";
+    public static final String BACK_KEYWORD   = "indietro";
+
+    /** Lanciata quando l'utente digita 'annulla' durante un form. */
+    public static class CancelException extends RuntimeException
+    {
+        public CancelException() { super("Operazione annullata dall'utente."); }
+    }
+
+    /** Lanciata quando l'utente digita 'indietro' durante un form. */
+    public static class BackException extends RuntimeException
+    {
+        public BackException() { super(); }
+    }
+
     private final Scanner scanner;
 
     public ConsoleUI(Scanner scanner)
@@ -26,7 +41,8 @@ public final class ConsoleUI
     public String acquisisciStringa(String prompt)
     {
         System.out.print(prompt);
-        return scanner.nextLine();
+        String line = scanner.nextLine();
+        return (line == null) ? "" : line.trim();
     }
 
     public int acquisisciIntero(String prompt, int min, int max)
@@ -128,6 +144,16 @@ public final class ConsoleUI
     {
         stampa("----- " + titolo + " -----");
     }
+
+    public void pausa()
+    {
+        acquisisciStringa("Premi INVIO per continuare...");
+    }
+
+    public void stampaSuccesso(String msg) { stampa("  ✅ " + msg); }
+    public void stampaErrore(String msg)   { stampa("  ❌ " + msg); }
+    public void stampaAvviso(String msg)   { stampa("  ⚠️  " + msg); }
+    public void stampaInfo(String msg)     { stampa("  ℹ️  " + msg); }
 
     public void stampaMenu (String titolo, String[] lista)
     {

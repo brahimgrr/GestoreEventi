@@ -2,10 +2,36 @@ package it.unibs.ingsoft.v3.model;
 
 public enum StatoProposta
 {
-    BOZZA,
-    VALIDA,
-    APERTA,
-    CONFERMATA,
-    ANNULLATA,
-    CONCLUSA
+    BOZZA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return next == VALIDA;
+        }
+    },
+    VALIDA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return next == APERTA || next == BOZZA;
+        }
+    },
+    APERTA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return next == CONFERMATA || next == ANNULLATA;
+        }
+    },
+    CONFERMATA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return next == CONCLUSA;
+        }
+    },
+    ANNULLATA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return false;
+        }
+    },
+    CONCLUSA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return false;
+        }
+    };
+
+    public abstract boolean canTransitionTo(StatoProposta next);
 }

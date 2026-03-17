@@ -10,16 +10,21 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class BatchImportService
 {
     private final CategoriaService  categoriaService;
     private final PropostaService   propostaService;
 
+    /**
+     * @pre categoriaService != null
+     * @pre propostaService != null
+     */
     public BatchImportService(CategoriaService categoriaService, PropostaService propostaService)
     {
-        this.categoriaService = categoriaService;
-        this.propostaService  = propostaService;
+        this.categoriaService = Objects.requireNonNull(categoriaService, "categoriaService non può essere null.");
+        this.propostaService  = Objects.requireNonNull(propostaService, "propostaService non può essere null.");
     }
 
     // ---------------------------------------------------------------
@@ -59,7 +64,7 @@ public final class BatchImportService
 
             try
             {
-                categoriaService.addCampoComune(nome, tipo, obbligat);
+                categoriaService.addCampoComuneNoSave(nome, tipo, obbligat);
                 report.add("OK campo comune: " + nome);
             }
             catch (Exception e)
@@ -68,6 +73,7 @@ public final class BatchImportService
             }
         }
 
+        categoriaService.save();
         return report;
     }
 
@@ -119,7 +125,7 @@ public final class BatchImportService
 
                 try
                 {
-                    categoriaService.createCategoria(nomeCategoria);
+                    categoriaService.createCategoriaNoSave(nomeCategoria);
                     report.add("OK categoria: " + nomeCategoria);
                 }
                 catch (Exception e)
@@ -149,7 +155,7 @@ public final class BatchImportService
 
                 try
                 {
-                    categoriaService.addCampoSpecifico(nomeCategoria, nome, tipo, obbligat);
+                    categoriaService.addCampoSpecificoNoSave(nomeCategoria, nome, tipo, obbligat);
                     report.add("  OK campo specifico \"" + nome + "\" -> " + nomeCategoria);
                 }
                 catch (Exception e)
@@ -159,6 +165,7 @@ public final class BatchImportService
             }
         }
 
+        categoriaService.save();
         return report;
     }
 
@@ -218,8 +225,9 @@ public final class BatchImportService
             try
             {
                 var proposta = propostaService.creaProposta(nomeCategoria);
-                proposta.getValoriCampi().putAll(block);
-                proposta.getValoriCampi().remove("categoria");
+                Map<String, String> campi = new java.util.HashMap<>(block);
+                campi.remove("categoria");
+                proposta.putAllValoriCampi(campi);
 
                 List<String> errori = propostaService.validaProposta(proposta);
 
@@ -229,7 +237,7 @@ public final class BatchImportService
                     continue;
                 }
 
-                propostaService.pubblicaProposta(proposta);
+                propostaService.pubblicaPropostaNoSave(proposta);
                 String titolo = block.getOrDefault("Titolo", "senza titolo");
                 report.add("OK proposta pubblicata: \"" + titolo + "\"");
             }
@@ -239,6 +247,7 @@ public final class BatchImportService
             }
         }
 
+        propostaService.save();
         return report;
     }
 

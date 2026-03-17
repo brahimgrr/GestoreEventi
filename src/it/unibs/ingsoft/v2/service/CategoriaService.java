@@ -2,16 +2,20 @@ package it.unibs.ingsoft.v2.service;
 
 import it.unibs.ingsoft.v2.model.*;
 import it.unibs.ingsoft.v2.persistence.AppData;
-import it.unibs.ingsoft.v2.persistence.DatabaseService;
+import it.unibs.ingsoft.v2.persistence.IPersistenceService;
 
 import java.util.*;
 
 public final class CategoriaService
 {
-    private final DatabaseService db;
+    private final IPersistenceService db;
     private final AppData data;
 
-    public CategoriaService(DatabaseService db, AppData data)
+    /**
+     * @pre db   != null
+     * @pre data != null
+     */
+    public CategoriaService(IPersistenceService db, AppData data)
     {
         this.db   = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
@@ -39,7 +43,7 @@ public final class CategoriaService
 
             if (!giaPresente)
             {
-                data.getCampiBase().add(new Campo(cbd.getNomeCampo(), TipoCampo.BASE, cbd.getTipoDato(), true));
+                data.addCampoBase(new Campo(cbd.getNomeCampo(), TipoCampo.BASE, cbd.getTipoDato(), true));
                 modificato = true;
             }
         }
@@ -49,6 +53,15 @@ public final class CategoriaService
     }
 
     /**
+     * Adds extra base fields chosen by the configurator at first startup.
+     * The fixed base fields are already present; this method adds optional extras only.
+     *
+     * @pre  !data.isCampiBaseFissati()
+     * @pre  nomi != null &amp;&amp; tipi != null &amp;&amp; nomi.size() == tipi.size()
+     * @post data.isCampiBaseFissati()
+     * @throws IllegalStateException    if base fields are already fixed
+     * @throws IllegalArgumentException if any name conflicts with an existing field
+     *
      * Aggiunge campi base EXTRA scelti dal configuratore al primo avvio.
      * I campi fissi della traccia sono già presenti; questo metodo aggiunge
      * solo quelli aggiuntivi. Una volta salvati, non potranno essere modificati.
@@ -74,7 +87,7 @@ public final class CategoriaService
             if (nomeCampoGiaEsistente(nome))
                 throw new IllegalArgumentException("Esiste già un campo con il nome: \"" + nome + "\".");
 
-            data.getCampiBase().add(new Campo(nome, TipoCampo.BASE, td, true));
+            data.addCampoBase(new Campo(nome, TipoCampo.BASE, td, true));
         }
 
         data.setCampiBaseFissati(true);
@@ -108,6 +121,15 @@ public final class CategoriaService
     // CAMPI COMUNI
     // ---------------------------------------------------------------
 
+    /**
+     * Adds a new common field shared by all categories.
+     *
+     * @pre  nome != null &amp;&amp; !nome.isBlank()
+     * @pre  tipoDato != null
+     * @pre  no existing field (base, common, or specific) has the same name (case-insensitive)
+     * @post getCampiComuni() contains a field with the given name
+     * @throws IllegalArgumentException if a field with the same name already exists
+     */
     public void addCampoComune(String nome, TipoDato tipoDato, boolean obbligatorio)
     {
         nome = normalizza(nome);
@@ -115,15 +137,14 @@ public final class CategoriaService
         if (nomeCampoGiaEsistente(nome))
             throw new IllegalArgumentException("Esiste già un campo con il nome: \"" + nome + "\".");
 
-        data.getCampiComuni().add(new Campo(nome, TipoCampo.COMUNE, tipoDato, obbligatorio));
-        sortCampiComuni();
+        data.addCampoComune(new Campo(nome, TipoCampo.COMUNE, tipoDato, obbligatorio));
         db.save(data);
     }
 
     public boolean removeCampoComune(String nome)
     {
         final String n = normalizza(nome);
-        boolean removed = data.getCampiComuni().removeIf(c -> c.getNome().equalsIgnoreCase(n));
+        boolean removed = data.removeCampoComune(n);
         if (removed) db.save(data);
         return removed;
     }
@@ -154,16 +175,23 @@ public final class CategoriaService
     // CATEGORIE
     // ---------------------------------------------------------------
 
+    /**
+     * Creates a new category with the given name.
+     *
+     * @pre  nomeCategoria != null &amp;&amp; !nomeCategoria.isBlank()
+     * @pre  no category with this name already exists (case-insensitive)
+     * @post getCategorie() contains a category named {@code nomeCategoria}
+     * @throws IllegalArgumentException if a category with the same name already exists
+     */
     public Categoria createCategoria(String nomeCategoria)
     {
         nomeCategoria = normalizza(nomeCategoria);
 
-        if (data.findCategoria(nomeCategoria) != null)
+        if (data.findCategoria(nomeCategoria).isPresent())
             throw new IllegalArgumentException("Categoria già esistente.");
 
         Categoria cat = new Categoria(nomeCategoria);
-        data.getCategorie().add(cat);
-        sortCategorie();
+        data.addCategoria(cat);
         db.save(data);
         return cat;
     }
@@ -171,8 +199,7 @@ public final class CategoriaService
     public boolean removeCategoria(String nomeCategoria)
     {
         final String n = normalizza(nomeCategoria);
-        boolean removed = data.getCategorie()
-                .removeIf(c -> c.getNome().equalsIgnoreCase(n));
+        boolean removed = data.removeCategoria(n);
 
         if (removed)
             db.save(data);
@@ -185,34 +212,43 @@ public final class CategoriaService
         return Collections.unmodifiableList(data.getCategorie());
     }
 
-    public Categoria getCategoria(String nomeCategoria)
-    {
-        return getCategoriaOrThrow(nomeCategoria);
-    }
-
     public Categoria getCategoriaOrThrow(String nomeCategoria)
     {
-        nomeCategoria = normalizza(nomeCategoria);
-        Categoria c = data.findCategoria(nomeCategoria);
-
-        if (c == null)
-            throw new IllegalArgumentException("Categoria non trovata: \"" + nomeCategoria + "\".");
-
-        return c;
+        final String nome = normalizza(nomeCategoria);
+        return data.findCategoria(nome)
+                   .orElseThrow(() -> new IllegalArgumentException("Categoria non trovata: \"" + nome + "\"."));
     }
 
     // ---------------------------------------------------------------
     // CAMPI SPECIFICI
     // ---------------------------------------------------------------
 
+    /**
+     * Adds a specific field to the given category.
+     *
+     * @pre  nomeCategoria != null &amp;&amp; the category exists
+     * @pre  nomeCampo != null &amp;&amp; !nomeCampo.isBlank()
+     * @pre  tipoDato != null
+     * @pre  no base or common field has the same name (case-insensitive)
+     * @pre  the category does not already have a specific field with the same name
+     * @post the category's specific fields contain a field named {@code nomeCampo}
+     * @throws IllegalArgumentException if category not found, or name conflicts with existing field
+     */
     public void addCampoSpecifico(String nomeCategoria, String nomeCampo, TipoDato tipoDato, boolean obbligatorio)
     {
         nomeCampo = normalizza(nomeCampo);
 
-        if (nomeCampoGiaEsistente(nomeCampo))
+        // Global check: base and common fields must not be shadowed
+        if (nomeCampoBaseOComuneGiaEsistente(nomeCampo))
             throw new IllegalArgumentException("Esiste già un campo con il nome: \"" + nomeCampo + "\".");
 
         Categoria c = getCategoriaOrThrow(nomeCategoria);
+
+        // Per-category check: unique within this category's specific fields
+        final String nome = nomeCampo;
+        if (c.getCampiSpecifici().stream().anyMatch(f -> f.getNome().equalsIgnoreCase(nome)))
+            throw new IllegalArgumentException("Esiste già un campo specifico con il nome: \"" + nome + "\" in questa categoria.");
+
         c.addCampoSpecifico(new Campo(nomeCampo, TipoCampo.SPECIFICO, tipoDato, obbligatorio));
         db.save(data);
     }
@@ -244,16 +280,6 @@ public final class CategoriaService
     // UTILITY
     // ---------------------------------------------------------------
 
-    private void sortCampiComuni()
-    {
-        data.getCampiComuni().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
-    }
-
-    private void sortCategorie()
-    {
-        data.getCategorie().sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
-    }
-
     private boolean nomeCampoGiaEsistente(String nome)
     {
         nome = normalizza(nome);
@@ -273,6 +299,17 @@ public final class CategoriaService
             all.addAll(c.getCampiSpecifici());
 
         return all;
+    }
+
+    // Checks only base and common fields (used for specific-field uniqueness within a category)
+    private boolean nomeCampoBaseOComuneGiaEsistente(String nome)
+    {
+        nome = normalizza(nome);
+        for (Campo c : data.getCampiBase())
+            if (c.getNome().equalsIgnoreCase(nome)) return true;
+        for (Campo c : data.getCampiComuni())
+            if (c.getNome().equalsIgnoreCase(nome)) return true;
+        return false;
     }
 
     private String normalizza(String s)

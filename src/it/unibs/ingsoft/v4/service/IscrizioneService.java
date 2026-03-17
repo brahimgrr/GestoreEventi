@@ -5,25 +5,29 @@ import it.unibs.ingsoft.v4.model.Iscrizione;
 import it.unibs.ingsoft.v4.model.Proposta;
 import it.unibs.ingsoft.v4.model.StatoProposta;
 import it.unibs.ingsoft.v4.persistence.AppData;
-import it.unibs.ingsoft.v4.persistence.DatabaseService;
+import it.unibs.ingsoft.v4.persistence.IPersistenceService;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 public final class IscrizioneService
 {
-    // Name of the base field that stores max participants
-    private static final String CAMPO_NUM_PARTECIPANTI = "Numero di partecipanti";
+    // Reuse the constant defined in PropostaService — single source of truth
+    private static final String CAMPO_NUM_PARTECIPANTI = PropostaService.CAMPO_NUM_PARTECIPANTI;
 
-    private final DatabaseService db;
-    private final AppData data;
-    private final FruitoreService fruitoreService;
+    private final IPersistenceService db;
+    private final AppData             data;
+    private final NotificaListener    notificaListener;
 
-    public IscrizioneService(DatabaseService db, AppData data, FruitoreService fruitoreService)
+    /**
+     * @pre db != null
+     * @pre data != null
+     */
+    public IscrizioneService(IPersistenceService db, AppData data, NotificaListener notificaListener)
     {
-        this.db              = Objects.requireNonNull(db);
-        this.data            = Objects.requireNonNull(data);
-        this.fruitoreService = Objects.requireNonNull(fruitoreService);
+        this.db               = Objects.requireNonNull(db);
+        this.data             = Objects.requireNonNull(data);
+        this.notificaListener = Objects.requireNonNull(notificaListener);
     }
 
     // ---------------------------------------------------------------
@@ -49,8 +53,18 @@ public final class IscrizioneService
             if (p.getTermineIscrizione() != null && !oggi.isAfter(p.getTermineIscrizione()))
                 continue;
 
-            int iscritti      = p.getNumeroIscritti();
-            int maxPart       = getMaxPartecipanti(p);
+            int iscritti = p.getNumeroIscritti();
+            int maxPart;
+            try
+            {
+                maxPart = getMaxPartecipanti(p);
+            }
+            catch (IllegalStateException e)
+            {
+                annulla(p, oggi);
+                modificato = true;
+                continue;
+            }
 
             if (iscritti >= maxPart)
                 conferma(p, oggi);
@@ -65,7 +79,7 @@ public final class IscrizioneService
             if (p.getStato() != StatoProposta.CONFERMATA)
                 continue;
 
-            LocalDate dataConclus = p.getDataEvento(); // or parse from valoriCampi "Data conclusiva"
+            LocalDate dataConclus = p.getDataConclus();
             if (dataConclus != null && oggi.isAfter(dataConclus))
             {
                 p.setStato(StatoProposta.CONCLUSA, oggi);
@@ -88,6 +102,13 @@ public final class IscrizioneService
      * - Deadline must not have passed
      * - Fruitore must not already be signed up
      * - Proposal must not be full
+     *
+     * @pre fruitore != null
+     * @pre proposta != null
+     * @pre proposta.getStato() == StatoProposta.APERTA
+     * @pre !proposta.isIscrittoFruitore(fruitore.getUsername())
+     * @post proposta.isIscrittoFruitore(fruitore.getUsername())
+     * @throws IllegalStateException if any precondition is violated
      */
     public void iscrivi(Fruitore fruitore, Proposta proposta)
     {
@@ -112,7 +133,7 @@ public final class IscrizioneService
                     "La proposta ha già raggiunto il numero massimo di partecipanti (" + max + ").");
 
         // All checks passed — register
-        Iscrizione i = new Iscrizione(fruitore, proposta, oggi);
+        Iscrizione i = new Iscrizione(fruitore, oggi);
         proposta.addIscrizione(i);
         db.save(data);
     }
@@ -121,6 +142,13 @@ public final class IscrizioneService
      * Cancels a fruitore's subscription to an open proposal.
      * Only allowed if the proposal is APERTA and the deadline has not passed.
      * After cancelling, the fruitore can re-subscribe.
+     *
+     * @pre fruitore != null
+     * @pre proposta != null
+     * @pre proposta.getStato() == StatoProposta.APERTA
+     * @pre proposta.isIscrittoFruitore(fruitore.getUsername())
+     * @post !proposta.isIscrittoFruitore(fruitore.getUsername())
+     * @throws IllegalStateException if any precondition is violated
      */
     public void disdici(Fruitore fruitore, Proposta proposta)
     {
@@ -147,6 +175,12 @@ public final class IscrizioneService
      * Withdraws a proposal (APERTA or CONFERMATA) before the event date.
      * Only allowed up to 23:59 of the day before "Data".
      * Notifies all subscribed fruitori and freezes the subscribers list.
+     *
+     * @pre proposta != null
+     * @pre proposta.getStato() == StatoProposta.APERTA || proposta.getStato() == StatoProposta.CONFERMATA
+     * @pre LocalDate.now().isBefore(proposta.getDataEvento())
+     * @post proposta.getStato() == StatoProposta.RITIRATA
+     * @throws IllegalStateException if any precondition is violated
      */
     public void ritira(Proposta proposta)
     {
@@ -166,7 +200,7 @@ public final class IscrizioneService
         proposta.setStato(StatoProposta.RITIRATA, oggi);
 
         // 4. Notify all subscribers
-        String titolo    = proposta.getValoriCampi().getOrDefault("Titolo", "senza titolo");
+        String titolo    = proposta.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "senza titolo");
         String messaggio = "⚠ L'iniziativa \"" + titolo + "\" è stata RITIRATA dal configuratore.";
         notificaTutti(proposta, messaggio);
 
@@ -184,11 +218,11 @@ public final class IscrizioneService
     {
         p.setStato(StatoProposta.CONFERMATA, oggi);
 
-        String titolo = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
-        String data   = p.getValoriCampi().getOrDefault("Data", "");
-        String ora    = p.getValoriCampi().getOrDefault("Ora", "");
-        String luogo  = p.getValoriCampi().getOrDefault("Luogo", "");
-        String quota  = p.getValoriCampi().getOrDefault("Quota individuale", "");
+        String titolo = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "senza titolo");
+        String data   = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_DATA,   "");
+        String ora    = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_ORA,    "");
+        String luogo  = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_LUOGO,  "");
+        String quota  = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_QUOTA,  "");
 
         String messaggio =
                 "✔ L'iniziativa \"" + titolo + "\" è CONFERMATA!\n" +
@@ -206,7 +240,7 @@ public final class IscrizioneService
     {
         p.setStato(StatoProposta.ANNULLATA, oggi);
 
-        String titolo    = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
+        String titolo    = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "senza titolo");
         String messaggio = "✘ L'iniziativa \"" + titolo + "\" è stata ANNULLATA " +
                 "per insufficienza di iscrizioni.";
 
@@ -219,7 +253,7 @@ public final class IscrizioneService
     private void notificaTutti(Proposta p, String messaggio)
     {
         for (Iscrizione i : p.getIscrizioni())
-            fruitoreService.inviaNotifica(i.getFruitore().getUsername(), messaggio);
+            notificaListener.notifica(i.getFruitore().getUsername(), messaggio);
     }
 
     // ---------------------------------------------------------------
@@ -228,14 +262,15 @@ public final class IscrizioneService
 
     /**
      * Reads "Numero di partecipanti" from the proposal's field values.
-     * Returns Integer.MAX_VALUE as fallback if the field is missing or invalid.
+     * Throws IllegalStateException if the field is missing or not a valid integer.
      */
     private int getMaxPartecipanti(Proposta p)
     {
         String val = p.getValoriCampi().get(CAMPO_NUM_PARTECIPANTI);
 
         if (val == null || val.isBlank())
-            return Integer.MAX_VALUE;
+            throw new IllegalStateException(
+                    "Campo \"" + CAMPO_NUM_PARTECIPANTI + "\" mancante nella proposta.");
 
         try
         {
@@ -243,7 +278,8 @@ public final class IscrizioneService
         }
         catch (NumberFormatException e)
         {
-            return Integer.MAX_VALUE;
+            throw new IllegalStateException(
+                    "Campo \"" + CAMPO_NUM_PARTECIPANTI + "\" non è un intero valido: " + val);
         }
     }
 }

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find src/it/unibs/ingsoft/v1 -type f -name \"*.java\" -exec wc -l {} +)",
+      "Bash(sort -k2)",
+      "Bash(find src/it/unibs/ingsoft/v2 -type f -name \"*.java\" -exec wc -l {} +)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -l DatabaseService c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/src/it/unibs/ingsoft/v3/service/*.java)",
+      "Bash(grep -v \"//.*assert\")",
+      "Bash(grep -v \"//.*Integer\")",
+      "Bash(ls \"c:\\\\Users\\\\Brahim\\\\Desktop\\\\ProgettoSw\\\\GestoreEventi\\\\tst\\\\it\\\\unibs\\\\ingsoft\\\\v3\\\\model\"\" 2>/dev/null || echo \"DIRECTORY_EMPTY_OR_NOT_FOUND \")"
+    ]
+  }
+}

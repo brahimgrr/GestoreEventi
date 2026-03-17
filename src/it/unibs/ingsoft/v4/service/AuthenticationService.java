@@ -2,7 +2,7 @@ package it.unibs.ingsoft.v4.service;
 
 import it.unibs.ingsoft.v4.model.Configuratore;
 import it.unibs.ingsoft.v4.persistence.AppData;
-import it.unibs.ingsoft.v4.persistence.DatabaseService;
+import it.unibs.ingsoft.v4.persistence.IPersistenceService;
 
 import java.util.Objects;
 
@@ -11,15 +11,26 @@ public final class AuthenticationService
     public static final String USERNAME_PREDEFINITO = "config";
     public static final String PASSWORD_PREDEFINITA = "config";
 
-    private final DatabaseService db;
+    private final IPersistenceService db;
     private final AppData data;
 
-    public AuthenticationService(DatabaseService db, AppData data)
+    /**
+     * @pre db != null
+     * @pre data != null
+     */
+    public AuthenticationService(IPersistenceService db, AppData data)
     {
         this.db = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
     }
 
+    /**
+     * Attempts login for a configuratore.
+     *
+     * @pre username != null
+     * @pre password != null
+     * @post returns Configuratore if valid, null otherwise
+     */
     public Configuratore login(String username, String password)
     {
         if (username == null || password == null)
@@ -37,8 +48,15 @@ public final class AuthenticationService
         return null;
     }
 
-    //REGISTRAZIONE NUOVO CONFIGURATORE
-    //Da chiamare subito dopo il login con credenziali predefinite.
+    /**
+     * Registers a new configuratore with personal credentials.
+     * To be called immediately after first login with the default credentials.
+     *
+     * @pre newUsername.trim().length() >= 3
+     * @pre newPassword.trim().length() >= 4
+     * @post data.getConfiguratori().containsKey(newUsername)
+     * @throws IllegalArgumentException if credentials are invalid or username is already taken
+     */
     public Configuratore registraNuovoConfiguratore(String newUsername, String newPassword)
     {
         //Username almeno 3 caratteri e password almeno 3 caratteri
@@ -54,7 +72,7 @@ public final class AuthenticationService
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(newUsername))
             throw new IllegalArgumentException("Username non consentito (riservato).");
 
-        data.getConfiguratori().put(newUsername, newPassword);
+        data.addConfiguratore(newUsername, newPassword);
         db.save(data);
 
         return new Configuratore(newUsername);

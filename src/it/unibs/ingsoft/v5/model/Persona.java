@@ -8,12 +8,22 @@ public abstract class Persona implements Serializable
     private static final long serialVersionUID = 1L;
     private final String username;
 
+    /**
+     * @pre  username != null && !username.isBlank()
+     * @post getUsername().equals(username.trim())
+     * @post !getUsername().isBlank()
+     * @throws IllegalArgumentException if username is null or blank
+     */
     protected Persona(String username)
     {
         if (username == null || username.isBlank())
             throw new IllegalArgumentException("Username non valido.");
 
         this.username = username.trim();
+
+        // Class invariant: username must never be blank after construction
+        if (this.username.isBlank())
+            throw new IllegalStateException("Invariant violated: username must not be blank after construction.");
     }
 
     public String getUsername()

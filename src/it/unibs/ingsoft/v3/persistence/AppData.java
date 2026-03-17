@@ -7,25 +7,22 @@ import it.unibs.ingsoft.v3.model.Proposta;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class AppData implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
     // NUOVO V3
-    private  Map<String, String>         fruitori    = new HashMap<>();
-    private  Map<String, List<Notifica>> notifiche   = new HashMap<>();
+    private Map<String, String>         fruitori  = new HashMap<>();
+    private Map<String, List<Notifica>> notifiche = new HashMap<>();
 
     // configuratori registrati
     private final Map<String, String> configuratori = new HashMap<>();
 
     // campi base
-    private final List<Campo> campiBase = new ArrayList<>();
-    private boolean campiBaseFissati = false;
+    private final List<Campo> campiBase      = new ArrayList<>();
+    private boolean           campiBaseFissati = false;
 
     // campi comuni
     private final List<Campo> campiComuni = new ArrayList<>();
@@ -33,37 +30,58 @@ public final class AppData implements Serializable
     // categorie
     private final List<Categoria> categorie = new ArrayList<>();
 
-    // NUOVO V3
-    public Map<String, String> getFruitori()
-    {
-        return fruitori;
-    }
-
-    public Map<String, List<Notifica>> getNotifiche()
-    {
-        return notifiche;
-    }
-
-    /**
-     * Returns the notification list for a specific fruitore.
-     * Creates an empty list if none exists yet.
-     */
-    public List<Notifica> getNotifichePerFruitore(String username)
-    {
-        return notifiche.computeIfAbsent(username, k -> new ArrayList<>());
-    }
-
     // archivio delle proposte pubblicate
     private final List<Proposta> proposte = new ArrayList<>();
 
+    // ---------------------------------------------------------------
+    // CONFIGURATORI
+    // ---------------------------------------------------------------
+
     public Map<String, String> getConfiguratori()
     {
-        return configuratori;
+        return Collections.unmodifiableMap(configuratori);
     }
+
+    public void addConfiguratore(String username, String password)
+    {
+        configuratori.put(username, password);
+    }
+
+    // ---------------------------------------------------------------
+    // FRUITORI
+    // ---------------------------------------------------------------
+
+    public Map<String, String> getFruitori()
+    {
+        return Collections.unmodifiableMap(fruitori);
+    }
+
+    public void addFruitore(String username, String password)
+    {
+        fruitori.put(username, password);
+    }
+
+    // ---------------------------------------------------------------
+    // NOTIFICHE
+    // ---------------------------------------------------------------
+
+    public Map<String, List<Notifica>> getNotifiche()
+    {
+        return Collections.unmodifiableMap(notifiche);
+    }
+
+    public void addNotifica(String username, Notifica n)
+    {
+        notifiche.computeIfAbsent(username, k -> new ArrayList<>()).add(n);
+    }
+
+    // ---------------------------------------------------------------
+    // CAMPI BASE
+    // ---------------------------------------------------------------
 
     public List<Campo> getCampiBase()
     {
-        return campiBase;
+        return Collections.unmodifiableList(campiBase);
     }
 
     public boolean isCampiBaseFissati()
@@ -76,28 +94,75 @@ public final class AppData implements Serializable
         this.campiBaseFissati = campiBaseFissati;
     }
 
+    public void addCampoBase(Campo c)
+    {
+        campiBase.add(c);
+    }
+
+    // ---------------------------------------------------------------
+    // CAMPI COMUNI
+    // ---------------------------------------------------------------
+
     public List<Campo> getCampiComuni()
     {
-        return campiComuni;
+        return Collections.unmodifiableList(campiComuni);
     }
+
+    public void addCampoComune(Campo c)
+    {
+        campiComuni.add(c);
+        campiComuni.sort(Comparator.comparing(cc -> cc.getNome().toLowerCase()));
+    }
+
+    public boolean removeCampoComune(String nome)
+    {
+        return campiComuni.removeIf(c -> c.getNome().equalsIgnoreCase(nome));
+    }
+
+    // ---------------------------------------------------------------
+    // CATEGORIE
+    // ---------------------------------------------------------------
 
     public List<Categoria> getCategorie()
     {
-        return categorie;
+        return Collections.unmodifiableList(categorie);
     }
 
-    public List<Proposta> getProposte()
+    public void addCategoria(Categoria c)
     {
-        return proposte;
+        categorie.add(c);
+        categorie.sort(Comparator.comparing(cc -> cc.getNome().toLowerCase()));
     }
 
-    public Categoria findCategoria(String nome)
+    public boolean removeCategoria(String nome)
+    {
+        return categorie.removeIf(c -> c.getNome().equalsIgnoreCase(nome));
+    }
+
+    public Optional<Categoria> findCategoria(String nome)
     {
         return categorie.stream()
                 .filter(c -> c.getNome().equalsIgnoreCase(nome))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
+
+    // ---------------------------------------------------------------
+    // PROPOSTE
+    // ---------------------------------------------------------------
+
+    public List<Proposta> getProposte()
+    {
+        return Collections.unmodifiableList(proposte);
+    }
+
+    public void addProposta(Proposta p)
+    {
+        proposte.add(p);
+    }
+
+    // ---------------------------------------------------------------
+    // SERIALIZATION SAFETY
+    // ---------------------------------------------------------------
 
     @Serial
     private void readObject(java.io.ObjectInputStream in)
@@ -108,20 +173,9 @@ public final class AppData implements Serializable
         // Safety net: initialize any fields that may be null
         // due to deserialization of older saved data
         if (fruitori == null)
-            fruitori = new java.util.HashMap<>();
+            fruitori = new HashMap<>();
 
         if (notifiche == null)
-            notifiche = new java.util.HashMap<>();
+            notifiche = new HashMap<>();
     }
-
-    /*
-    public Proposta findProposta(String titolo)
-
-    {
-        return proposte.stream()
-                .filter(p -> p.getTitolo().equalsIgnoreCase(titolo))
-                .findFirst()
-                .orElse(null);
-    }
-    */
 }

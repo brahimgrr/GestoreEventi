@@ -1,24 +1,27 @@
 package it.unibs.ingsoft.v5.service;
 
 import it.unibs.ingsoft.v5.model.Fruitore;
-import it.unibs.ingsoft.v5.model.Notifica;
 import it.unibs.ingsoft.v5.persistence.AppData;
-import it.unibs.ingsoft.v5.persistence.DatabaseService;
+import it.unibs.ingsoft.v5.persistence.IPersistenceService;
 
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
-public final class FruitoreService
+public final class FruitoreService implements NotificaListener
 {
-    private final DatabaseService db;
+    private final IPersistenceService db;
     private final AppData data;
+    private final NotificaService notificaService;
 
-    public FruitoreService(DatabaseService db, AppData data)
+    /**
+     * @pre db               != null
+     * @pre data             != null
+     * @pre notificaService  != null
+     */
+    public FruitoreService(IPersistenceService db, AppData data, NotificaService notificaService)
     {
-        this.db   = Objects.requireNonNull(db);
-        this.data = Objects.requireNonNull(data);
+        this.db              = Objects.requireNonNull(db);
+        this.data            = Objects.requireNonNull(data);
+        this.notificaService = Objects.requireNonNull(notificaService);
     }
 
     // ---------------------------------------------------------------
@@ -28,6 +31,12 @@ public final class FruitoreService
     /**
      * Registers a new fruitore.
      * Username must be unique across both fruitori AND configuratori.
+     *
+     * @pre  username != null && !username.isBlank() && username.trim().length() >= 3
+     * @pre  password != null && !password.isBlank() && password.trim().length() >= 4
+     * @pre  !usernameGiaEsistente(username)
+     * @post data.getFruitori().containsKey(username)
+     * @throws IllegalArgumentException if credentials are invalid or username is already taken
      */
     public Fruitore registraFruitore(String username, String password)
     {
@@ -36,7 +45,7 @@ public final class FruitoreService
         if (usernameGiaEsistente(username))
             throw new IllegalArgumentException("Username già esistente.");
 
-        data.getFruitori().put(username, password);
+        data.addFruitore(username, password);
         db.save(data);
 
         return new Fruitore(username);
@@ -45,6 +54,11 @@ public final class FruitoreService
     /**
      * Attempts login for a fruitore.
      * Returns the Fruitore if credentials are valid, null otherwise.
+     *
+     * @pre  username != null
+     * @pre  password != null
+     * @post result != null implies result.getUsername().equals(username)
+     * @post result == null implies credentials are invalid
      */
     public Fruitore login(String username, String password)
     {
@@ -60,43 +74,18 @@ public final class FruitoreService
     }
 
     // ---------------------------------------------------------------
-    // NOTIFICHE
+    // NOTIFICHE (Observer implementation)
     // ---------------------------------------------------------------
 
     /**
-     * Sends a notification to a specific fruitore.
+     * Observer implementation: adds a notification by delegating to NotificaService.
+     * Persistence is delegated to the caller (IscrizioneService)
+     * so that bulk operations cause only one db.save.
      */
-    public void inviaNotifica(String usernameFruitore, String messaggio)
+    @Override
+    public void notifica(String usernameFruitore, String messaggio)
     {
-        Notifica n = new Notifica(messaggio, LocalDate.now());
-        data.getNotifichePerFruitore(usernameFruitore).add(n);
-        db.save(data);
-    }
-
-    /**
-     * Returns all notifications for a fruitore (unmodifiable).
-     */
-    public List<Notifica> getNotifiche(String usernameFruitore)
-    {
-        return Collections.unmodifiableList(
-                data.getNotifichePerFruitore(usernameFruitore)
-        );
-    }
-
-    /**
-     * Deletes a notification by its index in the fruitore's list.
-     * Returns true if deleted, false if index was invalid.
-     */
-    public boolean eliminaNotifica(String usernameFruitore, int index)
-    {
-        List<Notifica> lista = data.getNotifichePerFruitore(usernameFruitore);
-
-        if (index < 0 || index >= lista.size())
-            return false;
-
-        lista.remove(index);
-        db.save(data);
-        return true;
+        notificaService.aggiungiNotifica(usernameFruitore, messaggio);
     }
 
     // ---------------------------------------------------------------

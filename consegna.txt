@@ -1,0 +1,285 @@
+Page 1
+A.A. 2025-2026
+
+ALLIEVI DEL III ANNO IN INGEGNERIA INFORMATICA
+
+PROGETTO DA PRESENTARE OBBLIGATORIAMENTE PER LE PROVE ORALI D'ESAME DELL'INSEGNAMENTO INGEGNERIA DEL SOFTWARE (9 CFU)
+
+N.B. Una opportuna ulteriore attività proposta dai docenti, tesa a estendere o approfondire il progetto (prima e seconda parte) realizzato nell'ambito dell'insegnamento di Ingegneria del Software e svolta autonomamente dal singolo studente, con produzione di un elaborato finale individuale, può essere l'oggetto della PROVA FINALE (3 CFU) per il conseguimento della LAUREA IN INGEGNERIA INFORMATICA.
+
+1
+
+Page 2
+TEMA
+
+Si desidera realizzare, secondo un processo di sviluppo incrementale/iterativo, un sistema software orientato all'organizzazione di iniziative, di natura ricreativa, amatoriale, dilettantistica, che coinvolgano persone maggiorenni aventi passioni o interessi simili. L'applicazione può essere adottata da vari enti, privi di scopo di lucro, quali il circolo ricreativo-culturale di un'azienda o istituzione (pubblica o privata) o un ufficio dedicato al tempo libero dei cittadini di un comune, con l'obiettivo di facilitare i destinatari delle proposte nella partecipazione a iniziative di loro gradimento e favorirne la socializzazione. Esempi di iniziative sono una gita a Montisola, una visita guidata alla mostra temporanea “Guido Crepax” presso il Museo di Santa Giulia a Brescia, una serata alla Specola Cidnea, un pomeriggio scacchistico, ...
+
+L'applicazione prevede due tipologie di utente, il configuratore, che descrive le iniziative proposte, e il fruitore, che aderisce alle stesse.
+
+2
+
+Page 3
+GENERALITÀ
+L'applicazione consta di un back-end, destinato all'interazione con il configuratore, e di un front-end, destinato all'interazione con il fruitore. Interagendo coi configuratori, il back-end raccoglie un corpo di dati relativi alle iniziative proposte. Il front-end espone ai fruitori tali iniziative, raccoglie le loro iscrizioni e, terminato il periodo di iscrizione a ciascuna iniziativa, comunica se la stessa è stata confermata o annullata.
+
+L'applicazione è tesa a gestire alcune categorie predefinite di iniziative, relative unicamente a eventi che occupano un intervallo orario collocato in una sola giornata oppure che coprono, senza interruzione, più giorni consecutivi. Ciascuna categoria è dotata di un nome che la individua univocamente. Esempi di nomi di categorie sono “arte”, “musica”, “spettacolo”, “letteratura”, “cinema”, “fotografia”, “sport”, “giochi” e “gite”. Si sottolinea che si tratta solo di esempi: i configuratori sono liberi di fissare le categorie che ritengono più adatte alle finalità dell'ente particolare che si è dotato dell'applicazione.
+
+3
+
+Page 4
+A ciascuna categoria corrisponde un insieme di campi atti a descrivere la proposta di un evento appartenente alla categoria stessa. Relativamente a ogni singola categoria, ogni campo è dotato di un nome che lo individua univocamente. Ciascun campo è obbligatorio o facoltativo, nel senso che l'attribuzione di un valore a tale campo (compilazione) da parte del configuratore creatore di un'iniziativa è obbligatoria o facoltativa. Si indicano di seguito il nome e il significato di un insieme di campi cosiddetti base; si tratta di campi obbligatori che devono essere condivisi da tutte le categorie, sono impostati dal configuratore al primo avvio dell'applicazione e non potranno essere modificati per l'intera durata della vita operativa dell'applicazione stessa.
+
+“Titolo”, nome di fantasia (esplicativo) attribuito all'iniziativa;
+“Numero di partecipanti”, numero di persone da coinvolgere nell'iniziativa;
+“Termine ultimo di iscrizione”, ultimo giorno utile per iscriversi all'iniziativa (ci si potrà iscrivere fino alle ore 23.59 di tale giorno);
+“Luogo”, indirizzo del luogo che ospiterà l'iniziativa oppure, se l'iniziativa è itinerante, il luogo di ritrovo dei partecipanti;
+“Data”, data in cui si svolgerà l'iniziativa o, nel caso l'iniziativa non termini nello stesso giorno in cui ha inizio, data di inizio dell'iniziativa; deve essere successiva di almeno due giorni rispetto a quella indicata nel campo “Termine ultimo di iscrizione”;
+“Ora”, ora in cui i partecipanti dovranno trovarsi nel luogo “Luogo” in data “Data” per dare inizio all'iniziativa;
+4
+
+Page 5
+"Quota individuale", spesa (o una stima della stessa) che ogni partecipante all'iniziativa dovrà sostenere (si noti che la spesa può anche essere nulla);
+"Data conclusiva", data di conclusione dell'iniziativa; nel caso di iniziative che terminino nello stesso giorno in cui hanno inizio, tale data coincide con quella indicata nel campo "Data" (altrimenti è una data successiva a quella indicata da suddetto campo).
+Oltre ai campi base, tutte le categorie di iniziative condividono eventuali altri campi fissati dal configuratore, detti campi comuni. Si indicano di seguito il nome, l'obbligatorietà e il significato di alcuni esempi di campi comuni. Si sottolinea che si tratta solo di esempi: i configuratori sono liberi di stabilire i campi comuni che ritengono più opportuni.
+
+"Durata", campo facoltativo che indica la durata in termini di numero (approssimativo) di ore e minuti, per le iniziative che si esauriscono in un sol giorno, o in termini di numero esatto di giorni, per le iniziative che occupano più giorni consecutivi;
+"Compreso nella quota", campo facoltativo che indica tutte le voci di spesa comprese nell'ammontare indicato nella "Quota individuale";
+"Ora conclusiva", campo facoltativo che stima l'ora di conclusione dell'iniziativa nella "Data conclusiva";
+"Note", campo facoltativo contenente informazioni aggiuntive circa l'iniziativa.
+5
+
+Page 6
+Se lo ritiene necessario, il configuratore può aggiungere ai campi sopra elencati, condivisi da tutte le categorie, dei campi detti specifici, diversi da categoria a categoria, al fine di descrivere con maggiore precisione aspetti peculiari delle iniziative afferenti alla categoria a cui si riferiscono. Un esempio di campo specifico per la categoria “sport” è il seguente:
+
+“Certificato medico”, campo obbligatorio che indica se, al fine di essere ammesso all’iniziativa, il partecipante debba essere munito di certificato medico che attesti la sua idoneità all’iniziativa stessa.
+6
+
+Page 7
+VERSIONE 1 - REQUISITI FUNZIONALI
+La prima versione dell'applicazione consente l'accesso del solo configuratore. Ogni configuratore effettua il primo accesso sfruttando credenziali predefinite (comunicate a ciascun nuovo configuratore autorizzato a registrarsi), che lo qualificano come appartenente al gruppo (non vuoto, eventualmente individuale) dei configuratori dell'applicazione. Nell'ambito della sessione aperta al primo accesso, egli dovrà immediatamente scegliere credenziali personali, da usare in tutti gli accessi successivi: solo a valle di tale scelta egli potrà operare sul back-end dell'applicazione. Lo username di ciascun configuratore lo individua univocamente fra i configuratori e lo distingue da ogni fruitore.
+
+La prima versione dell'applicazione deve consentire al configuratore di
+
+Fissare i campi base e salvarli in forma persistente. L'elenco dei campi base (di cui alla sezione GENERALITÀ) deve essere fornito all'applicazione al suo primo avvio e, una volta creato, è da ritenere immutabile.
+Fissare i campi comuni e salvarli in forma persistente. Questa operazione può indifferentemente precedere o seguire la creazione di categorie. Inoltre, i campi comuni fissati possono essere modificati in ogni momento, anche quando ancora non è stata creata alcuna categoria.
+7
+
+Page 8
+Creare/aggiungere le categorie desiderate, indicando per ciascuna gli eventuali campi specifici della stessa, e salvarle (unitamente ai loro campi specifici) in forma persistente. L'elenco delle categorie, inizialmente vuoto, può essere aggiornato in ogni momento. L'aggiunta di nuove categorie non avrà alcun effetto sulle iniziative già proposte mentre diverrà operativa per le iniziative di nuova creazione. (La versione corrente non permette di effettuare proposte, operazione che sarà possibile a partire dalla seconda versione.)
+Modificare campi comuni e/o specifici. L'elenco dei campi comuni e/o l'elenco dei campi specifici di una categoria fissato inizialmente può essere successivamente modificato (anche ripetutamente) tramite aggiunta e/o rimozione di campi e/o variazione dell'obbligatorietà di qualche campo comune o specifico; tale modifica non avrà alcun effetto sulle iniziative già proposte mentre diverrà operativa per le iniziative di nuova creazione.
+Rimuovere categorie esistenti. La rimozione di una categoria, che comporta anche la rimozione dei campi specifici della stessa, non avrà alcun effetto sulle iniziative già proposte mentre diverrà operativa per le iniziative di nuova creazione.
+Visualizzare le categorie presenti e i campi delle stesse (sia base, sia comuni, sia specifici).
+8
+
+Page 9
+VERSIONE 2 – REQUISITI FUNZIONALI
+Anche la seconda versione dell’applicazione consente l’accesso del solo configuratore.
+
+Utilizzando questa versione, ogni configuratore può proporre iniziative, afferenti solo alle categorie previste, descrivendo ciascuna iniziativa mediante l’assegnamento di valori ai campi (sia base, sia comuni, sia specifici) della categoria della stessa. Attenzione: la data indicata nel campo “Termine ultimo di iscrizione” deve essere successiva rispetto alla data corrente e, come già evidenziato, quella indicata nel campo “Data” deve essere successiva di almeno due giorni rispetto a quella del campo “Termine ultimo di iscrizione”. Una proposta acquisisce lo stato di proposta valida solo se rispetta i vincoli sopra stabiliti ed è stato assegnato un valore a tutti i suoi campi obbligatori. Dietro richiesta del configuratore, una proposta valida viene pubblicata nella cosiddetta bacheca, passando così nello stato di proposta aperta, ovvero proposta per cui è attiva la raccolta di iscrizioni. Si noti che, nella versione attuale dell’applicazione, il contenuto della bacheca è visibile ai soli configuratori mentre, a partire dalla terza versione, esso sarà reso visibile anche a tutti i fruitori. Una proposta rimane aperta fintantoché si trova in bacheca. Al termine di una sessione di lavoro del configuratore, una proposta valida creata dallo stesso ma non pubblicata in bacheca non viene salvata.
+
+9
+
+Page 10
+Riassumendo, la seconda versione dell'applicazione, oltre a garantire tutte le funzionalità della prima versione, deve consentire al configuratore di:
+
+descrivere un'iniziativa afferente a una categoria prevista (cioè, creare una proposta);
+chiedere la pubblicazione in bacheca di una proposta valida;
+visualizzare il contenuto della bacheca, categoria per categoria.
+Inoltre, la seconda versione deve essere in grado di assegnare automaticamente a una proposta lo stato di valida, gestire i passaggi di stato da proposta valida a proposta aperta e salvare in forma persistente tutti i dati relativi a ciascuna proposta aperta (cioè, i valori dei campi che descrivono tale proposta e la data di pubblicazione della stessa in bacheca). Viene così costruita una sorta di archivio delle proposte.
+
+10
+
+Page 11
+VERSIONE 3 – REQUISITI FUNZIONALI
+La terza versione dell’applicazione consente l’accesso anche al fruitore.
+
+Al primo accesso, ogni fruitore deve scegliere le sue credenziali individuali, che gli consentiranno di operare sul front-end dell’applicazione. Lo username di ciascun fruitore individua univocamente il fruitore stesso (esso non deve coincidere con lo username di alcun altro fruitore né di alcun configuratore).
+
+Un fruitore può visualizzare il contenuto della bacheca, categoria per categoria, e, se lo desidera, aderire a una o più proposte aperte. L’iscrizione a una iniziativa è possibile solo fino alle ore 23.59 del giorno indicato dal campo “Termine ultimo di iscrizione”. Un fruitore può avere (al più) un’unica iscrizione a ciascuna proposta aperta e può iscrivere solo se stesso alla proposta (cioè, non può iscrivere a suo nome più persone). L’applicazione rifiuterà l’iscrizione a una proposta da parte del fruitore nel caso in cui tale proposta abbia già raccolto il numero di partecipanti previsto (stabilito dal valore del campo “Numero di partecipanti”).
+
+Allo scadere della mezzanotte (cioè, alle ore 24.00) del suo “Termine ultimo di iscrizione”, una proposta aperta viene tolta dalla bacheca. Se l’applicazione non fosse in esecuzione alle ore 24.00, essa dovrà provvedere a togliere la proposta dalla bacheca al primo avvio successivo alle ore 24.00 (qualsiasi sia l’utente che effettua il login). L’espressione “allo
+
+11
+
+Page 12
+scadere della mezzanotte” deve essere interpretata in modo analogo anche per i requisiti espressi nei paragrafi seguenti.
+
+Quando, allo scadere della mezzanotte del “Termine ultimo di iscrizione”, il numero di adesioni alla proposta aperta eguaglia il valore del campo “Numero di partecipanti”, essa diventa una proposta confermata e tutti gli aderenti vengono informati del fatto che l’evento sarà attuato. Unitamente a tale informazione, gli aderenti ricevono un promemoria relativo a data, ora e luogo dell’evento nonché all’eventuale importo dovuto. Le notifiche inviate a ciascun fruitore sono visibili nel cosiddetto spazio personale del fruitore stesso, che avrà la facoltà di cancellare le notifiche di cui intende liberarsi. Il contenuto dello spazio personale di un fruitore è visibile solo a tale fruitore. Una proposta passa dallo stato confermata allo stato conclusa il giorno successivo a quello indicato nel campo “Data conclusiva”.
+
+Se, allo scadere della mezzanotte del “Termine ultimo di iscrizione”, una proposta aperta non ha raccolto un numero di iscrizioni pari a “Numero di partecipanti”, essa diventa una proposta annullata. In tal caso, ogni iscritto all’iniziativa, viene avvisato della cancellazione entro il suo spazio personale.
+
+12
+
+Page 13
+Riassumendo, la terza versione dell'applicazione deve consentire al fruitore di:
+
+visualizzare il contenuto della bacheca, categoria per categoria;
+aderire a una proposta aperta;
+accedere allo spazio personale per leggere le notifiche ricevute;
+cancellare selettivamente le notifiche ricevute nello spazio personale.
+Inoltre, la terza versione deve essere in grado di gestire i passaggi di stato delle proposte (da aperte a confermate a concluse e da aperte ad annullate), generare automaticamente le opportune notifiche al momento dei passaggi di stato (da proposta aperta a confermata oppure annullata) e recapitare le stesse negli spazi personali dei destinatari. Infine, la terza versione deve operare il salvataggio in forma persistente di tutti i dati relativi a ciascuna proposta: sia i passaggi di stato da proposta aperta a confermata a conclusa oppure da aperta ad annullata, sia l'elenco (unico) degli aderenti alla proposta. L'elenco degli aderenti a una proposta aperta può cambiare fino a che non chiudono le iscrizioni alla stessa; dal momento in cui la proposta diventa confermata o annullata, l'elenco degli aderenti non cambia più (e resta tale quando la proposta diventa conclusa). Salvare i passaggi di stato significa che, ogni volta che una proposta cambia stato, si deve salvare il nuovo stato della proposta e la data in cui questo stato è stato assunto (senza cancellare la registrazione relativa a ciascuno degli stati precedenti della proposta stessa e alle date in cui essi sono stati assunti). Tali dati vanno ad aggiungersi, entro l'archivio
+
+13
+
+Page 14
+delle proposte, a quelli già considerati nella seconda versione. Al configuratore deve essere consentita la visualizzazione del contenuto dell'archivio delle proposte.
+
+Al momento dell'apertura dello spazio personale di ciascun fruitore entro una sessione di lavoro, il contenuto dello spazio stesso deve essere consistente col contenuto al momento della chiusura precedente (cioè, tutte le notifiche presenti alla chiusura devono essere visualizzate alla riapertura, unitamente a eventuali nuove notifiche).
+
+14
+
+Page 15
+VERSIONE 4 – REQUISITI FUNZIONALI
+La quarta versione consente a un fruitore che ha aderito a una proposta aperta di disdire la sua iscrizione. Ciò è possibile solo fino alle ore 23.59 della data stabilita dal campo “Termine ultimo di iscrizione”. Un fruitore che ha disdetto la sua iscrizione a una proposta aperta viene rimosso dall’elenco degli aderenti alla stessa. Un fruitore, dopo avere disdetto la sua iscrizione a una proposta aperta, può iscriversi nuovamente alla medesima proposta (rispettando sempre il “Termine ultimo di iscrizione”).
+
+La quarta versione consente inoltre al configuratore di ritirare una proposta aperta o confermata fino alle ore 23.59 del giorno precedente quello indicato dal campo “Data” della stessa. In tal caso la proposta diviene ritirata e tutti i fruitori che avevano aderito alla proposta vengono automaticamente avvisati, nello spazio personale di ciascuno, del ritiro della stessa. Inoltre, se, al momento del ritiro, la proposta era aperta, essa viene tolta dalla bacheca. Il ritiro di una proposta è una misura eccezionale, da adottare per cause di forza maggiore; ad esempio, un’iniziativa di visita di un museo viene ritirata se, per motivi imprevisti, il museo nella data “Data” rimarrà chiuso.
+
+15
+
+Page 16
+In sunto, la quarta versione dell'applicazione, alle funzionalità già presenti nella versione precedente, deve aggiungere quelle atte a gestire:
+
+la cancellazione da parte dei fruitori di iscrizioni a proposte aperte;
+il ritiro da parte dei configuratori di proposte aperte o confermate e il conseguente passaggio di stato delle stesse, unitamente alla generazione delle opportune notifiche.
+La nuova versione deve salvare in modo persistente (entro l'archivio delle proposte) non solo le informazioni di cui alle versioni precedenti ma anche quelle circa i passaggi di stato di ciascuna proposta emersi nella versione corrente (deve, cioè, indicare che una proposta ha assunto lo stato di proposta ritirata e in quale data ciò è avvenuto; l'elenco degli aderenti a una proposta ritirata coincide con l'elenco degli aderenti alla medesima prima del ritiro e non può più cambiare).
+
+16
+
+Page 17
+VERSIONE 5 – REQUISITI FUNZIONALI
+La quinta versione consente al configuratore di importare gli ingressi del back-end dell’applicazione, ovvero categorie, campi e nuove proposte di iniziative, in modalità batch (cioè attraverso uno o più file di input) anziché in modalità interattiva (che comunque deve restare operativa).
+
+17
+
+Page 18
+REQUISITI NON FUNZIONALI
+Il modello di processo da adottare è incrementale/iterativo. Ogni versione da produrre estende le funzionalità della precedente, senza modificarle.
+
+Il linguaggio di programmazione da utilizzare è Java.
+
+L'architettura esterna da realizzare per l'applicazione è stand alone.
+
+Requisito non prescrittivo ma importante in sede di valutazione è l'impiego di precondizioni, postcondizioni e invarianti di classe entro il codice Java.
+
+Non è richiesta la creazione di una interfaccia utente grafica (tuttavia è bene che l'architettura interna sia progettata in modo da ridurre gli effetti collaterali e lo sforzo connesso al cambiamento se in futuro il sistema di interazione testuale fosse sostituito da una GUI).
+
+Non è richiesto l'impiego di alcun DBMS (Data Base Management System).
+
+18
+
+Page 19
+NOTE
+
+Nei requisiti sopra enunciati non sono contemplati i controlli relativi all'appartenenza di ciascun fruitore all'insieme di persone a cui una specifica installazione dell'applicazione si rivolge. Ad esempio, se l'applicazione è adottata dal circolo ricreativo-culturale di un'azienda, essa si rivolge solo a chi opera entro l'azienda; se l'applicazione è adottata da un comune, essa si rivolge solo ai cittadini dello stesso, ecc. La ragione per cui questi controlli essenziali sono stati omessi è che l'applicazione che sarà realizzata è da intendere come il frutto di un esercizio, necessariamente di dimensioni limitate, e non è destinata a essere effettivamente installata e usata nella realtà quotidiana, come sottolineato dal requisito di adottare un'architettura esterna stand alone (mentre un'applicazione impiegata nel mondo reale dovrebbe operare in rete).
+
+Nei requisiti sopra enunciati si sono ignorati anche i possibili aspetti legali connessi alla gestione di un'applicazione volta a supportare la proposta di iniziative e a raccogliere le iscrizioni dei potenziali partecipanti alle stesse. È evidente che ogni applicazione che operi nel mondo reale deve rispettare la legislazione del Paese in cui viene utilizzata. Secondo le specifiche delle pagine precedenti, nessun fruitore fornisce dati personali all'applicazione: ciò è irrealistico perché l'iscrizione a un'iniziativa nella realtà deve essere vincolante e, affinché lo sia, è necessario che i dati anagrafici dell'iscritto siano
+
+19
+
+Page 20
+noti. La mancata richiesta di dati personali da parte dell'applicazione comporta che non si siano introdotti requisiti volti al trattamento degli stessi. Nella realtà, invece, la legislazione potrebbe imporre, per esempio, che ciascun fruitore fornisca i suoi dati anagrafici e, nel contempo, esprima un consenso al trattamento dei dati e che chiunque possa leggere tali dati (ad esempio, il configuratore) si impegni al rispetto delle leggi sulla privacy. Nell'ambito dell'esercizio proposto, è ammesso che l'applicazione chieda ai fruitori di fornire il proprio nome e cognome: spetta al gruppo di lavoro scegliere se implementare questo requisito oppure no, nella consapevolezza che, se viene implementato, le questioni legali sono (irrealisticamente) ignorate. Per semplicità, i requisiti assumono che i fruitori siano solo persone maggiorenni (la legislazione potrebbe richiedere un trattamento speciale per i fruitori minorenni). La ragione per cui le questioni legali sono state ignorate è la medesima riferita nel punto precedente. Per la stessa ragione si è escluso ogni scambio di denaro fra i fruitori e l'organizzazione che, attraverso l'applicazione, sovrintende alla proposta di iniziative e alla raccolta di iscrizioni alle stesse. Se una iniziativa comporta dei costi per i fruitori (ad esempio, per il biglietto d'ingresso a un museo), i pagamenti relativi saranno corrisposti direttamente all'ente che gestisce il luogo da visitare (il museo, nell'esempio), non all'organizzazione che ha proposto tale visita, che non trae alcun profitto dalla stessa. Gli scambi di denaro e il ritorno economico esulano completamente dagli scopi didattici del progetto.
+
+20
+
+Page 21
+Nella sezione GENERALITÀ non si è considerato il fatto che un campo base o specifico possa essere (sempre o talvolta) “ridondante”, ovvero che il suo valore possa essere ricavato da quello di altri campi. Ad esempio, il campo comune esemplificato “Durata”, nel caso si riferisca a una iniziativa che occupa più giorni consecutivi, assume come valore il numero di giorni occupati da tale iniziativa, numero che si può desumere conoscendo i valori dei campi base “Data” e “Data conclusiva”. Il campo “Durata” non è però ridondante quando si riferisce a una iniziativa che si esaurisce in un solo giorno. Dal momento che l’applicazione non conosce la semantica di campi comuni e specifici, i requisiti funzionali espressi non richiedono che si effettui un controllo di congruenza dei valori dei campi ridondanti. La responsabilità di una compilazione corretta dei valori di tali campi cade sul configuratore che descrive una iniziativa. Il controllo della congruenza dei valori assegnati ai campi base è invece esplicitamente richiesto. Ad esempio, i valori assegnati a “Data” e “Data conclusiva” devono effettivamente essere quelli di due date e la seconda non può cronologicamente precedere la prima.
+
+Nel mondo reale il requisito di sicurezza gioca un ruolo di rilievo. Tale requisito, sempre più importante in un lavoro professionale, non è stato considerato nei limiti dell’esercizio proposto né il gruppo di lavoro deve tenerne conto. L’enfasi del progetto non è infatti sulla sicurezza, pertanto l’attribuzione di credenziali al configuratore così come la scelta di credenziali da parte del fruitore non sono ritenute operazioni critiche. L’interpretazione relativa alle “credenziali predefinite” comunicate a ciascun nuovo
+
+21
+
+Page 22
+configuratore che intende registrarsi, di cui ai requisiti funzionali della prima versione, non è univoca. Secondo l'interpretazione più semplice – e meno sicura – tali credenziali sono uniche e immutabili, stabilite al momento dell'installazione dell'applicazione. Un'interpretazione più complessa è quella secondo cui le credenziali predefinite sono diverse per ciascun configuratore che intende registrarsi. In questo caso, al primo configuratore che intende registrarsi vengono comunicate credenziali predefinite stabilite al momento dell'installazione dell'applicazione mentre a ciascuno di quelli successivi vengono comunicate nuove credenziali, fissate di volta in volta da un configuratore già registrato. Questa soluzione è più sicura ma non ne è richiesta la realizzazione.
+
+Un lavoro professionale teso a soddisfare i requisiti sopra esposti richiederebbe la creazione di un'architettura esterna client server con client web/mobile. Tuttavia, i requisiti enunciati non lo impongono: tali accorgimenti sono demandati a eventuali estensioni future.
+
+I requisiti non funzionali non stabiliscono scelte tecnologiche predefinite in merito alla conoscenza del calendario e dell'orologio da parte dell'applicazione. I progettisti possono fare riferimento (eventualmente usando apposite librerie) alla data e ora fornita dal sistema operativo ma sono adottabili anche opzioni meno professionali (quali la simulazione – accelerata – del fluire del tempo).
+
+22
+
+Page 23
+I requisiti non funzionali non impongono alcuna tecnologia da utilizzare per la memorizzazione persistente dei dati (categorie di eventi, campi, archivio delle proposte, contenuto degli spazi personali, ecc.) Un lavoro professionale richiederebbe il salvataggio entro una base di dati ma, come già sottolineato, l'esercizio corrente non richiede l'impiego di alcun DBMS. La scelta dei progettisti potrebbe pertanto cadere banalmente sulla serializzazione di oggetti. In alternativa, si potrebbero impiegare file di testo aventi una sintassi definita appositamente dai progettisti stessi (ad esempio, file in formato CSV o JSON o XML).
+
+Nella descrizione della VERSIONE 2 si è implicitamente assunto che la sessione di lavoro di ciascun configuratore termini nella stessa giornata in cui è iniziata: ciò fa sì che una proposta valida venga pubblicata, su richiesta del configuratore, nel giorno in cui è stata creata dal medesimo. Se l'assunzione che la sessione di un configuratore termini nella stessa giornata in cui è iniziata venisse rilassata, prima di pubblicare una proposta sarebbe necessario rivalutarne la validità, in particolare si dovrebbe controllare che la data indicata nel campo “Termine ultimo di iscrizione” sia successiva rispetto alla data corrente, dove per data corrente si intende quella di pubblicazione.
+
+23
+
+Page 24
+I requisiti sopra esposti richiedono che l'applicazione invii notifiche automatiche ai fruitori iscritti a una proposta. I fruitori destinatari delle notifiche possono essere considerati alla stregua di osservatori di alcuni fenomeni (i passaggi di stato di una proposta a cui sono iscritti). Questa prospettiva può essere di rilievo nella seconda parte del progetto, anche al fine di disaccoppiare la gestione delle proposte da quella dei fruitori (rendendo così modificabili separatamente l'una e l'altra).
+
+I requisiti (funzionali e non) delle cinque versioni dell'applicazione da realizzare sono deliberatamente espressi a un alto livello di astrazione (ad esempio, non si è fissato il tipo dei campi base né le dimensioni degli spazi personali dei fruitori; non si è parlato di valori di default per i campi; non si è detto che l'indicazione di un luogo può essere accompagnata dalle coordinate geografiche dello stesso; non si sono stabilite le modalità di visualizzazione di categorie e campi né quelle del contenuto dell'archivio delle proposte) al fine di consentire agli ingegneri del software di fornire un'interpretazione personale, che comporta sempre l'aggiunta di ulteriori requisiti. Tali aggiunte o scelte implementative devono essere chiaramente documentate.
+
+24
+
+Page 25
+ESTENSIONI FUTURE
+Si elencano di seguito alcuni possibili punti di estensione o modifica dell'applicazione, non affinché i requisiti a essi relativi siano soddisfatti ma perché anticipare i cambiamenti è un importante principio di progettazione (teso a rendere l'applicazione insensibile agli stessi).
+
+Il sistema di interazione potrebbe divenire grafico.
+L'architettura esterna potrebbe diventare distribuita (vedi NOTA 5).
+La memorizzazione persistente dei dati potrebbe essere gestita attraverso un DBMS (vedi NOTA 7). L'utilizzo di una base di dati supporterrebbe la creazione di interrogazioni, quali:
+Numero di fruitori,
+(Incremento del) numero di fruitori per anno solare,
+Numero di proposte aperte/confermate/concluse/annullate/ritirate per anno solare e categoria,
+Numero cumulativo di aderenti alle proposte concluse per anno solare,
+Categoria col maggior numero di proposte concluse/annullate/ritirate per anno solare,
+Fruttore che ha aderito al maggior numero di proposte concluse per anno solare,
+Elenco di tutte le proposte concluse a cui un fruttore ha aderito in un anno solare.
+25
+
+Page 26
+Si potrebbe creare una versione dell'applicazione in cui il campo base “Numero di partecipanti” è sostituito da due campi base, “Numero minimo di partecipanti” e “Numero massimo di partecipanti” (che deve assumere un valore maggiore o uguale al campo precedente), e confermare una proposta quando, allo scadere del “Termine ultimo di iscrizione”, il numero di iscritti è compreso fra tali due valori, estremi inclusi.
+Si potrebbe creare una versione dell'applicazione in cui il numero di giorni che devono intercorrere fra la data “Data” e la data indicata dal “Termine ultimo di iscrizione” sia parametrico.
+Si potrebbe creare una versione dell'applicazione in cui a tutti i fruitori venga inviata la notifica della pubblicazione in bacheca di ogni nuova proposta.
+Si potrebbero introdurre categorie di eventi che richiedono una calendarizzazione in giornate non contigue (ad es. tornei di tennis).
+Si potrebbe consentire al configuratore l'invio di messaggi scritti a tutti i fruitori aderenti a una proposta, sia essa aperta, confermata, annullata o ritirata (con recapito di tali messaggi nello spazio personale di ciascun fruitore destinatario).
+Si potrebbe offrire ai fruitori la possibilità di creare gruppi di fruitori legati da affinità (ad es. il gruppo degli amici della bici) o squadre (ad es. squadre di calcio). L'iscrizione a un evento potrebbe avvenire cumulativamente per un intero gruppo o un'intera squadra, così come l'invio di notifiche.
+26
+
+Page 27
+Si potrebbe prevedere la creazione di profili dei fruitori che raccolgano gusti (ad esempio, ciascun fruitore potrebbe indicare le categorie che gradisce maggiormente), preferenze ed, eventualmente, fasce di età, cosicché l'applicazione possa inviare automaticamente avvisi personalizzati (ad esempio, avvertendo di una nuova proposta tutti i fruitori che, secondo il loro profilo, potrebbero essere interessati alla stessa).
+27
+
+Page 28
+Richieste relative alla PRIMA PARTE DEL PROGETTO
+Agli studenti è richiesto di realizzare evolutivamente cinque versioni software che soddisfino i requisiti sopra esposti. Ogni gruppo (costituito al più da tre persone), dovrà:
+
+per ogni versione, produrre la documentazione di progetto, contenente
+
+casi d'uso (comprensivi dell'espressione di eventuali requisiti aggiuntivi), sia in forma testuale, sia in forma di diagramma UML; si invita a rendere evidenti a colpo l'occhio le integrazioni/modifiche apportate ai casi d'uso (testuali e grafici) della versione precedente per ottenere quelli della versione corrente;
+diagramma UML delle classi; si invita a rendere evidenti a colpo l'occhio le integrazioni/modifiche apportate al diagramma delle classi della versione precedente per ottenere quello della versione corrente;
+diagrammi UML comportamentali (opzionali) e qualsiasi altra specifica ritenuta opportuna;
+per l'ultima versione, creare anche diagrammi UML globali (cioè, relativi a tutte le funzionalità progressivamente aggiunte versione dopo versione) dei casi d'uso e delle classi, senza evidenziare le integrazioni/modifiche apportate per passare da una versione alla successiva;
+
+28
+
+Page 29
+per l'ultima versione, redigere un manuale di installazione e uso (il cui contenuto potrebbe eventualmente divenire parte dell'help in linea dell'applicazione);
+per agevolare la valutazione del lavoro da parte dei docenti e dei loro collaboratori, raccogliere in un unico file pdf la documentazione, relativa alle cinque versioni, di cui ai punti 1 e 2 e il manuale di cui al punto 3; consegnare tale file in formato elettronico; suddetto file deve contenere nome, cognome e numero di matricola di tutti gli autori; i dati identificativi degli autori devono essere riportati anche in una nota Moodle, compilabile al momento del caricamento del materiale, nota in cui deve essere chiarito anche l'anno accademico in cui il tema dell'elaborato svolto è stato assegnato;
+per ogni versione, consegnare codice sorgente + codice interpretabile + (preferibilmente) codice eseguibile.
+29
+
+Page 30
+preparare una dimostrazione del funzionamento dell'applicazione, che avverrà durante la prova orale. Al fine di evitare lunghi tempi di digitazione degli ingressi durante la dimostrazione, sfruttare il salvataggio in forma persistente dei dati che dovranno essere letti (cioè, recuperati dalla memoria di massa) e usati dall'applicazione durante la sessione dimostrativa. In particolare, salvare:
+le credenziali di almeno 2 configuratori;
+le credenziali di almeno 3 fruitori;
+i nomi di almeno 2 categorie di iniziative;
+le informazioni inerenti ad almeno 3 proposte aperte, 2 proposte confermate, una proposta conclusa, una cancellata e una ritirata.
+30
+
+Page 31
+MODALITÀ DI CONSEGNA E ALTRO
+Come riportato dalla guida in linea relativa all'insegnamento, ai fini del superamento dell'esame, ogni studente deve sostenere una sola prova orale (discussione di entrambe le parti dell'elaborato in un'unica data).
+
+Il materiale relativo alla PRIMA PARTE del progetto, di cui ai precedenti punti 4 e 5, deve essere consegnato attraverso la piattaforma Moodle, in anticipo rispetto al materiale relativo alla SECONDA PARTE e rispetto alla prova orale. Più precisamente, il materiale relativo alla PRIMA PARTE deve essere consegnato (al più tardi) entro la data in cui è fissata la prova orale dell'appello precedente rispetto a quello in cui si intende sostenere la prova orale. Le date delle prove orali sono indicate nella pagina di appelli e prove parziali del portale di Ateneo. La consegna del materiale relativo alla PRIMA PARTE dell'elaborato deve avvenire senza iscrizione ad alcuna prova da parte dei componenti del gruppo. La consegna (attraverso la piattaforma Moodle) della SECONDA PARTE dell'elaborato deve invece essere accompagnata dall'iscrizione su ESSE3 alla prova orale (una nota ESSE3 la indica come “Discussione dell'elaborato”) da parte di tutti i componenti del gruppo.
+
+31
+
+Page 32
+Per la PRIMA PARTE come per la SECONDA PARTE, si raccomanda di riportare la composizione del gruppo (comprensiva del numero di matricola di ciascun componente) entro il materiale consegnato (in particolare, per quanto riguarda la PRIMA PARTE, entro il file di cui al precedente punto 4) e anche in una nota Moodle, compilabile al momento del caricamento di suddetto materiale, nota in cui deve essere chiarito anche l'anno accademico in cui il tema dell'elaborato svolto è stato assegnato. La consegna deve essere effettuata da un solo componente, per conto dell'intero gruppo.
+
+Al momento della discussione della PRIMA PARTE del progetto, il gruppo dovrà rispondere a domande relative alla documentazione prodotta ed effettuare una dimostrazione del funzionamento dell'applicazione sviluppata (si veda il precedente punto 6). A tal fine è bene che ogni gruppo si presenti alla prova orale munito di un portatile, da connettere al sistema di proiezione disponibile in aula. Si raccomanda di non dimenticare il cavo di alimentazione; se il portatile non dispone di un'uscita HDMI, serve anche un adattatore a femmina HDMI, da collegare a un'uscita USB del portatile.
+
+Si rammenta che il progetto corrente, assegnato nell'a.a. 2025-2026, potrà essere discusso (in ciascuna delle sue due parti) solo fino alla sessione d'esame di Novembre 2027. Gli studenti che non avessero effettuato la discussione entro tale sessione dovranno svolgere il progetto assegnato nell'anno accademico successivo.
+
+32

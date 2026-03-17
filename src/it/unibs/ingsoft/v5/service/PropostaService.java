@@ -5,8 +5,8 @@ import it.unibs.ingsoft.v5.model.Categoria;
 import it.unibs.ingsoft.v5.model.Proposta;
 import it.unibs.ingsoft.v5.model.StatoProposta;
 import it.unibs.ingsoft.v5.persistence.AppData;
-import it.unibs.ingsoft.v5.persistence.DatabaseService;
-import it.unibs.ingsoft.v5.view.ConsoleUI;
+import it.unibs.ingsoft.v5.persistence.IPersistenceService;
+import it.unibs.ingsoft.v5.model.AppConstants;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -15,14 +15,23 @@ import java.util.stream.Collectors;
 public class PropostaService
 {
     // I campi base con nomi riservati per la logica di date
-    public static final String CAMPO_TERMINE_ISCRIZIONE = "Termine ultimo di iscrizione";
-    public static final String CAMPO_DATA = "Data";
-    public static final String CAMPO_DATA_CONCLUSIVA = "Data conclusiva";
+    public static final String CAMPO_TERMINE_ISCRIZIONE  = "Termine ultimo di iscrizione";
+    public static final String CAMPO_DATA                = "Data";
+    public static final String CAMPO_DATA_CONCLUSIVA     = "Data conclusiva";
+    public static final String CAMPO_TITOLO              = "Titolo";
+    public static final String CAMPO_ORA                 = "Ora";
+    public static final String CAMPO_LUOGO               = "Luogo";
+    public static final String CAMPO_QUOTA               = "Quota individuale";
+    public static final String CAMPO_NUM_PARTECIPANTI    = "Numero di partecipanti";
 
-    private final DatabaseService db;
+    private final IPersistenceService db;
     private final AppData data;
 
-    public PropostaService(DatabaseService db, AppData data)
+    /**
+     * @pre db != null
+     * @pre data != null
+     */
+    public PropostaService(IPersistenceService db, AppData data)
     {
         this.db   = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
@@ -41,10 +50,8 @@ public class PropostaService
      */
     public Proposta creaProposta(String nomeCategoria)
     {
-        Categoria cat = data.findCategoria(nomeCategoria);
-
-        if (cat == null)
-            throw new IllegalArgumentException("Categoria non trovata: " + nomeCategoria);
+        Categoria cat = data.findCategoria(nomeCategoria)
+                .orElseThrow(() -> new IllegalArgumentException("Categoria non trovata: " + nomeCategoria));
 
         return new Proposta(cat);
     }
@@ -140,7 +147,7 @@ public class PropostaService
             return null;
         try
         {
-            return LocalDate.parse(s, ConsoleUI.DATE_FMT);
+            return LocalDate.parse(s, AppConstants.DATE_FMT);
 
         }	catch (Exception e) {
             return null;
@@ -163,18 +170,25 @@ public class PropostaService
         if (p.getStato() != StatoProposta.VALIDA)
             throw new IllegalStateException("La proposta deve essere in stato VALIDA per essere pubblicata.");
 
+        // Re-validate dates: termineIscrizione must still be in the future at publication time
+        LocalDate oggi = LocalDate.now();
+        if (p.getTermineIscrizione() != null && !p.getTermineIscrizione().isAfter(oggi))
+            throw new IllegalStateException(
+                    "Non è più possibile pubblicare: il termine di iscrizione (" +
+                    p.getTermineIscrizione() + ") è già scaduto. Rivalidare la proposta.");
+
         // Duplicate check: same Titolo + Data + Ora + Luogo = same event
-        String titolo = p.getValoriCampi().getOrDefault("Titolo", "").trim().toLowerCase();
-        String dataStr   = p.getValoriCampi().getOrDefault("Data", "").trim();
-        String ora    = p.getValoriCampi().getOrDefault("Ora", "").trim().toLowerCase();
-        String luogo  = p.getValoriCampi().getOrDefault("Luogo", "").trim().toLowerCase();
+        String titolo  = p.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().toLowerCase();
+        String dataStr = p.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim();
+        String ora     = p.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim().toLowerCase();
+        String luogo   = p.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim().toLowerCase();
 
         boolean duplicato = data.getProposte().stream()
                 .anyMatch(existing ->
-                        existing.getValoriCampi().getOrDefault("Titolo", "").trim().equalsIgnoreCase(titolo) &&
-                                existing.getValoriCampi().getOrDefault("Data",   "").trim().equals(dataStr)             &&
-                                existing.getValoriCampi().getOrDefault("Ora",    "").trim().equalsIgnoreCase(ora)    &&
-                                existing.getValoriCampi().getOrDefault("Luogo",  "").trim().equalsIgnoreCase(luogo)
+                        existing.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().equalsIgnoreCase(titolo) &&
+                        existing.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim().equals(dataStr)          &&
+                        existing.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim().equalsIgnoreCase(ora)    &&
+                        existing.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim().equalsIgnoreCase(luogo)
                 );
 
         if (duplicato)
@@ -184,13 +198,66 @@ public class PropostaService
         p.setStato(StatoProposta.APERTA, LocalDate.now());
         p.setDataPubblicazione(LocalDate.now());
 
-        data.getProposte().add(p);
+        data.addProposta(p);
         db.save(data);
     }
 
     // ------------------------------------------------
-    // BACHECA
+    // BATCH IMPORT SUPPORT (package-private, no db.save)
     // ------------------------------------------------
+
+    void pubblicaPropostaNoSave(Proposta p)
+    {
+        if (p.getStato() != StatoProposta.VALIDA)
+            throw new IllegalStateException("La proposta deve essere in stato VALIDA per essere pubblicata.");
+
+        LocalDate oggi = LocalDate.now();
+        if (p.getTermineIscrizione() != null && !p.getTermineIscrizione().isAfter(oggi))
+            throw new IllegalStateException(
+                    "Non è più possibile pubblicare: il termine di iscrizione (" +
+                    p.getTermineIscrizione() + ") è già scaduto. Rivalidare la proposta.");
+
+        String titolo  = p.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().toLowerCase();
+        String dataStr = p.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim();
+        String ora     = p.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim().toLowerCase();
+        String luogo   = p.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim().toLowerCase();
+
+        boolean duplicato = data.getProposte().stream()
+                .anyMatch(existing ->
+                        existing.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().equalsIgnoreCase(titolo) &&
+                        existing.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim().equals(dataStr)          &&
+                        existing.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim().equalsIgnoreCase(ora)    &&
+                        existing.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim().equalsIgnoreCase(luogo)
+                );
+
+        if (duplicato)
+            throw new IllegalStateException(
+                    "Esiste già una proposta con lo stesso Titolo, Data, Ora e Luogo.");
+
+        p.setStato(StatoProposta.APERTA, LocalDate.now());
+        p.setDataPubblicazione(LocalDate.now());
+        data.addProposta(p);
+    }
+
+    void save()
+    {
+        db.save(data);
+    }
+
+    // ------------------------------------------------
+    // BACHECA E ARCHIVIO
+    // ------------------------------------------------
+
+    /**
+     * Restituisce tutte le proposte pubblicate (stato != BOZZA/VALIDA),
+     * usato dal configuratore per consultare l'archivio.
+     */
+    public List<Proposta> getArchivio()
+    {
+        return data.getProposte().stream()
+                .filter(p -> p.getStato() != StatoProposta.BOZZA && p.getStato() != StatoProposta.VALIDA)
+                .collect(Collectors.toList());
+    }
 
     /**
      * Restituisce tutte le proposte aperte.
@@ -243,6 +310,18 @@ public class PropostaService
         return tutti;
     }
 
+    /**
+     * Restituisce i campi citati negli errori di validazione,
+     * confrontando i nomi dei campi con il testo degli errori.
+     * Usato per la correzione parziale (mostrare solo i campi errati).
+     */
+    public List<Campo> getCampiConErrore(Proposta p, List<String> errori)
+    {
+        return getTuttiCampi(p).stream()
+                .filter(c -> errori.stream().anyMatch(e -> e.contains(c.getNome())))
+                .collect(Collectors.toList());
+    }
+
     // Accessor per i tipi di campi separati (usati dalla UI)
     public List<Campo> getCampiBase()
     {
@@ -252,5 +331,26 @@ public class PropostaService
     public List<Campo> getCampiComuni()
     {
         return Collections.unmodifiableList(data.getCampiComuni());
+    }
+
+    /**
+     * Restituisce le proposte aperte a cui il fruitore è iscritto.
+     */
+    public List<Proposta> getProposteIscrittePerFruitore(String username)
+    {
+        return getBacheca().stream()
+                .filter(p -> p.isIscrittoFruitore(username))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Restituisce le proposte ritirabili (APERTA o CONFERMATA).
+     */
+    public List<Proposta> getProposteRitirabili()
+    {
+        return data.getProposte().stream()
+                .filter(p -> p.getStato() == StatoProposta.APERTA
+                          || p.getStato() == StatoProposta.CONFERMATA)
+                .collect(Collectors.toList());
     }
 }

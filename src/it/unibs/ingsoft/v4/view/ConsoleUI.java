@@ -1,23 +1,45 @@
 package it.unibs.ingsoft.v4.view;
 
+import it.unibs.ingsoft.v4.model.AppConstants;
 import it.unibs.ingsoft.v4.model.Campo;
+import it.unibs.ingsoft.v4.model.Categoria;
+import it.unibs.ingsoft.v4.model.Notifica;
+import it.unibs.ingsoft.v4.model.Proposta;
 import it.unibs.ingsoft.v4.model.TipoDato;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 /**
  * Classe che fornisce output formattato e lettura sicura dell'input.
  */
-public final class ConsoleUI
+public final class ConsoleUI implements IAppView
 {
-    public static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    /** Re-exported for backward compatibility; defined in AppConstants. */
+    public static final DateTimeFormatter DATE_FMT = AppConstants.DATE_FMT;
+
+    public static final String CANCEL_KEYWORD = "annulla";
+    public static final String BACK_KEYWORD   = "indietro";
+
+    /** Lanciata quando l'utente digita 'annulla' durante un form. */
+    public static class CancelException extends RuntimeException
+    {
+        public CancelException() { super("Operazione annullata dall'utente."); }
+    }
+
+    /** Lanciata quando l'utente digita 'indietro' durante un form. */
+    public static class BackException extends RuntimeException
+    {
+        public BackException() { super(); }
+    }
 
     private final Scanner scanner;
 
@@ -57,8 +79,8 @@ public final class ConsoleUI
     public String acquisisciStringa(String prompt)
     {
         System.out.print(prompt);
-
-        return scanner.nextLine();
+        String line = scanner.nextLine();
+        return (line == null) ? "" : line.trim();
     }
 
     public int acquisisciIntero(String prompt, int min, int max)
@@ -105,14 +127,48 @@ public final class ConsoleUI
     {
         while (true)
         {
-            String s = acquisisciStringa(prompt + " (gg/mm/aaaa): ").trim();
+            String s = acquisisciStringa(prompt + " (gg/mm/aaaa): ");
+
+            if (s.equalsIgnoreCase(CANCEL_KEYWORD)) throw new CancelException();
 
             try
             {
                 return LocalDate.parse(s, DATE_FMT);
+            }
+            catch (DateTimeParseException e)
+            {
+                stampa("  ❌ Data non valida. Usa il formato gg/mm/aaaa.");
+            }
+        }
+    }
 
-            }	catch (DateTimeParseException e) {
-                stampa("Data non valida. Usa il formato gg/mm/aaaa.");
+    public LocalDate acquisisciDataConVincolo(String prompt, LocalDate minData, String nomeMin)
+    {
+        while (true)
+        {
+            String s = acquisisciStringa(prompt + " (gg/mm/aaaa): ");
+
+            if (s.equalsIgnoreCase(CANCEL_KEYWORD)) throw new CancelException();
+            if (s.equalsIgnoreCase(BACK_KEYWORD))   throw new BackException();
+
+            try
+            {
+                LocalDate d = LocalDate.parse(s, DATE_FMT);
+
+                if (minData != null && !d.isAfter(minData.plusDays(1)))
+                {
+                    stampa("  ❌ Deve essere almeno 2 giorni dopo \"" + nomeMin
+                           + "\" (" + minData.format(DATE_FMT) + ")."
+                           + " Min: " + minData.plusDays(2).format(DATE_FMT) + ".");
+                    continue;
+                }
+
+                stampa("  ✅ Valido");
+                return d;
+            }
+            catch (DateTimeParseException e)
+            {
+                stampa("  ❌ Data non valida. Usa il formato gg/mm/aaaa.");
             }
         }
     }
@@ -165,20 +221,28 @@ public final class ConsoleUI
      * suddivisi per sezione (base -> comuni -> specifici).
      * Usa il TipoDato di ciascun campo per validare l'input.
      */
-    public void compilaCampiProposta(
-            Map<String, String> valoriCampi,
+    public Map<String, String> compilaCampiProposta(
+            Map<String, String> valoriEsistenti,
             List<Campo> campiBase,
             List<Campo> campiComuni,
             List<Campo> campiSpecifici
     )
     {
+        Map<String, String> valori = new HashMap<>(valoriEsistenti);
+        int totale = campiBase.size() + campiComuni.size() + campiSpecifici.size();
+        int[] contatore = {0};
+
         if (!campiBase.isEmpty())
         {
+            newLine();
             stampaSezione("Campi BASE (obbligatori)");
 
             for (Campo c : campiBase)
-                acquisisciValoreCampo(valoriCampi, c);
-
+            {
+                contatore[0]++;
+                System.out.print("  [" + contatore[0] + "/" + totale + "] ");
+                acquisisciValoreCampo(valori, c);
+            }
         }
 
         if (!campiComuni.isEmpty())
@@ -187,8 +251,11 @@ public final class ConsoleUI
             stampaSezione("Campi COMUNI");
 
             for (Campo c : campiComuni)
-                acquisisciValoreCampo(valoriCampi, c);
-
+            {
+                contatore[0]++;
+                System.out.print("  [" + contatore[0] + "/" + totale + "] ");
+                acquisisciValoreCampo(valori, c);
+            }
         }
 
         if (!campiSpecifici.isEmpty())
@@ -197,9 +264,14 @@ public final class ConsoleUI
             stampaSezione("Campi SPECIFICI della categoria");
 
             for (Campo c : campiSpecifici)
-                acquisisciValoreCampo(valoriCampi, c);
-
+            {
+                contatore[0]++;
+                System.out.print("  [" + contatore[0] + "/" + totale + "] ");
+                acquisisciValoreCampo(valori, c);
+            }
         }
+
+        return valori;
     }
 
     /**
@@ -217,15 +289,20 @@ public final class ConsoleUI
         {
             String input = acquisisciStringa(etichetta + ": ").trim();
 
-            // Campo facoltativo lasciato vuoto: mantieni eventuale valore precedente
+            // INVIO senza testo: mantieni valore esistente se presente, altrimenti blocca se obbligatorio
             if (input.isBlank())
             {
-                if (c.isObbligatorio())
+                if (c.isObbligatorio() && (esistente == null || esistente.isBlank()))
                 {
                     stampa("  Campo obbligatorio. Inserisci un valore.");
                     continue;
                 }
 
+                if (esistente != null && !esistente.isBlank())
+                {
+                    valoriCampi.put(c.getNome(), esistente);
+                    stampa("  ✅ Mantenuto: " + esistente);
+                }
                 break;
             }
 
@@ -338,6 +415,184 @@ public final class ConsoleUI
 
     // ---------------------------------------------------------------
     // MENU
+    public void pausa()
+    {
+        acquisisciStringa("Premi INVIO per continuare...");
+    }
+
+    public void stampaSuccesso(String msg) { stampa("  ✅ " + msg); }
+    public void stampaErrore(String msg)   { stampa("  ❌ " + msg); }
+    public void stampaAvviso(String msg)   { stampa("  ⚠️  " + msg); }
+    public void stampaInfo(String msg)     { stampa("  ℹ️  " + msg); }
+
+
+    // ---------------------------------------------------------------
+    // BACHECA
+    // ---------------------------------------------------------------
+
+    public void mostraBacheca(Map<String, List<Proposta>> bacheca,
+                              Function<Proposta, List<Campo>> campiProvider)
+    {
+        if (bacheca.isEmpty())
+        {
+            stampa("La bacheca è vuota: nessuna proposta aperta.");
+            return;
+        }
+
+        for (Map.Entry<String, List<Proposta>> entry : bacheca.entrySet())
+        {
+            stampaSezione("Categoria: " + entry.getKey());
+
+            List<Proposta> proposte = entry.getValue();
+            for (int i = 0; i < proposte.size(); i++)
+            {
+                Proposta p = proposte.get(i);
+                stampa("  [Proposta #" + (i + 1) + "]  Pubblicata il: " + p.getDataPubblicazione()
+                        + "  |  Termine iscrizione: " + p.getTermineIscrizione()
+                        + "  |  Iscritti: " + p.getNumeroIscritti());
+
+                for (Campo c : campiProvider.apply(p))
+                {
+                    String valore = p.getValoriCampi().get(c.getNome());
+                    if (valore != null && !valore.isBlank())
+                        stampa("    " + c.getNome() + ": " + valore);
+                }
+
+                newLine();
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // ARCHIVIO
+    // ---------------------------------------------------------------
+
+    public void mostraArchivio(List<Proposta> archivio, Function<Proposta, List<Campo>> campiProvider)
+    {
+        if (archivio.isEmpty())
+        {
+            stampa("L'archivio è vuoto.");
+            return;
+        }
+
+        for (int i = 0; i < archivio.size(); i++)
+        {
+            Proposta p = archivio.get(i);
+            stampa("  [" + (i + 1) + "] Stato: " + p.getStato()
+                    + "  |  Categoria: " + p.getCategoria().getNome()
+                    + "  |  Pubblicata: " + p.getDataPubblicazione());
+
+            for (Campo c : campiProvider.apply(p))
+            {
+                String valore = p.getValoriCampi().get(c.getNome());
+                if (valore != null && !valore.isBlank())
+                    stampa("    " + c.getNome() + ": " + valore);
+            }
+
+            newLine();
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // NOTIFICHE
+    // ---------------------------------------------------------------
+
+    public void mostraNotifiche(List<Notifica> notifiche)
+    {
+        if (notifiche.isEmpty())
+        {
+            stampa("Nessuna notifica.");
+            return;
+        }
+
+        for (int i = 0; i < notifiche.size(); i++)
+            stampa("  [" + (i + 1) + "] " + notifiche.get(i).getMessaggio()
+                    + "  (ricevuta il: " + notifiche.get(i).getData() + ")");
+    }
+
+    public void mostraRiepilogoProposta(Proposta proposta, List<Campo> tuttiCampi)
+    {
+        stampa("══════════════════════════════════════════════════");
+        stampa("  RIEPILOGO PROPOSTA");
+        stampa("══════════════════════════════════════════════════");
+        stampa(String.format("  %-22s: %s", "Categoria", proposta.getCategoria().getNome()));
+        for (Campo c : tuttiCampi)
+        {
+            String val = proposta.getValoriCampi().getOrDefault(c.getNome(), "");
+            if (!val.isBlank())
+                stampa(String.format("  %-22s: %s", c.getNome(), val));
+        }
+        stampa("══════════════════════════════════════════════════");
+        newLine();
+    }
+
+    public void correggiCampiNonValidi(Map<String, String> valori, List<Campo> campiConErrore)
+    {
+        stampaSezione("Correzione campi con errori");
+        stampa("  INVIO = mantieni valore attuale.");
+        newLine();
+        for (Campo c : campiConErrore)
+            acquisisciValoreCampo(valori, c);
+    }
+
+    public void mostraPropostePerIscrizione(List<Proposta> proposte)
+    {
+        for (int i = 0; i < proposte.size(); i++)
+        {
+            Proposta p    = proposte.get(i);
+            String titolo = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
+            String cat    = p.getCategoria().getNome();
+            String data   = p.getValoriCampi().getOrDefault("Data", "?");
+            String luogo  = p.getValoriCampi().getOrDefault("Luogo", "?");
+            String quota  = p.getValoriCampi().getOrDefault("Quota individuale", "");
+            int    max    = parseIntSafe(p.getValoriCampi().get("Numero di partecipanti"));
+
+            stampa("  " + (i + 1) + ") [" + cat + "] " + titolo);
+            stampa("     Data: " + data + " | Luogo: " + luogo);
+            stampa("     Termine: " + p.getTermineIscrizione()
+                   + " | Iscritti: " + (max > 0
+                       ? p.getNumeroIscritti() + "/" + max
+                       : String.valueOf(p.getNumeroIscritti()))
+                   + (!quota.isBlank() ? " | Quota: €" + quota : ""));
+            newLine();
+        }
+    }
+
+    public void stampaCategorieSelezione(List<Categoria> categorie)
+    {
+        for (int i = 0; i < categorie.size(); i++)
+            stampa("  " + (i + 1) + ") " + categorie.get(i).getNome());
+    }
+
+    public void stampaProposteRitirabili(List<Proposta> proposte)
+    {
+        for (int i = 0; i < proposte.size(); i++)
+        {
+            Proposta p    = proposte.get(i);
+            String titolo = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
+            stampa("  " + (i + 1) + ") [" + p.getStato() + "] " + titolo
+                    + " | Data evento: " + p.getDataEvento());
+        }
+    }
+
+    public void stampaProposteDisdici(List<Proposta> proposte)
+    {
+        for (int i = 0; i < proposte.size(); i++)
+        {
+            Proposta p    = proposte.get(i);
+            String titolo = p.getValoriCampi().getOrDefault("Titolo", "senza titolo");
+            stampa("  " + (i + 1) + ") " + titolo
+                    + " | Termine: " + p.getTermineIscrizione());
+        }
+    }
+
+    private static int parseIntSafe(String s)
+    {
+        if (s == null || s.isBlank()) return 0;
+        try { return Integer.parseInt(s.trim()); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
     // ---------------------------------------------------------------
 
     public void stampaMenu(String titolo, String[] lista)

@@ -2,7 +2,7 @@ package it.unibs.ingsoft.v1.service;
 
 import it.unibs.ingsoft.v1.model.Configuratore;
 import it.unibs.ingsoft.v1.persistence.AppData;
-import it.unibs.ingsoft.v1.persistence.DatabaseService;
+import it.unibs.ingsoft.v1.persistence.IPersistenceService;
 
 import java.util.Objects;
 
@@ -10,15 +10,29 @@ public final class AuthenticationService
 {
     public static final String USERNAME_PREDEFINITO = "config";
     public static final String PASSWORD_PREDEFINITA = "config";
-    private final DatabaseService db;
+    private final IPersistenceService db;
     private final AppData data;
 
-    public AuthenticationService(DatabaseService db, AppData data)
+    /**
+     * @pre db   != null
+     * @pre data != null
+     */
+    public AuthenticationService(IPersistenceService db, AppData data)
     {
         this.db = Objects.requireNonNull(db);
         this.data = Objects.requireNonNull(data);
     }
 
+    /**
+     * Attempts to log in with the given credentials.
+     *
+     * @pre  username != null
+     * @pre  password != null
+     * @post returns a {@link Configuratore} instance if credentials match, {@code null} otherwise
+     * @param username the username
+     * @param password the password
+     * @return the authenticated {@link Configuratore}, or {@code null} if credentials are wrong
+     */
     public Configuratore login(String username, String password)
     {
         if (username == null || password == null)
@@ -36,8 +50,19 @@ public final class AuthenticationService
         return null;
     }
 
-    //REGISTRAZIONE NUOVO CONFIGURATORE
-    //Da chiamare subito dopo il login con credenziali predefinite.
+    /**
+     * Registers a new configurator with the given personal credentials.
+     * Must be called immediately after the first login with default credentials.
+     *
+     * @pre  newUsername != null &amp;&amp; newUsername.trim().length() &gt;= 3
+     * @pre  newPassword != null &amp;&amp; newPassword.trim().length() &gt;= 4
+     * @pre  !newUsername.equalsIgnoreCase({@value #USERNAME_PREDEFINITO})
+     * @post data.getConfiguratori().containsKey(newUsername)
+     * @param newUsername the desired username (min 3 chars)
+     * @param newPassword the desired password (min 4 chars)
+     * @return the newly created {@link Configuratore}
+     * @throws IllegalArgumentException if credentials are too short, reserved, or already taken
+     */
     public Configuratore registraNuovoConfiguratore(String newUsername, String newPassword)
     {
         //Username almeno 3 caratteri e password almeno 3 caratteri
@@ -50,7 +75,7 @@ public final class AuthenticationService
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(newUsername))
             throw new IllegalArgumentException("Username non consentito (riservato).");
 
-        data.getConfiguratori().put(newUsername, newPassword);
+        data.addConfiguratore(newUsername, newPassword);
         db.save(data);
 
         return new Configuratore(newUsername);
