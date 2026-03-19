@@ -2,8 +2,8 @@ package it.unibs.ingsoft.v1.presentation.controller;
 
 import it.unibs.ingsoft.v1.domain.Configuratore;
 import it.unibs.ingsoft.v1.application.AuthenticationService;
-import it.unibs.ingsoft.v1.presentation.view.cli.ConsoleUI;
 import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 
 /**
  * Handles configuratore login and first-time credential setup.
@@ -60,7 +60,7 @@ public final class AuthController
                     ui.newLine();
                     return registered;
                 }
-                catch (ConsoleUI.CancelException e)
+                catch (OperationCancelledException e)
                 {
                     ui.stampaInfo("Registrazione annullata. Esegui di nuovo il login per riprovare.");
                     ui.newLine();
@@ -75,7 +75,7 @@ public final class AuthController
 
     /**
      * Guides the user through first-time credential registration with field-level re-prompts.
-     * Throws {@link ConsoleUI.CancelException} if the user aborts.
+     * Throws {@link OperationCancelledException} if the user aborts.
      */
     private Configuratore registrazioneInterattiva()
     {
@@ -83,7 +83,7 @@ public final class AuthController
         ui.stampaInfo("Username: minimo 3 caratteri, non può essere '" +
                       AuthenticationService.USERNAME_PREDEFINITO + "'.");
         ui.stampaInfo("Password: minimo 4 caratteri.");
-        ui.stampaInfo(ConsoleUI.HINT_ANNULLA);
+        ui.stampaInfo(IAppView.HINT_ANNULLA);
         ui.newLine();
 
         while (true)

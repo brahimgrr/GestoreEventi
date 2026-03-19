@@ -8,17 +8,31 @@ import java.util.Objects;
 
 /**
  * Immutable value object representing a field.
- * Identity is determined by name only (case-insensitive), as field names are globally unique.
+ *
+ * <p><b>Invariant:</b> {@code nome} is never null or blank; {@code tipo} and {@code tipoDato} are never null.</p>
+ * <p>Identity is determined by name only (case-insensitive), as field names must be unique
+ * within their scope (globally for base/common, per-category for specific fields).</p>
  */
 public final class Campo
 {
     private final String    nome;
     private final TipoCampo tipo;
+    private final TipoDato  tipoDato;
     private final boolean   obbligatorio;
 
+    /**
+     * @pre  nome != null &amp;&amp; !nome.isBlank()
+     * @pre  tipo != null
+     * @pre  tipoDato != null
+     * @post getNome().equals(nome.trim())
+     * @post getTipo() == tipo
+     * @post getTipoDato() == tipoDato
+     * @post isObbligatorio() == obbligatorio
+     */
     @JsonCreator
     public Campo(@JsonProperty("nome")         String    nome,
                  @JsonProperty("tipo")         TipoCampo tipo,
+                 @JsonProperty("tipoDato")     TipoDato  tipoDato,
                  @JsonProperty("obbligatorio") boolean   obbligatorio)
     {
         if (nome == null || nome.isBlank())
@@ -26,12 +40,22 @@ public final class Campo
 
         this.nome         = nome.trim();
         this.tipo         = Objects.requireNonNull(tipo, "Tipo nullo.");
+        this.tipoDato     = tipoDato != null ? tipoDato : TipoDato.STRINGA;
         this.obbligatorio = obbligatorio;
     }
 
-    public String getNome()        { return nome; }
-    public TipoCampo getTipo()     { return tipo; }
-    public boolean isObbligatorio(){ return obbligatorio; }
+    /**
+     * Convenience constructor that defaults {@code tipoDato} to {@link TipoDato#STRINGA}.
+     */
+    public Campo(String nome, TipoCampo tipo, boolean obbligatorio)
+    {
+        this(nome, tipo, TipoDato.STRINGA, obbligatorio);
+    }
+
+    public String getNome()         { return nome; }
+    public TipoCampo getTipo()      { return tipo; }
+    public TipoDato getTipoDato()   { return tipoDato; }
+    public boolean isObbligatorio() { return obbligatorio; }
 
     /**
      * Returns a new {@code Campo} identical to this one except for the {@code obbligatorio} flag.
@@ -39,7 +63,7 @@ public final class Campo
      */
     public Campo withObbligatorio(boolean nuovoValore)
     {
-        return new Campo(this.nome, this.tipo, nuovoValore);
+        return new Campo(this.nome, this.tipo, this.tipoDato, nuovoValore);
     }
 
     // ---------------------------------------------------------------
@@ -75,6 +99,6 @@ public final class Campo
     @Override
     public String toString()
     {
-        return nome + (obbligatorio ? "  (obbligatorio)" : "");
+        return nome + " [" + tipoDato + "]" + (obbligatorio ? "  (obbligatorio)" : "");
     }
 }

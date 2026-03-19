@@ -12,12 +12,14 @@ import java.util.function.Predicate;
  */
 public interface IInputView
 {
+    /** Context hint shown at the start of every form that accepts free-text input. */
+    String HINT_ANNULLA = "Digita 'annulla' per annullare.";
+
     String acquisisciStringa(String prompt);
 
     /**
      * Acquires a string, re-prompting inline until {@code validator} passes.
-     * Throws {@link it.unibs.ingsoft.v1.presentation.view.cli.ConsoleUI.CancelException}
-     * if the user types the cancel keyword.
+     * Throws {@link OperationCancelledException} if the user types the cancel keyword.
      *
      * @param messaggioErrore shown with ❌ on each failed validation attempt
      */
@@ -37,6 +39,11 @@ public interface IInputView
     int acquisisciIntero(String prompt, int min, int max);
 
     boolean acquisisciSiNo(String prompt);
+
+    /**
+     * Presents the available data types and returns the user's choice.
+     */
+    it.unibs.ingsoft.v1.domain.TipoDato acquisisciTipoDato(String prompt);
 
     /**
      * Interactively collects a list of names, one per line.

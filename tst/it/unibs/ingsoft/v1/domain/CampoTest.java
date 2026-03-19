@@ -11,14 +11,24 @@ class CampoTest
     // ───────────────────── Construction ─────────────────────
 
     @Test
-    @DisplayName("Constructor with valid params stores name, type, mandatory flag")
+    @DisplayName("Constructor with valid params stores name, type, tipoDato, mandatory flag")
     void constructor_validParams_storesCorrectly()
     {
-        Campo c = new Campo("Titolo", TipoCampo.BASE, true);
+        Campo c = new Campo("Titolo", TipoCampo.BASE, TipoDato.STRINGA, true);
 
         assertEquals("Titolo", c.getNome());
         assertEquals(TipoCampo.BASE, c.getTipo());
+        assertEquals(TipoDato.STRINGA, c.getTipoDato());
         assertTrue(c.isObbligatorio());
+    }
+
+    @Test
+    @DisplayName("3-arg constructor defaults tipoDato to STRINGA")
+    void constructor_threeArgs_defaultsTipoDato()
+    {
+        Campo c = new Campo("Titolo", TipoCampo.BASE, true);
+
+        assertEquals(TipoDato.STRINGA, c.getTipoDato());
     }
 
     @Test
@@ -50,29 +60,29 @@ class CampoTest
     void constructor_nullType_throwsException()
     {
         assertThrows(NullPointerException.class,
-                () -> new Campo("Titolo", null, true));
+                () -> new Campo("Titolo", null, TipoDato.STRINGA, true));
     }
 
-    // ───────────────────── Mutator ─────────────────────
+    // ───────────────────── withObbligatorio ─────────────────────
 
     @Test
-    @DisplayName("setObbligatorio toggles mandatory flag")
-    void setObbligatorio_toggle_changesFlag()
+    @DisplayName("withObbligatorio returns new Campo with toggled flag")
+    void withObbligatorio_toggle_returnsNewInstance()
     {
-        Campo c = new Campo("Note", TipoCampo.COMUNE, false);
+        Campo c = new Campo("Note", TipoCampo.COMUNE, TipoDato.STRINGA, false);
         assertFalse(c.isObbligatorio());
 
-        c.setObbligatorio(true);
-        assertTrue(c.isObbligatorio());
-
-        c.setObbligatorio(false);
-        assertFalse(c.isObbligatorio());
+        Campo updated = c.withObbligatorio(true);
+        assertTrue(updated.isObbligatorio());
+        assertFalse(c.isObbligatorio()); // original unchanged
+        assertEquals(c.getNome(), updated.getNome());
+        assertEquals(c.getTipoDato(), updated.getTipoDato());
     }
 
     // ───────────────────── equals / hashCode ─────────────────────
 
     @Test
-    @DisplayName("equals is case-insensitive on name and same type")
+    @DisplayName("equals is case-insensitive on name")
     void equals_sameNameDifferentCase_returnsTrue()
     {
         Campo a = new Campo("Titolo", TipoCampo.BASE, true);
@@ -81,12 +91,12 @@ class CampoTest
     }
 
     @Test
-    @DisplayName("equals returns false for different types")
-    void equals_differentType_returnsFalse()
+    @DisplayName("equals ignores type — identity is name only")
+    void equals_differentType_sameNameReturnsTrue()
     {
         Campo a = new Campo("Titolo", TipoCampo.BASE, true);
         Campo b = new Campo("Titolo", TipoCampo.COMUNE, true);
-        assertNotEquals(a, b);
+        assertEquals(a, b);
     }
 
     @Test
@@ -110,21 +120,21 @@ class CampoTest
     // ───────────────────── toString ─────────────────────
 
     @Test
-    @DisplayName("toString includes name, type, and mandatory info")
+    @DisplayName("toString includes name and tipoDato")
     void toString_containsAllInfo()
     {
-        Campo c = new Campo("Titolo", TipoCampo.BASE, true);
+        Campo c = new Campo("Titolo", TipoCampo.BASE, TipoDato.STRINGA, true);
         String s = c.toString();
         assertTrue(s.contains("Titolo"));
-        assertTrue(s.contains("BASE"));
+        assertTrue(s.contains("STRINGA"));
         assertTrue(s.contains("obbligatorio"));
     }
 
     @Test
-    @DisplayName("toString shows facoltativo for non-mandatory field")
-    void toString_optional_showsFacoltativo()
+    @DisplayName("toString for non-mandatory field does not show obbligatorio")
+    void toString_optional_noObbligatorio()
     {
         Campo c = new Campo("Note", TipoCampo.COMUNE, false);
-        assertTrue(c.toString().contains("facoltativo"));
+        assertFalse(c.toString().contains("obbligatorio"));
     }
 }

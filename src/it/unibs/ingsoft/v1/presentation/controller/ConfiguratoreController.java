@@ -1,11 +1,15 @@
 package it.unibs.ingsoft.v1.presentation.controller;
 
 import it.unibs.ingsoft.v1.domain.Categoria;
+import it.unibs.ingsoft.v1.domain.TipoDato;
 import it.unibs.ingsoft.v1.application.CatalogoService;
-import it.unibs.ingsoft.v1.presentation.view.cli.ConsoleUI;
 import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Handles all configuratore menu interactions.
@@ -106,13 +110,25 @@ public final class ConfiguratoreController
             return;
         }
 
+        ui.stampaInfo("I seguenti 8 campi base predefiniti verranno impostati automaticamente:");
+        ui.stampaCampi(it.unibs.ingsoft.v1.domain.CampoBaseDefinito.tutti());
+        ui.newLine();
+
         try
         {
-            List<String> nomi = ui.acquisisciListaNomi("Inserisci i campi base (tutti obbligatori).");
-            cat.fissareCampiBase(nomi);
+            if (ui.acquisisciSiNo("Vuoi aggiungere campi base extra?"))
+            {
+                List<String> extra = ui.acquisisciListaNomi(
+                        "Inserisci i campi base aggiuntivi (tutti obbligatori).");
+                cat.fissareCampiBaseConExtra(extra);
+            }
+            else
+            {
+                cat.fissareCampiBase();
+            }
             ui.stampaSuccesso("Campi base fissati e salvati.");
         }
-        catch (ConsoleUI.CancelException e)
+        catch (OperationCancelledException e)
         {
             ui.stampaInfo("Operazione annullata. I campi base non sono stati salvati.");
         }
@@ -150,23 +166,24 @@ public final class ConfiguratoreController
                 case 1:
                     try
                     {
-                        ui.stampaInfo(ConsoleUI.HINT_ANNULLA);
+                        ui.stampaInfo(IAppView.HINT_ANNULLA);
                         String nome = ui.acquisisciStringaConValidazione(
                                 "Nome campo comune: ",
                                 n -> !n.isBlank() && !cat.nomeEsiste(n),
                                 "Nome non valido o già esistente."
                         );
+                        TipoDato tipoDato = ui.acquisisciTipoDato("Tipo di dato:");
                         boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
                         String flagStr = obbl ? "obbligatorio" : "facoltativo";
-                        if (!ui.acquisisciSiNo("Aggiungere '" + nome + "' (" + flagStr + ")?"))
+                        if (!ui.acquisisciSiNo("Aggiungere '" + nome + "' [" + tipoDato + ", " + flagStr + "]?"))
                         {
                             ui.stampaInfo("Operazione annullata.");
                             break;
                         }
-                        cat.addCampoComune(nome, obbl);
+                        cat.addCampoComune(nome, tipoDato, obbl);
                         ui.stampaSuccesso("Campo comune aggiunto.");
                     }
-                    catch (ConsoleUI.CancelException e)
+                    catch (OperationCancelledException e)
                     {
                         ui.stampaInfo("Operazione annullata.");
                     }
@@ -181,6 +198,11 @@ public final class ConfiguratoreController
                     ui.selezionaElemento("Seleziona campo comune da rimuovere:", cat.getCampiComuni())
                       .ifPresentOrElse(
                           c -> {
+                              if (!ui.acquisisciSiNo("Rimuovere il campo '" + c.getNome() + "'?"))
+                              {
+                                  ui.stampaInfo("Operazione annullata.");
+                                  return;
+                              }
                               boolean rimosso = cat.removeCampoComune(c.getNome());
                               if (rimosso) ui.stampaSuccesso("Campo rimosso.");
                               else ui.stampaErrore("Campo non trovato.");
@@ -238,7 +260,7 @@ public final class ConfiguratoreController
                 case 1:
                     try
                     {
-                        ui.stampaInfo(ConsoleUI.HINT_ANNULLA);
+                        ui.stampaInfo(IAppView.HINT_ANNULLA);
                         String nome = ui.acquisisciStringaConValidazione(
                                 "Nome nuova categoria: ",
                                 n -> !n.isBlank(),
@@ -247,7 +269,7 @@ public final class ConfiguratoreController
                         cat.createCategoria(nome);
                         ui.stampaSuccesso("Categoria creata.");
                     }
-                    catch (ConsoleUI.CancelException e)
+                    catch (OperationCancelledException e)
                     {
                         ui.stampaInfo("Operazione annullata.");
                     }
@@ -316,23 +338,24 @@ public final class ConfiguratoreController
                 case 1:
                     try
                     {
-                        ui.stampaInfo(ConsoleUI.HINT_ANNULLA);
+                        ui.stampaInfo(IAppView.HINT_ANNULLA);
                         String nome = ui.acquisisciStringaConValidazione(
                                 "Nome campo specifico: ",
                                 n -> !n.isBlank() && !cat.nomeEsiste(n),
                                 "Nome non valido o già esistente."
                         );
+                        TipoDato tipoDato = ui.acquisisciTipoDato("Tipo di dato:");
                         boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
                         String flagStr = obbl ? "obbligatorio" : "facoltativo";
-                        if (!ui.acquisisciSiNo("Aggiungere '" + nome + "' (" + flagStr + ")?"))
+                        if (!ui.acquisisciSiNo("Aggiungere '" + nome + "' [" + tipoDato + ", " + flagStr + "]?"))
                         {
                             ui.stampaInfo("Operazione annullata.");
                             break;
                         }
-                        cat.addCampoSpecifico(nomeCategoria, nome, obbl);
+                        cat.addCampoSpecifico(nomeCategoria, nome, tipoDato, obbl);
                         ui.stampaSuccesso("Campo specifico aggiunto.");
                     }
-                    catch (ConsoleUI.CancelException e)
+                    catch (OperationCancelledException e)
                     {
                         ui.stampaInfo("Operazione annullata.");
                     }
@@ -394,7 +417,17 @@ public final class ConfiguratoreController
         ui.stampaCampi(cat.getCampiCondivisi());
         ui.newLine();
         ui.stampaSezione("Categorie");
-        ui.stampaCategorieDettaglio(cat.getCategorie());
+
+        Map<String, List<String>> categorieVM = new LinkedHashMap<>();
+        for (Categoria c : cat.getCategorie())
+        {
+            List<String> campiStr = c.getCampiSpecifici().stream()
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+            categorieVM.put(c.getNome(), campiStr);
+        }
+        ui.stampaCategorieDettaglio(categorieVM);
+
         ui.newLine();
         ui.pausaConSpaziatura();
     }
