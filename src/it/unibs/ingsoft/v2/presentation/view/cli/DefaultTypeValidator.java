@@ -1,0 +1,67 @@
+package it.unibs.ingsoft.v2.presentation.view.cli;
+
+import it.unibs.ingsoft.v2.domain.AppConstants;
+import it.unibs.ingsoft.v2.domain.TipoDato;
+
+import java.time.LocalDate;
+import java.util.Set;
+
+/**
+ * Default implementation of {@link TypeValidator}.
+ * Validates that a raw string is parseable as the given {@link TipoDato}.
+ */
+public final class DefaultTypeValidator implements TypeValidator
+{
+    public static final DefaultTypeValidator INSTANCE = new DefaultTypeValidator();
+
+    private static final Set<String> VALORI_SI  = Set.of("s", "si", "sì", "true");
+    private static final Set<String> VALORI_NO  = Set.of("n", "no", "false");
+
+    private DefaultTypeValidator() {}
+
+    @Override
+    public String validate(String input, TipoDato tipo)
+    {
+        if (input == null || input.isBlank()) return null; // blank handled separately
+
+        switch (tipo)
+        {
+            case STRINGA:   return null;
+            case INTERO:    return validateIntero(input);
+            case DECIMALE:  return validateDecimale(input);
+            case DATA:      return validateData(input);
+            case BOOLEANO:  return validateBooleano(input);
+            default:        return null;
+        }
+    }
+
+    private String validateIntero(String s)
+    {
+        try { Integer.parseInt(s.trim()); return null; }
+        catch (NumberFormatException e) { return "Valore non valido: inserire un numero intero."; }
+    }
+
+    private String validateDecimale(String s)
+    {
+        try { Double.parseDouble(s.trim().replace(',', '.')); return null; }
+        catch (NumberFormatException e) { return "Valore non valido: inserire un numero decimale."; }
+    }
+
+    private String validateData(String s)
+    {
+        try { LocalDate.parse(s.trim(), AppConstants.DATE_FMT); return null; }
+        catch (Exception e)
+        {
+            return "Valore non valido: inserire una data nel formato " +
+                   AppConstants.DATE_FMT.toString().replace("Value(DayOfMonth,2)'/'Value(MonthOfYear,2)'/'Value(YearOfEra,4,19,EXCEEDS_PAD)", "dd/MM/yyyy") +
+                   " (es. 25/12/2026).";
+        }
+    }
+
+    private String validateBooleano(String s)
+    {
+        String lower = s.trim().toLowerCase();
+        if (VALORI_SI.contains(lower) || VALORI_NO.contains(lower)) return null;
+        return "Valore non valido: inserire s/si/sì oppure n/no.";
+    }
+}

@@ -1,7 +1,7 @@
 package it.unibs.ingsoft.v5.service;
 
-import it.unibs.ingsoft.v5.model.Campo;
 import it.unibs.ingsoft.v5.model.TipoDato;
+import it.unibs.ingsoft.v5.persistence.IUnitOfWork;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,19 +12,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Imports common fields, categories, and proposals from CSV files in a single
+ * transactional unit of work. On any failure, the unit of work is rolled back so
+ * the system state is unchanged (no partial writes).
+ */
 public final class BatchImportService
 {
-    private final CategoriaService  categoriaService;
-    private final PropostaService   propostaService;
+    private final CampoService     campoService;
+    private final CategoriaService categoriaService;
+    private final PropostaService  propostaService;
+    private final IUnitOfWork      unitOfWork;
 
     /**
-     * @pre categoriaService != null
-     * @pre propostaService != null
+     * @pre campoService      != null
+     * @pre categoriaService  != null
+     * @pre propostaService   != null
+     * @pre unitOfWork        != null
      */
-    public BatchImportService(CategoriaService categoriaService, PropostaService propostaService)
+    public BatchImportService(CampoService campoService, CategoriaService categoriaService,
+                              PropostaService propostaService, IUnitOfWork unitOfWork)
     {
-        this.categoriaService = Objects.requireNonNull(categoriaService, "categoriaService non può essere null.");
-        this.propostaService  = Objects.requireNonNull(propostaService, "propostaService non può essere null.");
+        this.campoService      = Objects.requireNonNull(campoService,     "campoService non può essere null.");
+        this.categoriaService  = Objects.requireNonNull(categoriaService, "categoriaService non può essere null.");
+        this.propostaService   = Objects.requireNonNull(propostaService,  "propostaService non può essere null.");
+        this.unitOfWork        = Objects.requireNonNull(unitOfWork,       "unitOfWork non può essere null.");
     }
 
     // ---------------------------------------------------------------
@@ -35,6 +47,7 @@ public final class BatchImportService
      * Imports common fields from a CSV file.
      * Format per line: nome,tipo,obbligatorio
      * Returns a report of what happened (successes and errors).
+     * The entire import is transactional: on any I/O error the batch is rolled back.
      */
     public List<String> importaCampiComuni(Path file)
     {
@@ -43,37 +56,51 @@ public final class BatchImportService
         List<String> lines = leggiFile(file, report);
         if (lines == null) return report;
 
-        for (String line : lines)
+        unitOfWork.begin();
+        boolean success = false;
+
+        try
         {
-            if (line.isBlank() || line.startsWith("#")) continue;
-
-            String[] parts = line.split(",", -1);
-
-            if (parts.length < 3)
+            for (String line : lines)
             {
-                report.add("SKIP (formato errato): " + line);
-                continue;
+                if (line.isBlank() || line.startsWith("#")) continue;
+
+                String[] parts = line.split(",", -1);
+
+                if (parts.length < 3)
+                {
+                    report.add("SKIP (formato errato): " + line);
+                    continue;
+                }
+
+                String  nome     = parts[0].trim();
+                String  tipoStr  = parts[1].trim().toUpperCase();
+                boolean obbligat = Boolean.parseBoolean(parts[2].trim());
+
+                TipoDato tipo = parseTipo(tipoStr, line, report);
+                if (tipo == null) continue;
+
+                try
+                {
+                    campoService.addCampoComune(nome, tipo, obbligat);
+                    report.add("OK campo comune: " + nome);
+                }
+                catch (Exception e)
+                {
+                    report.add("ERRORE campo comune \"" + nome + "\": " + e.getMessage());
+                }
             }
 
-            String  nome       = parts[0].trim();
-            String  tipoStr    = parts[1].trim().toUpperCase();
-            boolean obbligat   = Boolean.parseBoolean(parts[2].trim());
-
-            TipoDato tipo = parseTipo(tipoStr, line, report);
-            if (tipo == null) continue;
-
-            try
-            {
-                categoriaService.addCampoComuneNoSave(nome, tipo, obbligat);
-                report.add("OK campo comune: " + nome);
-            }
-            catch (Exception e)
-            {
-                report.add("ERRORE campo comune \"" + nome + "\": " + e.getMessage());
-            }
+            success = true;
+        }
+        finally
+        {
+            if (success)
+                unitOfWork.commit();
+            else
+                unitOfWork.rollback();
         }
 
-        categoriaService.save();
         return report;
     }
 
@@ -86,6 +113,7 @@ public final class BatchImportService
      *   nome,tipo,obbligatorio
      *   ...
      * Returns a report of what happened.
+     * The entire import is transactional.
      */
     public List<String> importaCategorie(Path file)
     {
@@ -94,78 +122,92 @@ public final class BatchImportService
         List<String> lines = leggiFile(file, report);
         if (lines == null) return report;
 
-        String        nomeCategoria  = null;
-        boolean       aspettaCategoria = false;
-        boolean       aspettaCampi   = false;
+        unitOfWork.begin();
+        boolean success = false;
 
-        for (String line : lines)
+        try
         {
-            if (line.isBlank()) continue;
+            String  nomeCategoria    = null;
+            boolean aspettaCategoria = false;
+            boolean aspettaCampi     = false;
 
-            if (line.startsWith("# categoria"))
+            for (String line : lines)
             {
-                aspettaCategoria = true;
-                aspettaCampi     = false;
-                continue;
-            }
+                if (line.isBlank()) continue;
 
-            if (line.startsWith("# campi specifici"))
-            {
-                aspettaCampi     = true;
-                aspettaCategoria = false;
-                continue;
-            }
-
-            if (line.startsWith("#")) continue;
-
-            if (aspettaCategoria)
-            {
-                nomeCategoria = line.trim();
-                aspettaCategoria = false;
-
-                try
+                if (line.startsWith("# categoria"))
                 {
-                    categoriaService.createCategoriaNoSave(nomeCategoria);
-                    report.add("OK categoria: " + nomeCategoria);
-                }
-                catch (Exception e)
-                {
-                    report.add("ERRORE categoria \"" + nomeCategoria + "\": " + e.getMessage());
-                    nomeCategoria = null;
-                }
-                continue;
-            }
-
-            if (aspettaCampi && nomeCategoria != null)
-            {
-                String[] parts = line.split(",", -1);
-
-                if (parts.length < 3)
-                {
-                    report.add("SKIP campo specifico (formato errato): " + line);
+                    aspettaCategoria = true;
+                    aspettaCampi     = false;
                     continue;
                 }
 
-                String   nome     = parts[0].trim();
-                String   tipoStr  = parts[1].trim().toUpperCase();
-                boolean  obbligat = Boolean.parseBoolean(parts[2].trim());
-
-                TipoDato tipo = parseTipo(tipoStr, line, report);
-                if (tipo == null) continue;
-
-                try
+                if (line.startsWith("# campi specifici"))
                 {
-                    categoriaService.addCampoSpecificoNoSave(nomeCategoria, nome, tipo, obbligat);
-                    report.add("  OK campo specifico \"" + nome + "\" -> " + nomeCategoria);
+                    aspettaCampi     = true;
+                    aspettaCategoria = false;
+                    continue;
                 }
-                catch (Exception e)
+
+                if (line.startsWith("#")) continue;
+
+                if (aspettaCategoria)
                 {
-                    report.add("  ERRORE campo specifico \"" + nome + "\": " + e.getMessage());
+                    nomeCategoria    = line.trim();
+                    aspettaCategoria = false;
+
+                    try
+                    {
+                        categoriaService.createCategoria(nomeCategoria);
+                        report.add("OK categoria: " + nomeCategoria);
+                    }
+                    catch (Exception e)
+                    {
+                        report.add("ERRORE categoria \"" + nomeCategoria + "\": " + e.getMessage());
+                        nomeCategoria = null;
+                    }
+                    continue;
+                }
+
+                if (aspettaCampi && nomeCategoria != null)
+                {
+                    String[] parts = line.split(",", -1);
+
+                    if (parts.length < 3)
+                    {
+                        report.add("SKIP campo specifico (formato errato): " + line);
+                        continue;
+                    }
+
+                    String   nome     = parts[0].trim();
+                    String   tipoStr  = parts[1].trim().toUpperCase();
+                    boolean  obbligat = Boolean.parseBoolean(parts[2].trim());
+
+                    TipoDato tipo = parseTipo(tipoStr, line, report);
+                    if (tipo == null) continue;
+
+                    try
+                    {
+                        categoriaService.addCampoSpecifico(nomeCategoria, nome, tipo, obbligat);
+                        report.add("  OK campo specifico \"" + nome + "\" -> " + nomeCategoria);
+                    }
+                    catch (Exception e)
+                    {
+                        report.add("  ERRORE campo specifico \"" + nome + "\": " + e.getMessage());
+                    }
                 }
             }
+
+            success = true;
+        }
+        finally
+        {
+            if (success)
+                unitOfWork.commit();
+            else
+                unitOfWork.rollback();
         }
 
-        categoriaService.save();
         return report;
     }
 
@@ -173,6 +215,7 @@ public final class BatchImportService
      * Imports proposals from a CSV file.
      * Format: key,value pairs per line, blank line between proposals.
      * Returns a report of what happened.
+     * The entire import is transactional.
      */
     public List<String> importaProposte(Path file)
     {
@@ -181,7 +224,7 @@ public final class BatchImportService
         List<String> lines = leggiFile(file, report);
         if (lines == null) return report;
 
-        // Split lines into blocks separated by blank lines
+        // Parse all blocks first (no mutation yet)
         List<Map<String, String>> blocks = new ArrayList<>();
         Map<String, String> current = new LinkedHashMap<>();
 
@@ -207,47 +250,59 @@ public final class BatchImportService
             current.put(parts[0].trim(), parts[1].trim());
         }
 
-        // Don't forget the last block if file doesn't end with blank line
         if (!current.isEmpty())
             blocks.add(current);
 
-        // Process each block as a proposal
-        for (Map<String, String> block : blocks)
+        unitOfWork.begin();
+        boolean success = false;
+
+        try
         {
-            String nomeCategoria = block.get("categoria");
-
-            if (nomeCategoria == null)
+            for (Map<String, String> block : blocks)
             {
-                report.add("SKIP proposta: campo 'categoria' mancante.");
-                continue;
-            }
+                String nomeCategoria = block.get("categoria");
 
-            try
-            {
-                var proposta = propostaService.creaProposta(nomeCategoria);
-                Map<String, String> campi = new java.util.HashMap<>(block);
-                campi.remove("categoria");
-                proposta.putAllValoriCampi(campi);
-
-                List<String> errori = propostaService.validaProposta(proposta);
-
-                if (!errori.isEmpty())
+                if (nomeCategoria == null)
                 {
-                    report.add("ERRORE proposta [" + nomeCategoria + "]: " + errori);
+                    report.add("SKIP proposta: campo 'categoria' mancante.");
                     continue;
                 }
 
-                propostaService.pubblicaPropostaNoSave(proposta);
-                String titolo = block.getOrDefault("Titolo", "senza titolo");
-                report.add("OK proposta pubblicata: \"" + titolo + "\"");
+                try
+                {
+                    var proposta = propostaService.creaProposta(nomeCategoria);
+                    Map<String, String> campi = new java.util.HashMap<>(block);
+                    campi.remove("categoria");
+                    proposta.putAllValoriCampi(campi);
+
+                    List<String> errori = propostaService.validaProposta(proposta);
+
+                    if (!errori.isEmpty())
+                    {
+                        report.add("ERRORE proposta [" + nomeCategoria + "]: " + errori);
+                        continue;
+                    }
+
+                    propostaService.pubblicaPropostaSenzaSalvare(proposta);
+                    String titolo = block.getOrDefault("Titolo", "senza titolo");
+                    report.add("OK proposta pubblicata: \"" + titolo + "\"");
+                }
+                catch (Exception e)
+                {
+                    report.add("ERRORE proposta [" + nomeCategoria + "]: " + e.getMessage());
+                }
             }
-            catch (Exception e)
-            {
-                report.add("ERRORE proposta [" + nomeCategoria + "]: " + e.getMessage());
-            }
+
+            success = true;
+        }
+        finally
+        {
+            if (success)
+                unitOfWork.commit();
+            else
+                unitOfWork.rollback();
         }
 
-        propostaService.save();
         return report;
     }
 

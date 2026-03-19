@@ -1,8 +1,9 @@
 package it.unibs.ingsoft.v4.service;
 
 import it.unibs.ingsoft.v4.model.Configuratore;
-import it.unibs.ingsoft.v4.persistence.AppData;
-import it.unibs.ingsoft.v4.persistence.IPersistenceService;
+import it.unibs.ingsoft.v4.persistence.FruitoreData;
+import it.unibs.ingsoft.v4.persistence.IUtenteRepository;
+import it.unibs.ingsoft.v4.persistence.UtenteData;
 
 import java.util.Objects;
 
@@ -11,37 +12,31 @@ public final class AuthenticationService
     public static final String USERNAME_PREDEFINITO = "config";
     public static final String PASSWORD_PREDEFINITA = "config";
 
-    private final IPersistenceService db;
-    private final AppData data;
+    private final IUtenteRepository repo;
+    private final UtenteData        utenti;
+    private final FruitoreData      fruitori;
 
     /**
-     * @pre db != null
-     * @pre data != null
+     * @pre repo     != null
+     * @pre utenti   != null
+     * @pre fruitori != null
      */
-    public AuthenticationService(IPersistenceService db, AppData data)
+    public AuthenticationService(IUtenteRepository repo, UtenteData utenti, FruitoreData fruitori)
     {
-        this.db = Objects.requireNonNull(db);
-        this.data = Objects.requireNonNull(data);
+        this.repo     = Objects.requireNonNull(repo);
+        this.utenti   = Objects.requireNonNull(utenti);
+        this.fruitori = Objects.requireNonNull(fruitori);
     }
 
-    /**
-     * Attempts login for a configuratore.
-     *
-     * @pre username != null
-     * @pre password != null
-     * @post returns Configuratore if valid, null otherwise
-     */
     public Configuratore login(String username, String password)
     {
         if (username == null || password == null)
             return null;
 
-        //CASO CREDENZIALI PREDEFINITE
         if (username.equals(USERNAME_PREDEFINITO) && password.equals(PASSWORD_PREDEFINITA))
             return new Configuratore(USERNAME_PREDEFINITO);
 
-        // CASO: CREDENZIALI SALVATE
-        String passSalvata = data.getConfiguratori().get(username);
+        String passSalvata = utenti.getConfiguratori().get(username);
         if (passSalvata != null && passSalvata.equals(password))
             return new Configuratore(username);
 
@@ -49,38 +44,32 @@ public final class AuthenticationService
     }
 
     /**
-     * Registers a new configuratore with personal credentials.
-     * To be called immediately after first login with the default credentials.
-     *
-     * @pre newUsername.trim().length() >= 3
-     * @pre newPassword.trim().length() >= 4
-     * @post data.getConfiguratori().containsKey(newUsername)
-     * @throws IllegalArgumentException if credentials are invalid or username is already taken
+     * @pre  newUsername != null &amp;&amp; newUsername.trim().length() &gt;= 3
+     * @pre  newPassword != null &amp;&amp; newPassword.trim().length() &gt;= 4
+     * @throws IllegalArgumentException if credentials invalid or username taken
      */
     public Configuratore registraNuovoConfiguratore(String newUsername, String newPassword)
     {
-        //Username almeno 3 caratteri e password almeno 3 caratteri
         validaCredenziali(newUsername, newPassword);
 
-        if (data.getConfiguratori().containsKey(newUsername))
+        if (utenti.getConfiguratori().containsKey(newUsername))
             throw new IllegalArgumentException("Username già esistente (usato da un configuratore).");
 
-        if (data.getFruitori().containsKey(newUsername))
+        if (fruitori.getFruitori().containsKey(newUsername))
             throw new IllegalArgumentException("Username già esistente (usato da un fruitore).");
 
-        //NON ACCETTO CONFIG COME USERNAME
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(newUsername))
             throw new IllegalArgumentException("Username non consentito (riservato).");
 
-        data.addConfiguratore(newUsername, newPassword);
-        db.save(data);
+        utenti.addConfiguratore(newUsername, newPassword);
+        repo.save(utenti);
 
         return new Configuratore(newUsername);
     }
 
     public boolean esistonoConfiguratori()
     {
-        return !data.getConfiguratori().isEmpty();
+        return !utenti.getConfiguratori().isEmpty();
     }
 
     private static void validaCredenziali(String username, String password)

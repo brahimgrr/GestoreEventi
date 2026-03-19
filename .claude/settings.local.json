@@ -8,7 +8,19 @@
       "Bash(grep -l DatabaseService c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/src/it/unibs/ingsoft/v3/service/*.java)",
       "Bash(grep -v \"//.*assert\")",
       "Bash(grep -v \"//.*Integer\")",
-      "Bash(ls \"c:\\\\Users\\\\Brahim\\\\Desktop\\\\ProgettoSw\\\\GestoreEventi\\\\tst\\\\it\\\\unibs\\\\ingsoft\\\\v3\\\\model\"\" 2>/dev/null || echo \"DIRECTORY_EMPTY_OR_NOT_FOUND \")"
+      "Bash(ls \"c:\\\\Users\\\\Brahim\\\\Desktop\\\\ProgettoSw\\\\GestoreEventi\\\\tst\\\\it\\\\unibs\\\\ingsoft\\\\v3\\\\model\"\" 2>/dev/null || echo \"DIRECTORY_EMPTY_OR_NOT_FOUND \")",
+      "Bash(grep -r \"AppData\\\\|IPersistenceService\\\\|DatabaseService\" C:UsersBrahimDesktopProgettoSwGestoreEventi/src/it/unibs/ingsoft --include=*.java)",
+      "Bash(mvn --version)",
+      "Bash(mvn dependency:get -Dartifact=com.fasterxml.jackson.core:jackson-databind:2.17.2 -q)",
+      "Bash(find c:UsersBrahimDesktopProgettoSwGestoreEventisrcitunibsingsoftv2model -type f -name *.java)",
+      "Bash(rm -rf src/it/unibs/ingsoft/v2/model src/it/unibs/ingsoft/v2/service src/it/unibs/ingsoft/v2/main)",
+      "Bash(rm -f src/it/unibs/ingsoft/v2/controller/App.java src/it/unibs/ingsoft/v2/controller/AuthController.java src/it/unibs/ingsoft/v2/controller/ConfiguratoreController.java)",
+      "Bash(rmdir src/it/unibs/ingsoft/v2/controller)",
+      "Bash(rm -rf src/it/unibs/ingsoft/v2/view)",
+      "Bash(rm -f src/it/unibs/ingsoft/v2/persistence/AbstractFileRepository.java src/it/unibs/ingsoft/v2/persistence/CatalogoData.java src/it/unibs/ingsoft/v2/persistence/UtenteData.java src/it/unibs/ingsoft/v2/persistence/PropostaData.java src/it/unibs/ingsoft/v2/persistence/ICategoriaRepository.java src/it/unibs/ingsoft/v2/persistence/IUtenteRepository.java src/it/unibs/ingsoft/v2/persistence/IPropostaRepository.java src/it/unibs/ingsoft/v2/persistence/FileCategoriaRepository.java src/it/unibs/ingsoft/v2/persistence/FileUtenteRepository.java src/it/unibs/ingsoft/v2/persistence/FilePropostaRepository.java)",
+      "Bash(rm -f tst/it/unibs/ingsoft/v2/model/CampoTest.java tst/it/unibs/ingsoft/v2/model/CategoriaTest.java tst/it/unibs/ingsoft/v2/model/PropostaTest.java tst/it/unibs/ingsoft/v2/model/StatoPropostaTest.java tst/it/unibs/ingsoft/v2/model/CampoBaseDefinitoTest.java tst/it/unibs/ingsoft/v2/model/TipoDatoTest.java tst/it/unibs/ingsoft/v2/model/PersonaTest.java tst/it/unibs/ingsoft/v2/model/ConfiguratoreTest.java tst/it/unibs/ingsoft/v2/model/TipoCampoTest.java tst/it/unibs/ingsoft/v2/model/ApplicationConstantsTest.java)",
+      "Bash(rm -f tst/it/unibs/ingsoft/v2/service/AuthenticationServiceTest.java tst/it/unibs/ingsoft/v2/service/CategoriaServiceTest.java tst/it/unibs/ingsoft/v2/service/PropostaServiceTest.java)",
+      "Bash(rmdir tst/it/unibs/ingsoft/v2/model tst/it/unibs/ingsoft/v2/service)"
     ]
   }
 }

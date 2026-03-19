@@ -1,0 +1,33 @@
+{
+  "campiBase" : [ {
+    "nome" : "Campo1",
+    "tipo" : "BASE",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Campo2",
+    "tipo" : "BASE",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Campo3",
+    "tipo" : "BASE",
+    "obbligatorio" : true
+  } ],
+  "campiBaseFissati" : true,
+  "campiComuni" : [ {
+    "nome" : "Campo Comune di prova",
+    "tipo" : "COMUNE",
+    "obbligatorio" : false
+  }, {
+    "nome" : "Pericolo",
+    "tipo" : "COMUNE",
+    "obbligatorio" : true
+  } ],
+  "categorie" : [ {
+    "nome" : "Categoria di prova",
+    "campiSpecifici" : [ {
+      "nome" : "campo specifico per prova",
+      "tipo" : "SPECIFICO",
+      "obbligatorio" : true
+    } ]
+  } ]
+}

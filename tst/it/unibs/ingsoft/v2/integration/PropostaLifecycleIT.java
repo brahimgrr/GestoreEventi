@@ -1,10 +1,13 @@
 package it.unibs.ingsoft.v2.integration;
 
-import it.unibs.ingsoft.v2.model.*;
-import it.unibs.ingsoft.v2.persistence.AppData;
-import it.unibs.ingsoft.v2.persistence.IPersistenceService;
-import it.unibs.ingsoft.v2.service.CategoriaService;
-import it.unibs.ingsoft.v2.service.PropostaService;
+import it.unibs.ingsoft.v2.application.CampoService;
+import it.unibs.ingsoft.v2.application.CategoriaService;
+import it.unibs.ingsoft.v2.application.PropostaService;
+import it.unibs.ingsoft.v2.domain.*;
+import it.unibs.ingsoft.v2.persistence.api.ICategoriaRepository;
+import it.unibs.ingsoft.v2.persistence.api.IPropostaRepository;
+import it.unibs.ingsoft.v2.persistence.dto.CatalogoData;
+import it.unibs.ingsoft.v2.persistence.dto.PropostaData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -23,21 +26,30 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("V2 Integration – Proposal Lifecycle")
 class PropostaLifecycleIT
 {
-    private AppData data;
+    private CampoService     campo;
     private CategoriaService cs;
-    private PropostaService ps;
+    private PropostaService  ps;
 
     @BeforeEach
     void setUp()
     {
-        data = new AppData();
-        IPersistenceService mockDb = new IPersistenceService()
+        CatalogoData catalogo     = new CatalogoData();
+        PropostaData proposteData = new PropostaData();
+
+        ICategoriaRepository catRepo = new ICategoriaRepository()
         {
-            @Override public AppData loadOrCreate() { return data; }
-            @Override public void save(AppData d) {}
+            @Override public CatalogoData load()          { return catalogo; }
+            @Override public void save(CatalogoData d)    {}
         };
-        cs = new CategoriaService(mockDb, data);
-        ps = new PropostaService(mockDb, data);
+        IPropostaRepository propRepo = new IPropostaRepository()
+        {
+            @Override public PropostaData load()          { return proposteData; }
+            @Override public void save(PropostaData d)    {}
+        };
+
+        campo = new CampoService(catRepo, catalogo);
+        cs    = new CategoriaService(catRepo, catalogo, campo);
+        ps    = new PropostaService(catalogo, propRepo, proposteData);
         cs.createCategoria("Sport");
     }
 
@@ -45,11 +57,9 @@ class PropostaLifecycleIT
     @DisplayName("Full lifecycle: BOZZA → VALIDA → APERTA → appears in bacheca")
     void fullLifecycle_bozzaToAperta()
     {
-        // Arrange
         LocalDate deadline  = LocalDate.now().plusDays(5);
         LocalDate eventDate = deadline.plusDays(3);
 
-        // Act — create, fill, validate, publish
         Proposta p = ps.creaProposta("Sport");
         p.putAllValoriCampi(Map.of(
                 "Titolo",                       "Gita in montagna",
@@ -64,7 +74,6 @@ class PropostaLifecycleIT
         List<String> errori = ps.validaProposta(p);
         ps.pubblicaProposta(p);
 
-        // Assert
         assertTrue(errori.isEmpty(), "Validation errors: " + errori);
         assertEquals(StatoProposta.APERTA, p.getStato());
         assertEquals(1, ps.getBacheca().size());
@@ -75,8 +84,7 @@ class PropostaLifecycleIT
     @DisplayName("Bacheca reflects only published proposals; drafts are excluded")
     void bacheca_excludesDraftAndValid()
     {
-        // Arrange — create one published and one draft proposal
-        Proposta bozza = ps.creaProposta("Sport");   // left in BOZZA
+        ps.creaProposta("Sport");   // left in BOZZA — should not appear
 
         LocalDate deadline  = LocalDate.now().plusDays(5);
         LocalDate eventDate = deadline.plusDays(3);
@@ -94,7 +102,6 @@ class PropostaLifecycleIT
         ps.validaProposta(aperta);
         ps.pubblicaProposta(aperta);
 
-        // Assert
         List<Proposta> bacheca = ps.getBacheca();
         assertEquals(1, bacheca.size());
         assertEquals(StatoProposta.APERTA, bacheca.get(0).getStato());
@@ -104,7 +111,6 @@ class PropostaLifecycleIT
     @DisplayName("Duplicate proposal (same Titolo+Data+Ora+Luogo) is rejected on publish")
     void duplicateProposal_rejected()
     {
-        // Arrange — publish the first proposal
         LocalDate deadline  = LocalDate.now().plusDays(5);
         LocalDate eventDate = deadline.plusDays(3);
         Map<String, String> campi = Map.of(
@@ -117,17 +123,16 @@ class PropostaLifecycleIT
                 "Quota individuale",            "10",
                 "Data conclusiva",              eventDate.format(AppConstants.DATE_FMT)
         );
+
         Proposta p1 = ps.creaProposta("Sport");
         p1.putAllValoriCampi(campi);
         ps.validaProposta(p1);
         ps.pubblicaProposta(p1);
 
-        // Act — try to publish an identical proposal
         Proposta p2 = ps.creaProposta("Sport");
         p2.putAllValoriCampi(campi);
         ps.validaProposta(p2);
 
-        // Assert
         assertThrows(IllegalStateException.class, () -> ps.pubblicaProposta(p2));
     }
 
@@ -135,7 +140,6 @@ class PropostaLifecycleIT
     @DisplayName("Proposal with specific category fields is validated correctly")
     void proposalWithSpecificFields_validatesCorrectly()
     {
-        // Arrange — add a specific optional field to the category
         cs.addCampoSpecifico("Sport", "Certificato medico", TipoDato.BOOLEANO, false);
 
         LocalDate deadline  = LocalDate.now().plusDays(5);
@@ -153,11 +157,9 @@ class PropostaLifecycleIT
                 "Data conclusiva",              eventDate.format(AppConstants.DATE_FMT)
         ));
 
-        // Act
         List<String> errori = ps.validaProposta(p);
         ps.pubblicaProposta(p);
 
-        // Assert — optional specific field missing is not an error
         assertTrue(errori.isEmpty(), "Unexpected errors: " + errori);
         assertEquals(StatoProposta.APERTA, p.getStato());
     }

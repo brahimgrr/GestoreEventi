@@ -1,10 +1,13 @@
 package it.unibs.ingsoft.v2.controller;
 
-import it.unibs.ingsoft.v2.model.*;
-import it.unibs.ingsoft.v2.persistence.AppData;
-import it.unibs.ingsoft.v2.persistence.IPersistenceService;
-import it.unibs.ingsoft.v2.service.CategoriaService;
-import it.unibs.ingsoft.v2.service.PropostaService;
+import it.unibs.ingsoft.v2.application.CampoService;
+import it.unibs.ingsoft.v2.application.CategoriaService;
+import it.unibs.ingsoft.v2.application.PropostaService;
+import it.unibs.ingsoft.v2.domain.*;
+import it.unibs.ingsoft.v2.persistence.api.ICategoriaRepository;
+import it.unibs.ingsoft.v2.persistence.api.IPropostaRepository;
+import it.unibs.ingsoft.v2.persistence.dto.CatalogoData;
+import it.unibs.ingsoft.v2.persistence.dto.PropostaData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -17,20 +20,30 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("V2 – ConfiguratoreController (service integration)")
 class ConfiguratoreControllerTest
 {
+    private CampoService     campo;
     private CategoriaService cs;
-    private PropostaService ps;
+    private PropostaService  ps;
 
     @BeforeEach
     void setUp()
     {
-        AppData data = new AppData();
-        IPersistenceService mockDb = new IPersistenceService()
+        CatalogoData catalogo     = new CatalogoData();
+        PropostaData proposteData = new PropostaData();
+
+        ICategoriaRepository catRepo = new ICategoriaRepository()
         {
-            @Override public AppData loadOrCreate() { return data; }
-            @Override public void save(AppData d) {}
+            @Override public CatalogoData load()          { return catalogo; }
+            @Override public void save(CatalogoData d)    {}
         };
-        cs = new CategoriaService(mockDb, data);
-        ps = new PropostaService(mockDb, data);
+        IPropostaRepository propRepo = new IPropostaRepository()
+        {
+            @Override public PropostaData load()          { return proposteData; }
+            @Override public void save(PropostaData d)    {}
+        };
+
+        campo = new CampoService(catRepo, catalogo);
+        cs    = new CategoriaService(catRepo, catalogo, campo);
+        ps    = new PropostaService(catalogo, propRepo, proposteData);
     }
 
     @Test
@@ -40,18 +53,18 @@ class ConfiguratoreControllerTest
         cs.createCategoria("Sport");
 
         Proposta p = ps.creaProposta("Sport");
-        LocalDate deadline = LocalDate.now().plusDays(5);
+        LocalDate deadline  = LocalDate.now().plusDays(5);
         LocalDate eventDate = deadline.plusDays(3);
 
         p.putAllValoriCampi(Map.of(
-                "Titolo", "Gita al lago",
-                "Numero di partecipanti", "10",
+                "Titolo",                       "Gita al lago",
+                "Numero di partecipanti",       "10",
                 "Termine ultimo di iscrizione", deadline.format(AppConstants.DATE_FMT),
-                "Luogo", "Lago",
-                "Data", eventDate.format(AppConstants.DATE_FMT),
-                "Ora", "09:00",
-                "Quota individuale", "0",
-                "Data conclusiva", eventDate.format(AppConstants.DATE_FMT)
+                "Luogo",                        "Lago",
+                "Data",                         eventDate.format(AppConstants.DATE_FMT),
+                "Ora",                          "09:00",
+                "Quota individuale",            "0",
+                "Data conclusiva",              eventDate.format(AppConstants.DATE_FMT)
         ));
 
         assertTrue(ps.validaProposta(p).isEmpty());

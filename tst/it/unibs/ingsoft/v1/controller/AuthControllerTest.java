@@ -1,12 +1,14 @@
 package it.unibs.ingsoft.v1.controller;
 
-import it.unibs.ingsoft.v1.model.Configuratore;
-import it.unibs.ingsoft.v1.service.AuthenticationService;
-import it.unibs.ingsoft.v1.persistence.AppData;
-import it.unibs.ingsoft.v1.persistence.IPersistenceService;
+import it.unibs.ingsoft.v1.domain.Configuratore;
+import it.unibs.ingsoft.v1.application.AuthenticationService;
+import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
+import it.unibs.ingsoft.v1.persistence.dto.UtenteData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,24 +27,24 @@ class AuthControllerTest
     @BeforeEach
     void setUp()
     {
-        AppData data = new AppData();
-        IPersistenceService mockDb = new IPersistenceService()
+        UtenteData data = new UtenteData();
+        IUtenteRepository mockRepo = new IUtenteRepository()
         {
-            @Override public AppData loadOrCreate() { return data; }
-            @Override public void save(AppData d) {}
+            @Override public UtenteData load()        { return data; }
+            @Override public void save(UtenteData d)  {}
         };
-        auth = new AuthenticationService(mockDb, data);
+        auth = new AuthenticationService(mockRepo, data);
     }
 
     @Test
     @DisplayName("Default credentials login yields a configuratore that must register")
     void defaultLogin_requiresRegistration()
     {
-        Configuratore c = auth.login(
+        Optional<Configuratore> result = auth.login(
                 AuthenticationService.USERNAME_PREDEFINITO,
                 AuthenticationService.PASSWORD_PREDEFINITA);
-        assertNotNull(c);
-        assertEquals(AuthenticationService.USERNAME_PREDEFINITO, c.getUsername());
+        assertTrue(result.isPresent());
+        assertEquals(AuthenticationService.USERNAME_PREDEFINITO, result.get().getUsername());
     }
 
     @Test
@@ -50,15 +52,24 @@ class AuthControllerTest
     void afterRegistration_personalCredentialsWork()
     {
         auth.registraNuovoConfiguratore("mario", "pass1234");
-        Configuratore c = auth.login("mario", "pass1234");
-        assertNotNull(c);
-        assertEquals("mario", c.getUsername());
+        Optional<Configuratore> result = auth.login("mario", "pass1234");
+        assertTrue(result.isPresent());
+        assertEquals("mario", result.get().getUsername());
     }
 
     @Test
-    @DisplayName("Invalid credentials do not authenticate")
-    void invalidCredentials_returnNull()
+    @DisplayName("Invalid credentials return empty Optional")
+    void invalidCredentials_returnEmpty()
     {
-        assertNull(auth.login("unknown", "wrong"));
+        assertTrue(auth.login("unknown", "wrong").isEmpty());
+    }
+
+    @Test
+    @DisplayName("esisteUsername returns false before registration, true after")
+    void esisteUsername_beforeAndAfter()
+    {
+        assertFalse(auth.esisteUsername("mario"));
+        auth.registraNuovoConfiguratore("mario", "pass1234");
+        assertTrue(auth.esisteUsername("mario"));
     }
 }

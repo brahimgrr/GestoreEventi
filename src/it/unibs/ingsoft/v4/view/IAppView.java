@@ -1,18 +1,16 @@
 package it.unibs.ingsoft.v4.view;
 
-import it.unibs.ingsoft.v4.model.Campo;
-import it.unibs.ingsoft.v4.model.Notifica;
-import it.unibs.ingsoft.v4.model.Proposta;
-import it.unibs.ingsoft.v4.model.TipoDato;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-
 /**
  * View interface — defines all UI operations used by controllers.
  * Any GUI implementation replaces ConsoleUI without touching controller code.
- * Extends the ISP-compliant sub-interfaces for output, input, and compound operations.
+ *
+ * Composed of five focused sub-interfaces following the Interface Segregation Principle (ISP):
+ * - {@link IOutputView}    pure output/display operations
+ * - {@link IInputView}     pure input/acquisition operations
+ * - {@link IFormView}      form orchestration (Optional return, no exceptions)
+ * - {@link IDisplayView}   domain-free display via view-models
+ * - {@link ISelectionView} combined display + selection via view-models
  */
-public interface IAppView extends IOutputView, IInputView, ICompositeView { }
+public interface IAppView extends IOutputView, IInputView, IFormView, IDisplayView, ISelectionView
+{
+}

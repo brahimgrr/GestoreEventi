@@ -1,26 +1,31 @@
 package it.unibs.ingsoft.v4.service;
 
 import it.unibs.ingsoft.v4.model.Fruitore;
-import it.unibs.ingsoft.v4.persistence.AppData;
-import it.unibs.ingsoft.v4.persistence.IPersistenceService;
+import it.unibs.ingsoft.v4.persistence.FruitoreData;
+import it.unibs.ingsoft.v4.persistence.IFruitoreRepository;
+import it.unibs.ingsoft.v4.persistence.UtenteData;
 
 import java.util.Objects;
 
 public final class FruitoreService implements NotificaListener
 {
-    private final IPersistenceService db;
-    private final AppData data;
-    private final NotificaService notificaService;
+    private final IFruitoreRepository repo;
+    private final FruitoreData        fData;
+    private final UtenteData          utenti;
+    private final NotificaService     notificaService;
 
     /**
-     * @pre db != null
-     * @pre data != null
+     * @pre repo            != null
+     * @pre fData           != null
+     * @pre utenti          != null
      * @pre notificaService != null
      */
-    public FruitoreService(IPersistenceService db, AppData data, NotificaService notificaService)
+    public FruitoreService(IFruitoreRepository repo, FruitoreData fData,
+                           UtenteData utenti, NotificaService notificaService)
     {
-        this.db              = Objects.requireNonNull(db);
-        this.data            = Objects.requireNonNull(data);
+        this.repo            = Objects.requireNonNull(repo);
+        this.fData           = Objects.requireNonNull(fData);
+        this.utenti          = Objects.requireNonNull(utenti);
         this.notificaService = Objects.requireNonNull(notificaService);
     }
 
@@ -32,9 +37,8 @@ public final class FruitoreService implements NotificaListener
      * Registers a new fruitore.
      * Username must be unique across both fruitori AND configuratori.
      *
-     * @pre username != null && username.trim().length() >= 3
-     * @pre password != null && password.trim().length() >= 4
-     * @post data.getFruitori().containsKey(username)
+     * @pre username != null &amp;&amp; username.trim().length() &gt;= 3
+     * @pre password != null &amp;&amp; password.trim().length() &gt;= 4
      * @throws IllegalArgumentException if credentials are invalid or username is already taken
      */
     public Fruitore registraFruitore(String username, String password)
@@ -44,26 +48,24 @@ public final class FruitoreService implements NotificaListener
         if (usernameGiaEsistente(username))
             throw new IllegalArgumentException("Username già esistente.");
 
-        data.addFruitore(username, password);
-        db.save(data);
+        fData.addFruitore(username, password);
+        repo.save(fData);
 
         return new Fruitore(username);
     }
 
     /**
      * Attempts login for a fruitore.
-     * Returns the Fruitore if credentials are valid, null otherwise.
      *
      * @pre username != null
      * @pre password != null
-     * @post returns Fruitore if valid, null otherwise
      */
     public Fruitore login(String username, String password)
     {
         if (username == null || password == null)
             return null;
 
-        String saved = data.getFruitori().get(username);
+        String saved = fData.getFruitori().get(username);
 
         if (saved != null && saved.equals(password))
             return new Fruitore(username);
@@ -77,8 +79,7 @@ public final class FruitoreService implements NotificaListener
 
     /**
      * Observer implementation: delegates to NotificaService without saving.
-     * Persistence is delegated to the caller (IscrizioneService)
-     * so that bulk operations cause only one db.save.
+     * Persistence is handled by the caller (IscrizioneService) for batching.
      */
     @Override
     public void notifica(String usernameFruitore, String messaggio)
@@ -90,19 +91,14 @@ public final class FruitoreService implements NotificaListener
     // UTILITY
     // ---------------------------------------------------------------
 
-    /**
-     * Checks if a username already exists among fruitori OR configuratori.
-     * This guarantees global uniqueness as required by the assignment.
-     */
     private boolean usernameGiaEsistente(String username)
     {
-        if (data.getFruitori().containsKey(username))
+        if (fData.getFruitori().containsKey(username))
             return true;
 
-        if (data.getConfiguratori().containsKey(username))
+        if (utenti.getConfiguratori().containsKey(username))
             return true;
 
-        // Also block the default configuratore username
         if (AuthenticationService.USERNAME_PREDEFINITO.equalsIgnoreCase(username))
             return true;
 

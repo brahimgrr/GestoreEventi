@@ -3,6 +3,7 @@ package it.unibs.ingsoft.v5.view;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Orchestrates a multi-field interactive form in the view layer.
@@ -10,32 +11,38 @@ import java.util.Map;
  * Features:
  * - Field-by-field entry with progress counter [N/M]
  * - INVIO (blank) = keep existing value for both mandatory and optional fields
- * - 'annulla' keyword → throws CancelException to abort the entire form
+ * - 'annulla' keyword → returns {@link Optional#empty()} (no exception thrown)
  * - 'indietro' keyword → steps back to the previous field
- * - Type validation (via ConsoleUI.validaInput) before business validators
- * - Ordered business-rule validators (FieldValidator) with cross-field context
+ * - Type validation via the injected {@link TypeValidator} before business validators
+ * - Ordered business-rule validators ({@link FieldValidator}) with cross-field context
  * - ✅/❌ feedback after each accepted/rejected value
  */
 public final class StepByStepFormRunner
 {
-    private final IInputView    input;
-    private final IOutputView   output;
+    public static final String CANCEL_KEYWORD = "annulla";
+    public static final String BACK_KEYWORD   = "indietro";
+
+    private final IInputView      input;
+    private final IOutputView     output;
+    private final TypeValidator   typeValidator;
     private final List<FormField> fields;
 
-    public StepByStepFormRunner(IInputView input, IOutputView output, List<FormField> fields)
+    public StepByStepFormRunner(IInputView input, IOutputView output,
+                                TypeValidator typeValidator, List<FormField> fields)
     {
-        this.input  = input;
-        this.output = output;
-        this.fields = List.copyOf(fields);
+        this.input         = input;
+        this.output        = output;
+        this.typeValidator = typeValidator;
+        this.fields        = List.copyOf(fields);
     }
 
     /**
      * Runs the form interactively.
      *
-     * @return an ordered map of field name → accepted string value
-     * @throws ConsoleUI.CancelException if the user types 'annulla' at any field
+     * @return the collected field values, or {@link Optional#empty()} if the user
+     *         typed 'annulla' at any field
      */
-    public Map<String, String> run()
+    public Optional<Map<String, String>> run()
     {
         Map<String, String> context = new LinkedHashMap<>();
 
@@ -55,21 +62,19 @@ public final class StepByStepFormRunner
 
             String raw = input.acquisisciStringa(etichetta + ": ");
 
-            // ── Cancel ──────────────────────────────────────────────
-            if (raw.equalsIgnoreCase(ConsoleUI.CANCEL_KEYWORD))
-                throw new ConsoleUI.CancelException();
+            // ── Cancel ──────────────────────────────────────────────────────────
+            if (raw.equalsIgnoreCase(CANCEL_KEYWORD))
+                return Optional.empty();
 
-            // ── Back ─────────────────────────────────────────────────
-            if (raw.equalsIgnoreCase(ConsoleUI.BACK_KEYWORD))
+            // ── Back ─────────────────────────────────────────────────────────────
+            if (raw.equalsIgnoreCase(BACK_KEYWORD))
             {
-                if (i > 0)
-                    i--;
-                else
-                    output.stampaInfo("Sei già al primo campo.");
+                if (i > 0) i--;
+                else output.stampaInfo("Sei già al primo campo.");
                 continue;
             }
 
-            // ── Enter = keep current value ────────────────────────────
+            // ── Enter = keep current value ────────────────────────────────────────
             if (raw.isBlank())
             {
                 if (f.isMandatory() && (esistente == null || esistente.isBlank()))
@@ -86,15 +91,15 @@ public final class StepByStepFormRunner
                 continue;
             }
 
-            // ── Type validation ──────────────────────────────────────
-            String typeError = ConsoleUI.validaInput(raw, f.getTipo());
+            // ── Type validation ──────────────────────────────────────────────────
+            String typeError = typeValidator.validate(raw, f.getTipo());
             if (typeError != null)
             {
                 output.stampaErrore(typeError);
                 continue;
             }
 
-            // ── Business-rule validators ──────────────────────────────
+            // ── Business-rule validators ──────────────────────────────────────────
             boolean valid = true;
             for (FieldValidator v : f.getValidators())
             {
@@ -113,10 +118,10 @@ public final class StepByStepFormRunner
             i++;
         }
 
-        return context;
+        return Optional.of(context);
     }
 
-    // ── private helpers ───────────────────────────────────────────────
+    // ── private helpers ────────────────────────────────────────────────────────
 
     private String buildEtichetta(FormField f, String esistente, int idx, int total)
     {

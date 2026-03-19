@@ -1,10 +1,9 @@
 package it.unibs.ingsoft.v1.controller;
 
-import it.unibs.ingsoft.v1.model.Campo;
-import it.unibs.ingsoft.v1.model.Categoria;
-import it.unibs.ingsoft.v1.persistence.AppData;
-import it.unibs.ingsoft.v1.persistence.IPersistenceService;
-import it.unibs.ingsoft.v1.service.CategoriaService;
+import it.unibs.ingsoft.v1.domain.Categoria;
+import it.unibs.ingsoft.v1.application.CatalogoService;
+import it.unibs.ingsoft.v1.persistence.api.ICategoriaRepository;
+import it.unibs.ingsoft.v1.persistence.dto.CatalogoData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -14,24 +13,24 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * ConfiguratoreController delegates all operations to CategoriaService.
+ * ConfiguratoreController delegates all operations to CatalogoService.
  * We test the service-level operations that the controller orchestrates.
  */
 @DisplayName("V1 – ConfiguratoreController (service integration)")
 class ConfiguratoreControllerTest
 {
-    private CategoriaService cs;
+    private CatalogoService cs;
 
     @BeforeEach
     void setUp()
     {
-        AppData data = new AppData();
-        IPersistenceService mockDb = new IPersistenceService()
+        CatalogoData data = new CatalogoData();
+        ICategoriaRepository mockRepo = new ICategoriaRepository()
         {
-            @Override public AppData loadOrCreate() { return data; }
-            @Override public void save(AppData d) {}
+            @Override public CatalogoData load()        { return data; }
+            @Override public void save(CatalogoData d)  {}
         };
-        cs = new CategoriaService(mockDb, data);
+        cs = new CatalogoService(mockRepo, data);
     }
 
     @Test
@@ -74,10 +73,26 @@ class ConfiguratoreControllerTest
     @DisplayName("Removing a category removes its specific fields too")
     void removeCategoria_removesSpecificFields()
     {
+        cs.fissareCampiBase(List.of("Titolo"));
         cs.createCategoria("Sport");
         cs.addCampoSpecifico("Sport", "Cert", true);
         cs.removeCategoria("Sport");
 
         assertTrue(cs.getCategorie().isEmpty());
+    }
+
+    @Test
+    @DisplayName("nomeEsiste returns true for base, common, and specific fields")
+    void nomeEsiste_crossFieldTypes()
+    {
+        cs.fissareCampiBase(List.of("Titolo"));
+        cs.addCampoComune("Note", false);
+        cs.createCategoria("Sport");
+        cs.addCampoSpecifico("Sport", "Cert", true);
+
+        assertTrue(cs.nomeEsiste("titolo"));   // base (case-insensitive)
+        assertTrue(cs.nomeEsiste("NOTE"));     // common
+        assertTrue(cs.nomeEsiste("cert"));     // specific
+        assertFalse(cs.nomeEsiste("Inesistente"));
     }
 }

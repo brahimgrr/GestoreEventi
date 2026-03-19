@@ -1,6 +1,8 @@
 package it.unibs.ingsoft.v1.persistence;
 
-import org.junit.jupiter.api.AfterEach;
+import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
+import it.unibs.ingsoft.v1.persistence.dto.UtenteData;
+import it.unibs.ingsoft.v1.persistence.impl.FileUtenteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -10,74 +12,70 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("V1 – DatabaseService")
+/**
+ * Previously tested the deleted DatabaseService (monolithic serialization).
+ * Now tests FileUtenteRepository — the replacement for the user-data portion.
+ */
+@DisplayName("V1 – FileUtenteRepository")
 class DatabaseServiceTest
 {
     @TempDir
     Path tempDir;
 
-    private DatabaseService db;
-    private Path storagePath;
+    private IUtenteRepository repo;
 
     @BeforeEach
     void setUp()
     {
-        storagePath = tempDir.resolve("test_data.ser");
-        db = new DatabaseService(storagePath);
+        repo = new FileUtenteRepository(tempDir.resolve("utenti.json"));
     }
 
     @Test
-    @DisplayName("loadOrCreate returns fresh AppData when no file exists")
-    void loadOrCreate_noFile_returnsFreshData()
+    @DisplayName("load returns fresh UtenteData when no file exists")
+    void load_noFile_returnsFreshData()
     {
-        AppData data = db.loadOrCreate();
+        UtenteData data = repo.load();
         assertNotNull(data);
         assertTrue(data.getConfiguratori().isEmpty());
-        assertTrue(data.getCampiBase().isEmpty());
     }
 
     @Test
-    @DisplayName("save then loadOrCreate returns consistent data")
+    @DisplayName("save then load returns consistent user data")
     void saveAndLoad_dataConsistent()
     {
-        AppData data = new AppData();
+        UtenteData data = new UtenteData();
         data.addConfiguratore("mario", "pass1234");
-        data.setCampiBaseFissati(true);
+        repo.save(data);
 
-        db.save(data);
-
-        // Reload from a new instance
-        DatabaseService db2 = new DatabaseService(storagePath);
-        AppData loaded = db2.loadOrCreate();
+        IUtenteRepository repo2 = new FileUtenteRepository(tempDir.resolve("utenti.json"));
+        UtenteData loaded = repo2.load();
 
         assertEquals("pass1234", loaded.getConfiguratori().get("mario"));
-        assertTrue(loaded.isCampiBaseFissati());
     }
 
     @Test
     @DisplayName("save creates parent directories if needed")
     void save_createsDirectories()
     {
-        Path nested = tempDir.resolve("sub").resolve("dir").resolve("data.ser");
-        DatabaseService dbNested = new DatabaseService(nested);
+        Path nested = tempDir.resolve("sub").resolve("dir").resolve("utenti.json");
+        IUtenteRepository nestedRepo = new FileUtenteRepository(nested);
 
-        AppData data = new AppData();
-        assertDoesNotThrow(() -> dbNested.save(data));
+        assertDoesNotThrow(() -> nestedRepo.save(new UtenteData()));
     }
 
     @Test
     @DisplayName("Multiple save/load cycles maintain consistency")
     void multipleSaveLoad_consistent()
     {
-        AppData data = db.loadOrCreate();
+        UtenteData data = repo.load();
         data.addConfiguratore("user1", "pass1");
-        db.save(data);
+        repo.save(data);
 
-        AppData loaded1 = db.loadOrCreate();
+        UtenteData loaded1 = repo.load();
         loaded1.addConfiguratore("user2", "pass2");
-        db.save(loaded1);
+        repo.save(loaded1);
 
-        AppData loaded2 = db.loadOrCreate();
+        UtenteData loaded2 = repo.load();
         assertEquals(2, loaded2.getConfiguratori().size());
     }
 }

@@ -8,8 +8,12 @@ import it.unibs.ingsoft.v3.service.IscrizioneService;
 import it.unibs.ingsoft.v3.service.NotificaService;
 import it.unibs.ingsoft.v3.service.PropostaService;
 import it.unibs.ingsoft.v3.view.IAppView;
+import it.unibs.ingsoft.v3.view.viewmodel.NotificaVM;
+import it.unibs.ingsoft.v3.view.viewmodel.PropostaSelezionabileVM;
+import it.unibs.ingsoft.v3.view.viewmodel.ViewModelMapper;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 /**
  * Handles all fruitore menu interactions.
@@ -70,7 +74,7 @@ public final class FruitoreController
     private void menuBacheca()
     {
         ui.header("BACHECA");
-        ui.mostraBacheca(ps.getBachecaPerCategoria(), ps::getTuttiCampi);
+        ui.mostraBacheca(ViewModelMapper.toBachecaVM(ps.getBachecaPerCategoria(), ps::getTuttiCampi));
         ui.newLine();
         ui.pausa();
     }
@@ -93,16 +97,14 @@ public final class FruitoreController
             return;
         }
 
-        ui.mostraPropostePerIscrizione(tutte);
+        List<PropostaSelezionabileVM> tutteVM = ViewModelMapper.toSelezionabileVMList(tutte);
+        OptionalInt scelta = ui.selezionaPropostaPerIscrizione(tutteVM);
 
-        int scelta = ui.acquisisciIntero("Scegli proposta (0 per annullare): ", 0, tutte.size());
-
-        if (scelta == 0)
-            return;
+        if (scelta.isEmpty()) return;
 
         try
         {
-            is.iscrivi(fruitore, tutte.get(scelta - 1));
+            is.iscrivi(fruitore, tutte.get(scelta.getAsInt()));
             ui.stampaSuccesso("Iscrizione completata!");
         }
         catch (IllegalStateException e)
@@ -125,8 +127,9 @@ public final class FruitoreController
             ui.header("SPAZIO PERSONALE - " + fruitore.getUsername());
 
             List<Notifica> notifiche = notificaService.getNotifiche(fruitore.getUsername());
+            List<NotificaVM> notificheVM = ViewModelMapper.toNotificaVMList(notifiche);
             ui.stampaSezione("Le tue notifiche");
-            ui.mostraNotifiche(notifiche);
+            ui.mostraNotifiche(notificheVM);
 
             ui.newLine();
             ui.stampaMenu("", MENU_NOTIFICHE);
@@ -136,20 +139,11 @@ public final class FruitoreController
             switch (choice)
             {
                 case 1:
-                    if (notifiche.isEmpty())
+                    OptionalInt idx = ui.selezionaNotificaDaEliminare(notificheVM);
+                    if (idx.isPresent())
                     {
-                        ui.stampa("Nessuna notifica da eliminare.");
-                        break;
-                    }
-                    int idx = ui.acquisisciIntero("Numero notifica da eliminare: ", 1, notifiche.size());
-                    try
-                    {
-                        notificaService.eliminaNotifica(fruitore.getUsername(), idx - 1);
-                        ui.stampa("Notifica eliminata.");
-                    }
-                    catch (IndexOutOfBoundsException e)
-                    {
-                        ui.stampa("Errore nell'eliminazione.");
+                        notificaService.eliminaNotifica(fruitore.getUsername(), idx.getAsInt());
+                        ui.stampaSuccesso("Notifica eliminata.");
                     }
                     break;
 

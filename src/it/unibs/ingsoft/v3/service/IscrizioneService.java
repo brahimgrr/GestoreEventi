@@ -1,31 +1,39 @@
 package it.unibs.ingsoft.v3.service;
 
 import it.unibs.ingsoft.v3.model.*;
-import it.unibs.ingsoft.v3.persistence.AppData;
-import it.unibs.ingsoft.v3.persistence.IPersistenceService;
+import it.unibs.ingsoft.v3.persistence.INotificaRepository;
+import it.unibs.ingsoft.v3.persistence.IPropostaRepository;
+import it.unibs.ingsoft.v3.persistence.NotificaData;
+import it.unibs.ingsoft.v3.persistence.PropostaData;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Objects;
 
 public final class IscrizioneService
 {
-    // Reuse the constant defined in PropostaService — single source of truth
     private static final String CAMPO_NUM_PARTECIPANTI = PropostaService.CAMPO_NUM_PARTECIPANTI;
 
-    private final IPersistenceService db;
-    private final AppData             data;
+    private final IPropostaRepository propostaRepo;
+    private final PropostaData        proposteData;
+    private final INotificaRepository notificaRepo;
+    private final NotificaData        notificaData;
     private final NotificaListener    notificaListener;
 
     /**
-     * @pre db               != null
-     * @pre data             != null
+     * @pre propostaRepo    != null
+     * @pre proposteData    != null
+     * @pre notificaRepo    != null
+     * @pre notificaData    != null
      * @pre notificaListener != null
      */
-    public IscrizioneService(IPersistenceService db, AppData data, NotificaListener notificaListener)
+    public IscrizioneService(IPropostaRepository propostaRepo, PropostaData proposteData,
+                             INotificaRepository notificaRepo, NotificaData notificaData,
+                             NotificaListener notificaListener)
     {
-        this.db               = Objects.requireNonNull(db);
-        this.data             = Objects.requireNonNull(data);
+        this.propostaRepo    = Objects.requireNonNull(propostaRepo);
+        this.proposteData    = Objects.requireNonNull(proposteData);
+        this.notificaRepo    = Objects.requireNonNull(notificaRepo);
+        this.notificaData    = Objects.requireNonNull(notificaData);
         this.notificaListener = Objects.requireNonNull(notificaListener);
     }
 
@@ -35,20 +43,18 @@ public final class IscrizioneService
 
     /**
      * Called once on every startup.
-     * Loops through all open proposals and transitions any whose
-     * "Termine ultimo di iscrizione" has passed.
+     * Loops through all open proposals and transitions any whose deadline has passed.
      */
     public void controllaScadenzeAlAvvio()
     {
         LocalDate oggi = LocalDate.now();
         boolean modificato = false;
 
-        for (Proposta p : data.getProposte())
+        for (Proposta p : proposteData.getProposte())
         {
             if (p.getStato() != StatoProposta.APERTA)
                 continue;
 
-            // Deadline has passed (strictly after termineIscrizione)
             if (p.getTermineIscrizione() != null && !oggi.isAfter(p.getTermineIscrizione()))
                 continue;
 
@@ -73,7 +79,7 @@ public final class IscrizioneService
             modificato = true;
         }
 
-        for (Proposta p : data.getProposte())
+        for (Proposta p : proposteData.getProposte())
         {
             if (p.getStato() != StatoProposta.CONFERMATA)
                 continue;
@@ -87,7 +93,10 @@ public final class IscrizioneService
         }
 
         if (modificato)
-            db.save(data);
+        {
+            propostaRepo.save(proposteData);
+            notificaRepo.save(notificaData);
+        }
     }
 
     // ---------------------------------------------------------------
@@ -96,56 +105,38 @@ public final class IscrizioneService
 
     /**
      * Signs up a fruitore to an open proposal.
-     * Checks:
-     * - Proposal must be APERTA
-     * - Deadline must not have passed
-     * - Fruitore must not already be signed up
-     * - Proposal must not be full
      *
      * @pre fruitore != null
-     * @pre proposta != null
-     * @pre proposta.getStato() == StatoProposta.APERTA
-     * @pre !proposta.isIscrittoFruitore(fruitore.getUsername())
-     * @pre LocalDate.now().isAfter(proposta.getTermineIscrizione()) == false
-     * @pre proposta.getNumeroIscritti() &lt; maxPartecipanti
-     * @post proposta.isIscrittoFruitore(fruitore.getUsername())
+     * @pre proposta != null &amp;&amp; proposta.getStato() == StatoProposta.APERTA
      * @throws IllegalStateException if any precondition is violated
      */
     public void iscrivi(Fruitore fruitore, Proposta proposta)
     {
-        // 1. Must be open
         if (proposta.getStato() != StatoProposta.APERTA)
             throw new IllegalStateException("La proposta non è aperta alle iscrizioni.");
 
-        // 2. Deadline must not have passed
         LocalDate oggi = LocalDate.now();
         if (proposta.getTermineIscrizione() != null &&
                 oggi.isAfter(proposta.getTermineIscrizione()))
             throw new IllegalStateException("Il termine di iscrizione è scaduto.");
 
-        // 3. Not already signed up
         if (proposta.isIscrittoFruitore(fruitore.getUsername()))
             throw new IllegalStateException("Sei già iscritto a questa proposta.");
 
-        // 4. Capacity check
         int max = getMaxPartecipanti(proposta);
         if (proposta.getNumeroIscritti() >= max)
             throw new IllegalStateException(
                     "La proposta ha già raggiunto il numero massimo di partecipanti (" + max + ").");
 
-        // All checks passed — register
         Iscrizione i = new Iscrizione(fruitore, oggi);
         proposta.addIscrizione(i);
-        db.save(data);
+        propostaRepo.save(proposteData);
     }
 
     // ---------------------------------------------------------------
     // STATE TRANSITIONS
     // ---------------------------------------------------------------
 
-    /**
-     * Confirms a proposal and notifies all adherents.
-     */
     private void conferma(Proposta p, LocalDate oggi)
     {
         p.setStato(StatoProposta.CONFERMATA, oggi);
@@ -158,16 +149,13 @@ public final class IscrizioneService
 
         String messaggio =
                 "✔ L'iniziativa \"" + titolo + "\" è CONFERMATA!\n" +
-                        "  Data: " + data + " | Ora: " + ora + "\n" +
-                        "  Luogo: " + luogo + "\n" +
-                        "  Quota individuale: " + quota;
+                "  Data: " + data + " | Ora: " + ora + "\n" +
+                "  Luogo: " + luogo + "\n" +
+                "  Quota individuale: " + quota;
 
         notificaTutti(p, messaggio);
     }
 
-    /**
-     * Cancels a proposal and notifies all adherents.
-     */
     private void annulla(Proposta p, LocalDate oggi)
     {
         p.setStato(StatoProposta.ANNULLATA, oggi);
@@ -179,9 +167,6 @@ public final class IscrizioneService
         notificaTutti(p, messaggio);
     }
 
-    /**
-     * Sends a notification to all fruitori signed up to a proposal.
-     */
     private void notificaTutti(Proposta p, String messaggio)
     {
         for (Iscrizione i : p.getIscrizioni())
@@ -192,10 +177,6 @@ public final class IscrizioneService
     // UTILITY
     // ---------------------------------------------------------------
 
-    /**
-     * Reads "Numero di partecipanti" from the proposal's field values.
-     * Throws IllegalStateException if the field is missing or not a valid integer.
-     */
     private int getMaxPartecipanti(Proposta p)
     {
         String val = p.getValoriCampi().get(CAMPO_NUM_PARTECIPANTI);
