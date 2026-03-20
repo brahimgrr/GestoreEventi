@@ -27,6 +27,12 @@ public abstract class Persona implements Serializable
         return username;
     }
 
+    /**
+     * Two {@code Persona} instances are equal iff they are of the same concrete type
+     * and have the same username. This uses {@code getClass()} comparison (not {@code instanceof})
+     * intentionally: a {@code Configuratore} and a {@code Fruitore} with the same username
+     * are considered distinct entities, which is correct since they represent different user roles.
+     */
     @Override
     public final boolean equals(Object o)
     {

@@ -1,11 +1,13 @@
 package it.unibs.ingsoft.v1.presentation.view.cli;
 
-import it.unibs.ingsoft.v1.domain.Categoria;
+import it.unibs.ingsoft.v1.domain.TipoDato;
 import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Function;
@@ -33,10 +35,14 @@ public final class ConsoleUI implements IAppView
     public static final String HINT_ANNULLA =
             "Digita '" + CANCEL_KEYWORD + "' per annullare.";
 
-    /** Thrown when the user types the cancel keyword during any string input. */
-    public static class CancelException extends RuntimeException
+    /**
+     * Thrown when the user types the cancel keyword during any string input.
+     * Extends {@link OperationCancelledException} so controllers can catch
+     * the contract-level exception without importing this class.
+     */
+    public static class CancelException extends OperationCancelledException
     {
-        public CancelException() { super("Operazione annullata dall'utente."); }
+        public CancelException() { super(); }
     }
 
     /** Thrown when the user types the back keyword during any string input. */
@@ -97,21 +103,21 @@ public final class ConsoleUI implements IAppView
             stampa("    · " + c);
     }
 
-    public void stampaCategorieDettaglio(List<Categoria> categorie)
+    public void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi)
     {
-        if (categorie.isEmpty())
+        if (categorieConCampi.isEmpty())
         {
             stampa("    (nessuna)");
             return;
         }
 
-        for (Categoria cat : categorie)
+        for (var entry : categorieConCampi.entrySet())
         {
-            stampa("    · " + cat.getNome());
-            if (cat.getCampiSpecifici().isEmpty())
+            stampa("    · " + entry.getKey());
+            if (entry.getValue().isEmpty())
                 stampa("          (nessun campo specifico)");
             else
-                cat.getCampiSpecifici().forEach(c -> stampa("          · " + c));
+                entry.getValue().forEach(c -> stampa("          · " + c));
         }
     }
 
@@ -257,6 +263,18 @@ public final class ConsoleUI implements IAppView
 
             stampa("Rispondi con s/n.");
         }
+    }
+
+    public TipoDato acquisisciTipoDato(String prompt)
+    {
+        TipoDato[] valori = TipoDato.values();
+        stampa(prompt);
+        for (int i = 0; i < valori.length; i++)
+            stampa("  " + (i + 1) + ") " + valori[i]);
+        newLine();
+
+        int choice = acquisisciIntero("Scelta: ", 1, valori.length);
+        return valori[choice - 1];
     }
 
     // ---------------------------------------------------------------

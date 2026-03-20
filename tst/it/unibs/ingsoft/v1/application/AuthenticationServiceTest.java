@@ -1,30 +1,32 @@
 package it.unibs.ingsoft.v1.application;
 
 import it.unibs.ingsoft.v1.domain.Configuratore;
-import it.unibs.ingsoft.v1.persistence.AppData;
-import it.unibs.ingsoft.v1.persistence.IPersistenceService;
+import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
+import it.unibs.ingsoft.v1.persistence.dto.UtenteData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("V1 – AuthenticationService")
 class AuthenticationServiceTest
 {
-    private AppData data;
+    private UtenteData utenti;
     private AuthenticationService auth;
 
     @BeforeEach
     void setUp()
     {
-        data = new AppData();
-        IPersistenceService mockDb = new IPersistenceService()
+        utenti = new UtenteData();
+        IUtenteRepository mockRepo = new IUtenteRepository()
         {
-            @Override public AppData loadOrCreate() { return data; }
-            @Override public void save(AppData d) {}
+            @Override public UtenteData load()       { return utenti; }
+            @Override public void save(UtenteData d) {}
         };
-        auth = new AuthenticationService(mockDb, data);
+        auth = new AuthenticationService(mockRepo, utenti);
     }
 
     // ───────────────────── Login ─────────────────────
@@ -33,11 +35,11 @@ class AuthenticationServiceTest
     @DisplayName("Login with default credentials returns Configuratore")
     void login_defaultCredentials_returnsConfiguratore()
     {
-        Configuratore c = auth.login(
+        Optional<Configuratore> result = auth.login(
                 AuthenticationService.USERNAME_PREDEFINITO,
                 AuthenticationService.PASSWORD_PREDEFINITA);
-        assertNotNull(c);
-        assertEquals(AuthenticationService.USERNAME_PREDEFINITO, c.getUsername());
+        assertTrue(result.isPresent());
+        assertEquals(AuthenticationService.USERNAME_PREDEFINITO, result.get().getUsername());
     }
 
     @Test
@@ -45,38 +47,46 @@ class AuthenticationServiceTest
     void login_savedCredentials_returnsConfiguratore()
     {
         auth.registraNuovoConfiguratore("mario", "pass1234");
-        Configuratore c = auth.login("mario", "pass1234");
-        assertNotNull(c);
-        assertEquals("mario", c.getUsername());
+        Optional<Configuratore> result = auth.login("mario", "pass1234");
+        assertTrue(result.isPresent());
+        assertEquals("mario", result.get().getUsername());
     }
 
     @Test
-    @DisplayName("Login with wrong password returns null")
-    void login_wrongPassword_returnsNull()
+    @DisplayName("Login with wrong password returns empty")
+    void login_wrongPassword_returnsEmpty()
     {
         auth.registraNuovoConfiguratore("mario", "pass1234");
-        assertNull(auth.login("mario", "wrongpass"));
+        assertTrue(auth.login("mario", "wrongpass").isEmpty());
     }
 
     @Test
-    @DisplayName("Login with unknown username returns null")
-    void login_unknownUsername_returnsNull()
+    @DisplayName("Login with unknown username returns empty")
+    void login_unknownUsername_returnsEmpty()
     {
-        assertNull(auth.login("sconosciuto", "pass1234"));
+        assertTrue(auth.login("sconosciuto", "pass1234").isEmpty());
     }
 
     @Test
-    @DisplayName("Login with null username returns null")
-    void login_nullUsername_returnsNull()
+    @DisplayName("Login with null username returns empty")
+    void login_nullUsername_returnsEmpty()
     {
-        assertNull(auth.login(null, "pass1234"));
+        assertTrue(auth.login(null, "pass1234").isEmpty());
     }
 
     @Test
-    @DisplayName("Login with null password returns null")
-    void login_nullPassword_returnsNull()
+    @DisplayName("Login with null password returns empty")
+    void login_nullPassword_returnsEmpty()
     {
-        assertNull(auth.login("mario", null));
+        assertTrue(auth.login("mario", null).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Login is case-insensitive on username")
+    void login_caseInsensitiveUsername()
+    {
+        auth.registraNuovoConfiguratore("mario", "pass1234");
+        assertTrue(auth.login("MARIO", "pass1234").isPresent());
     }
 
     // ───────────────────── Registration ─────────────────────
@@ -155,5 +165,23 @@ class AuthenticationServiceTest
     {
         auth.registraNuovoConfiguratore("mario", "pass1234");
         assertTrue(auth.esistonoConfiguratori());
+    }
+
+    // ───────────────────── esisteUsername ─────────────────────
+
+    @Test
+    @DisplayName("esisteUsername is case-insensitive")
+    void esisteUsername_caseInsensitive()
+    {
+        auth.registraNuovoConfiguratore("mario", "pass1234");
+        assertTrue(auth.esisteUsername("MARIO"));
+        assertTrue(auth.esisteUsername("Mario"));
+    }
+
+    @Test
+    @DisplayName("esisteUsername with null returns false")
+    void esisteUsername_null_returnsFalse()
+    {
+        assertFalse(auth.esisteUsername(null));
     }
 }

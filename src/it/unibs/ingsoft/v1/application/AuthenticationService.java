@@ -36,12 +36,14 @@ public final class AuthenticationService
         if (username == null || password == null)
             return Optional.empty();
 
-        if (username.equals(USERNAME_PREDEFINITO) && password.equals(PASSWORD_PREDEFINITA))
+        String normalised = username.trim().toLowerCase();
+
+        if (normalised.equals(USERNAME_PREDEFINITO) && password.equals(PASSWORD_PREDEFINITA))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
-        String passSalvata = utenti.getConfiguratori().get(username);
+        String passSalvata = utenti.getConfiguratori().get(normalised);
         if (passSalvata != null && passSalvata.equals(password))
-            return Optional.of(new Configuratore(username));
+            return Optional.of(new Configuratore(normalised));
 
         return Optional.empty();
     }
@@ -55,16 +57,18 @@ public final class AuthenticationService
     {
         validaCredenziali(newUsername, newPassword);
 
-        if (USERNAME_PREDEFINITO.equalsIgnoreCase(newUsername))
+        String normalised = newUsername.trim().toLowerCase();
+
+        if (USERNAME_PREDEFINITO.equalsIgnoreCase(normalised))
             throw new IllegalArgumentException("Username non consentito (riservato).");
 
-        if (utenti.getConfiguratori().containsKey(newUsername))
+        if (utenti.getConfiguratori().containsKey(normalised))
             throw new IllegalArgumentException("Username già esistente.");
 
-        utenti.addConfiguratore(newUsername, newPassword);
+        utenti.addConfiguratore(normalised, newPassword);
         repo.save(utenti);
 
-        return new Configuratore(newUsername);
+        return new Configuratore(normalised);
     }
 
     public boolean esistonoConfiguratori()
@@ -75,7 +79,8 @@ public final class AuthenticationService
     /** Returns {@code true} if the given username is already registered (UX guard for controllers). */
     public boolean esisteUsername(String username)
     {
-        return utenti.getConfiguratori().containsKey(username);
+        if (username == null) return false;
+        return utenti.getConfiguratori().containsKey(username.trim().toLowerCase());
     }
 
     private static void validaCredenziali(String username, String password)

@@ -1,13 +1,15 @@
 package it.unibs.ingsoft.v1.presentation.view.contract;
 
-import it.unibs.ingsoft.v1.domain.Categoria;
-
 import java.util.List;
+import java.util.Map;
 
 /**
  * ISP sub-interface: pure output / display operations.
  * Implementations that only need to produce output (e.g., a logger, a test spy)
  * depend only on this narrow interface.
+ *
+ * <p>This interface is deliberately free of domain imports to support GUI migration (NFR-05).
+ * Controllers must convert domain objects to primitives before calling display methods.</p>
  */
 public interface IOutputView
 {
@@ -18,8 +20,12 @@ public interface IOutputView
     void stampaCampi(List<?> campi);
     void stampaCategorie(List<?> cat);
 
-    /** Shows each category with its specific fields listed underneath. */
-    void stampaCategorieDettaglio(List<Categoria> categorie);
+    /**
+     * Shows each category with its specific fields listed underneath.
+     *
+     * @param categorieConCampi map from category name to list of field descriptions
+     */
+    void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi);
 
     /**
      * Renders a numbered action menu.

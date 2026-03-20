@@ -1,8 +1,10 @@
 package it.unibs.ingsoft.v1.application;
 
 import it.unibs.ingsoft.v1.domain.Campo;
+import it.unibs.ingsoft.v1.domain.CampoBaseDefinito;
 import it.unibs.ingsoft.v1.domain.Categoria;
 import it.unibs.ingsoft.v1.domain.TipoCampo;
+import it.unibs.ingsoft.v1.domain.TipoDato;
 import it.unibs.ingsoft.v1.persistence.dto.CatalogoData;
 import it.unibs.ingsoft.v1.persistence.api.ICategoriaRepository;
 
@@ -39,41 +41,65 @@ public final class CatalogoService
     // ---------------------------------------------------------------
 
     /**
-     * Fixes the base fields for the first and only time.
+     * Initialises the base fields: auto-populates the 8 predefined fields from
+     * {@link CampoBaseDefinito}, then locks them as immutable.
      *
-     * @throws IllegalStateException    if base fields have already been fixed
-     * @throws IllegalArgumentException if the list is empty or contains duplicates/conflicts
+     * @pre  base fields have not been fixed yet
+     * @post all 8 predefined base fields are stored and the catalogue is marked as fixed
+     * @throws IllegalStateException if base fields have already been fixed
      */
-    public void fissareCampiBase(List<String> nomiCampiBase)
+    public void fissareCampiBase()
     {
         if (catalogo.isCampiBaseFissati())
             throw new IllegalStateException("I campi base sono già stati fissati e sono immutabili.");
 
-        Objects.requireNonNull(nomiCampiBase);
+        catalogo.clearCampiBase();
+        for (Campo c : CampoBaseDefinito.tutti())
+            catalogo.addCampoBase(c);
+        catalogo.markCampiBaseFissati();
+        repo.save(catalogo);
+    }
 
-        List<String> clean = new ArrayList<>();
-        for (String s : nomiCampiBase)
-        {
-            if (s == null || s.isBlank()) continue;
-            clean.add(s.trim());
-        }
-
-        if (clean.isEmpty())
-            throw new IllegalArgumentException("Lista campi base vuota.");
-
-        Set<String> seen = new HashSet<>();
-        for (String n : clean)
-        {
-            if (!seen.add(n.toLowerCase()))
-                throw new IllegalArgumentException("Nome campo base duplicato: " + n);
-
-            if (nomeEsistente(n))
-                throw new IllegalArgumentException("Esiste già un campo con questo nome: " + n);
-        }
+    /**
+     * Initialises the base fields: auto-populates the 8 predefined fields, then appends
+     * any extra base fields supplied by the configurator.
+     *
+     * @pre  base fields have not been fixed yet
+     * @pre  nomiExtra contains no duplicates and no names conflicting with predefined fields
+     * @post all predefined + extra base fields are stored and the catalogue is marked as fixed
+     * @throws IllegalStateException    if base fields have already been fixed
+     * @throws IllegalArgumentException if extras contain duplicates or name conflicts
+     */
+    public void fissareCampiBaseConExtra(List<String> nomiExtra)
+    {
+        if (catalogo.isCampiBaseFissati())
+            throw new IllegalStateException("I campi base sono già stati fissati e sono immutabili.");
 
         catalogo.clearCampiBase();
-        for (String n : clean)
-            catalogo.addCampoBase(new Campo(n, TipoCampo.BASE, true));
+        for (Campo c : CampoBaseDefinito.tutti())
+            catalogo.addCampoBase(c);
+
+        if (nomiExtra != null)
+        {
+            Set<String> seen = new HashSet<>();
+            for (Campo c : CampoBaseDefinito.tutti())
+                seen.add(c.getNome().toLowerCase());
+
+            for (String s : nomiExtra)
+            {
+                if (s == null || s.isBlank()) continue;
+                String nome = s.trim();
+
+                if (!seen.add(nome.toLowerCase()))
+                    throw new IllegalArgumentException("Nome campo base duplicato: " + nome);
+
+                if (nomeEsistente(nome))
+                    throw new IllegalArgumentException("Esiste già un campo con questo nome: " + nome);
+
+                catalogo.addCampoBase(new Campo(nome, TipoCampo.BASE, TipoDato.STRINGA, true));
+            }
+        }
+
         catalogo.markCampiBaseFissati();
         repo.save(catalogo);
     }
@@ -88,9 +114,12 @@ public final class CatalogoService
     // ---------------------------------------------------------------
 
     /**
+     * @pre  nome != null &amp;&amp; !nome.isBlank()
+     * @pre  tipoDato != null
+     * @post the new common field is persisted
      * @throws IllegalArgumentException if nome is blank or a field with this name already exists
      */
-    public void addCampoComune(String nome, boolean obbligatorio)
+    public void addCampoComune(String nome, TipoDato tipoDato, boolean obbligatorio)
     {
         if (nome == null || nome.isBlank())
             throw new IllegalArgumentException("Il nome del campo non può essere vuoto.");
@@ -98,7 +127,7 @@ public final class CatalogoService
         if (nomeEsistente(nome))
             throw new IllegalArgumentException("Esiste già un campo con questo nome.");
 
-        catalogo.addCampoComune(new Campo(nome.trim(), TipoCampo.COMUNE, obbligatorio));
+        catalogo.addCampoComune(new Campo(nome.trim(), TipoCampo.COMUNE, tipoDato, obbligatorio));
         repo.save(catalogo);
     }
 
@@ -186,7 +215,16 @@ public final class CatalogoService
      * @throws IllegalArgumentException if the category is not found, the name is blank,
      *                                  or a field with this name already exists globally
      */
-    public void addCampoSpecifico(String nomeCategoria, String nomeCampo, boolean obbligatorio)
+    /**
+     * @pre  nomeCategoria identifies an existing category
+     * @pre  nomeCampo != null &amp;&amp; !nomeCampo.isBlank()
+     * @pre  tipoDato != null
+     * @post the new specific field is persisted within the target category
+     * @throws IllegalArgumentException if the category is not found, the name is blank,
+     *                                  or a field with this name already exists globally
+     */
+    public void addCampoSpecifico(String nomeCategoria, String nomeCampo, TipoDato tipoDato,
+                                  boolean obbligatorio)
     {
         if (nomeCampo == null || nomeCampo.isBlank())
             throw new IllegalArgumentException("Il nome del campo non può essere vuoto.");
@@ -196,7 +234,7 @@ public final class CatalogoService
 
         Categoria c = getCategoriaOrThrow(nomeCategoria);
         // In-category duplicate check and type check delegated to the domain model
-        c.addCampoSpecifico(new Campo(nomeCampo.trim(), TipoCampo.SPECIFICO, obbligatorio));
+        c.addCampoSpecifico(new Campo(nomeCampo.trim(), TipoCampo.SPECIFICO, tipoDato, obbligatorio));
         repo.save(catalogo);
     }
 
@@ -228,7 +266,7 @@ public final class CatalogoService
     // Read-only queries (UX guard — controllers use these for inline validation)
     // ---------------------------------------------------------------
 
-    /** Returns {@code true} if any field (base, common, or specific) has the given name (case-insensitive). */
+    /** Returns {@code true} if any base or common field has the given name (case-insensitive). */
     public boolean nomeEsiste(String nome) { return nomeEsistente(nome); }
 
     // ---------------------------------------------------------------
@@ -243,18 +281,18 @@ public final class CatalogoService
     }
 
     /**
-     * Global name uniqueness check: base fields + common fields + all specific fields
-     * across all categories.
+     * Checks whether a field name already exists among base or common fields.
+     * Specific field uniqueness is per-category only, enforced by
+     * {@link Categoria#addCampoSpecifico(Campo)}.
+     *
+     * <p>Per spec: "Relativamente a ogni singola categoria, ogni campo è dotato
+     * di un nome che lo individua univocamente" — uniqueness is within the scope
+     * of base+common (globally) and specific (per-category).</p>
      */
     private boolean nomeEsistente(String nome)
     {
         if (Campo.containsNome(catalogo.getCampiBase(),   nome)) return true;
-        if (Campo.containsNome(catalogo.getCampiComuni(), nome)) return true;
-
-        for (Categoria cat : catalogo.getCategorie())
-            if (Campo.containsNome(cat.getCampiSpecifici(), nome)) return true;
-
-        return false;
+        return Campo.containsNome(catalogo.getCampiComuni(), nome);
     }
 
     /** Saves the catalogue only if a change actually occurred. */
