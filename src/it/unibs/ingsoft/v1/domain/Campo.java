@@ -3,15 +3,8 @@ package it.unibs.ingsoft.v1.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-import java.util.Objects;
-
 /**
- * Immutable value object representing a field.
- *
- * <p><b>Invariant:</b> {@code nome} is never null or blank; {@code tipo} and {@code tipoDato} are never null.</p>
- * <p>Identity is determined by name only (case-insensitive), as field names must be unique
- * within their scope (globally for base/common, per-category for specific fields).</p>
+ * Immutable value object representing a field definition (base, common, or category-specific).
  */
 public final class Campo
 {
@@ -36,52 +29,43 @@ public final class Campo
                  @JsonProperty("obbligatorio") boolean   obbligatorio)
     {
         if (nome == null || nome.isBlank())
-            throw new IllegalArgumentException("Nome campo non valido.");
+            throw new IllegalArgumentException("Il nome del campo non può essere vuoto.");
+        if (tipo == null)
+            throw new IllegalArgumentException("Il tipo del campo non può essere null.");
+        if (tipoDato == null)
+            throw new IllegalArgumentException("Il tipo dato del campo non può essere null.");
 
         this.nome         = nome.trim();
-        this.tipo         = Objects.requireNonNull(tipo, "Tipo nullo.");
-        this.tipoDato     = tipoDato != null ? tipoDato : TipoDato.STRINGA;
+        this.tipo         = tipo;
+        this.tipoDato     = tipoDato;
         this.obbligatorio = obbligatorio;
     }
 
-    /**
-     * Convenience constructor that defaults {@code tipoDato} to {@link TipoDato#STRINGA}.
-     */
-    public Campo(String nome, TipoCampo tipo, boolean obbligatorio)
-    {
-        this(nome, tipo, TipoDato.STRINGA, obbligatorio);
+    public String getNome() {
+        return nome;
     }
 
-    public String getNome()         { return nome; }
-    public TipoCampo getTipo()      { return tipo; }
-    public TipoDato getTipoDato()   { return tipoDato; }
-    public boolean isObbligatorio() { return obbligatorio; }
-
-    /**
-     * Returns a new {@code Campo} identical to this one except for the {@code obbligatorio} flag.
-     * Use this instead of a setter to keep {@code Campo} immutable.
-     */
-    public Campo withObbligatorio(boolean nuovoValore)
-    {
-        return new Campo(this.nome, this.tipo, this.tipoDato, nuovoValore);
+    public TipoCampo getTipo(){
+        return tipo;
     }
 
-    // ---------------------------------------------------------------
-    // Static utility
-    // ---------------------------------------------------------------
-
-    /**
-     * Returns {@code true} if any field in {@code campi} has the given name (case-insensitive).
-     */
-    public static boolean containsNome(List<Campo> campi, String nome)
-    {
-        return campi.stream().anyMatch(c -> c.getNome().equalsIgnoreCase(nome));
+    public TipoDato getTipoDato() {
+        return tipoDato;
     }
 
-    // ---------------------------------------------------------------
-    // Identity: name only (case-insensitive) — type is irrelevant for uniqueness
-    // ---------------------------------------------------------------
+    public boolean isObbligatorio() {
+        return obbligatorio;
+    }
 
+    /**
+     * Returns a new Campo identical to this one but with the given {@code obbligatorio} value.
+     */
+    public Campo withObbligatorio(boolean obbligatorio)
+    {
+        return new Campo(this.nome, this.tipo, this.tipoDato, obbligatorio);
+    }
+
+    /** Case-insensitive name equality. */
     @Override
     public boolean equals(Object o)
     {

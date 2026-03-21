@@ -18,23 +18,20 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
  * Generic base class for file-backed JSON repositories.
+ * Encapsulates all I/O logic (load + atomic save) so concrete sub-classes
+ * need only declare their type parameter and supply a default-value factory.
  *
- * <p>Replaces the previous Java-serialization implementation.
- * JSON is used because it is:
+ * <p>JSON is used instead of Java serialization because:
  * <ul>
  *   <li>Human-readable and debuggable</li>
- *   <li>Safe across class refactors (no {@code serialVersionUID} fragility)</li>
- *   <li>Forward-compatible: unknown fields are silently ignored</li>
+ *   <li>Schema evolution is safe: unknown fields are ignored by default</li>
+ *   <li>No {@code serialVersionUID} fragility</li>
  * </ul>
- *
- * <p>Saves atomically: writes to a {@code .tmp} sibling file then renames,
- * so the target file is never left in a partially-written state.</p>
- *
- * @param <T> the DTO type to serialize / deserialize
  */
 abstract class AbstractFileRepository<T>
 {
@@ -64,9 +61,9 @@ abstract class AbstractFileRepository<T>
 
     protected AbstractFileRepository(Path path, Class<T> type, Supplier<T> defaultValue)
     {
-        this.path         = path;
-        this.type         = type;
-        this.defaultValue = defaultValue;
+        this.path         = Objects.requireNonNull(path);
+        this.type         = Objects.requireNonNull(type);
+        this.defaultValue = Objects.requireNonNull(defaultValue);
     }
 
     public T load()
@@ -88,6 +85,8 @@ abstract class AbstractFileRepository<T>
 
     public void save(T data)
     {
+        Objects.requireNonNull(data);
+
         try
         {
             if (path.getParent() != null)

@@ -7,4 +7,6 @@ package it.unibs.ingsoft.v2.presentation.view.contract;
  */
 public interface IAppView extends IOutputView, IInputView, IFormView, ISelectionView
 {
+    /** Context hint shown at the start of every form that accepts free-text input. */
+    String HINT_ANNULLA = "Digita 'annulla' per annullare.";
 }

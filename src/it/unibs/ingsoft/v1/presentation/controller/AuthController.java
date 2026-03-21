@@ -31,6 +31,7 @@ public final class AuthController
     {
         while (true)
         {
+            ui.newLine();
             ui.stampa("LOGIN CONFIGURATORE");
             String u = ui.acquisisciStringa("Username: ");
             String p = ui.acquisisciStringa("Password: ");
@@ -53,7 +54,6 @@ public final class AuthController
                 ui.newLine();
                 ui.stampa("Primo accesso con credenziali predefinite.");
                 ui.stampa("Scegli le tue credenziali personali.");
-
                 try
                 {
                     Configuratore registered = registrazioneInterattiva();
@@ -62,7 +62,7 @@ public final class AuthController
                 }
                 catch (OperationCancelledException e)
                 {
-                    ui.stampaInfo("Registrazione annullata. Esegui di nuovo il login per riprovare.");
+                    ui.stampaInfo("Registrazione annullata. Effettua nuovamente il login.");
                     ui.newLine();
                     continue;
                 }
@@ -83,18 +83,14 @@ public final class AuthController
         ui.stampaInfo("Username: minimo 3 caratteri, non può essere '" +
                       AuthenticationService.USERNAME_PREDEFINITO + "'.");
         ui.stampaInfo("Password: minimo 4 caratteri.");
-        ui.stampaInfo(IAppView.HINT_ANNULLA);
+        ui.stampaInfo(IAppView.HINT_ANNULLA); // TODO IMPLEMENT
         ui.newLine();
 
         while (true)
         {
-            // ── Step 1: collect and validate username ──────────────────
             String newU = raccogliUsername();
-
-            // ── Step 2: collect and validate password ──────────────────
             String newP = raccogliPassword();
 
-            // ── Step 3: submit (defensive catch — should not trigger if steps 1-2 passed) ──
             try
             {
                 Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
@@ -118,7 +114,7 @@ public final class AuthController
                     "Nuovo username: ",
                     u -> !u.isBlank() && u.trim().length() >= 3,
                     "Username troppo corto (minimo 3 caratteri)."
-            );
+            ).trim();
 
             if (newU.equalsIgnoreCase(AuthenticationService.USERNAME_PREDEFINITO))
             {
@@ -141,7 +137,7 @@ public final class AuthController
     {
         while (true)
         {
-            String newP = ui.acquisisciPassword("Password: ");
+            String newP = ui.acquisisciPassword("Nuova password: ");
 
             if (newP == null || newP.isBlank() || newP.trim().length() < 4)
             {

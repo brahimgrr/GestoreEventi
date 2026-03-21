@@ -3,10 +3,21 @@ package it.unibs.ingsoft.v2.presentation.view.contract;
 import it.unibs.ingsoft.v2.domain.TipoDato;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * ISP sub-interface: pure input / acquisition operations.
+ * Implementations that only need to read user input (e.g., a scripted test driver)
+ * depend only on this narrow interface.
+ */
 public interface IInputView
 {
+    /**
+     * Reads a string from the user. Implementations must detect the cancel keyword
+     * ("annulla") and throw {@link OperationCancelledException} when it is typed.
+     */
     String acquisisciStringa(String prompt);
 
     /** Prompts until the supplied predicate is satisfied, showing errorMsg on failure. */
@@ -16,5 +27,23 @@ public interface IInputView
     int    acquisisciIntero(String prompt, int min, int max);
     boolean acquisisciSiNo(String prompt);
     TipoDato acquisisciTipoDato(String prompt);
-    List<String> acquisisciListaNomi(String prompt);
+
+    /**
+     * Interactively collects a list of names with inline duplicate detection
+     * and a review/confirm step before returning.
+     */
+    List<String> acquisisciListaNomi(String titolo);
+
+    /**
+     * Presents a numbered list and returns the selected element,
+     * or {@link Optional#empty()} if the user chooses 0 (Annulla).
+     */
+    <T> Optional<T> selezionaElemento(String prompt, List<T> elementi);
+
+    /**
+     * Like {@link #selezionaElemento} but appends extra info per element
+     * (e.g., "[obbligatorio]" or "[facoltativo]").
+     */
+    <T> Optional<T> selezionaElementoConInfo(String prompt, List<T> elementi,
+                                              Function<T, String> infoMapper);
 }

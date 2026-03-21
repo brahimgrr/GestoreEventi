@@ -1,16 +1,18 @@
 package it.unibs.ingsoft.v2.domain;
 
-import java.io.Serializable;
-
 /**
  * Abstract base class for all application users.
  */
-public abstract class Persona implements Serializable
+public abstract class Persona
 {
-    private static final long serialVersionUID = 1L;
-
     private final String username;
 
+    /**
+     * @pre  username != null &amp;&amp; !username.isBlank()
+     * @post getUsername().equals(username.trim())
+     * @post !getUsername().isBlank()
+     * @throws IllegalArgumentException if username is null or blank
+     */
     protected Persona(String username)
     {
         if (username == null || username.isBlank())
@@ -18,18 +20,31 @@ public abstract class Persona implements Serializable
         this.username = username.trim();
     }
 
-    public String getUsername() { return username; }
+    public String getUsername() {
+        return username;
+    }
 
+    /**
+     * Two {@code Persona} instances are equal iff they are of the same concrete type
+     * and have the same username. This uses {@code getClass()} comparison (not {@code instanceof})
+     * intentionally: a {@code Configuratore} and a {@code Fruitore} with the same username
+     * are considered distinct entities, which is correct since they represent different user roles.
+     */
     @Override
-    public boolean equals(Object obj)
+    public final boolean equals(Object o)
     {
-        if (this == obj) return true;
-        if (!(obj instanceof Persona)) return false;
-        return username.equals(((Persona) obj).username);
+        if (this == o)
+            return true;
+
+        if (o == null || this.getClass() != o.getClass())
+            return false;
+
+        Persona persona = (Persona) o;
+        return username.equals(persona.username);
     }
 
     @Override
-    public int hashCode()
+    public final int hashCode()
     {
         return username.hashCode();
     }

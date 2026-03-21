@@ -1,5 +1,8 @@
 package it.unibs.ingsoft.v1.presentation.view.contract;
 
+import it.unibs.ingsoft.v1.domain.Campo;
+import it.unibs.ingsoft.v1.domain.Categoria;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,45 +16,32 @@ import java.util.Map;
  */
 public interface IOutputView
 {
-    void stampa(String msg);
+    void stampa(String testo);
     void newLine();
-    void header(String title);
+    void header(String titolo);
     void stampaSezione(String titolo);
-    void stampaCampi(List<?> campi);
-    void stampaCategorie(List<?> cat);
+    void stampaCampi(List<Campo> campi);
+    void stampaCategorie(List<Categoria> categorie);
 
-    /**
-     * Shows each category with its specific fields listed underneath.
-     *
-     * @param categorieConCampi map from category name to list of field descriptions
-     */
+    /** Displays categories with their specific fields listed below each. */
     void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi);
 
-    /**
-     * Renders a numbered action menu.
-     *
-     * @param uscitaLabel label shown for option 0 (e.g., {@code "Esci"} or {@code "Torna"})
-     */
-    void stampaMenu(String titolo, String[] lista, String uscitaLabel);
+    /** Displays a numbered menu; {@code 0} exits/goes back with the label "Esci". */
+    void stampaMenu(String titolo, String[] voci);
 
-    /**
-     * Renders a numbered action menu with {@code "Esci"} as the option-0 label.
-     * Use for the top-level main menu only; inner menus should use
-     * {@link #stampaMenu(String, String[], String)} with {@code "Torna"}.
-     */
-    default void stampaMenu(String titolo, String[] lista) { stampaMenu(titolo, lista, "Esci"); }
+    /** Displays a numbered menu; {@code 0} exits/goes back with the custom {@code uscitaLabel}. */
+    void stampaMenu(String titolo, String[] voci, String uscitaLabel);
 
     void pausa();
 
-    /** Messaggio di successo: "  ✅ msg" */
     void stampaSuccesso(String msg);
-    /** Messaggio di errore:   "  ❌ msg" */
     void stampaErrore(String msg);
-    /** Messaggio di avviso:   "  ⚠️  msg" */
     void stampaAvviso(String msg);
-    /** Messaggio informativo: "  ℹ️  msg" */
     void stampaInfo(String msg);
 
     /** Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern. */
-    default void pausaConSpaziatura() { newLine(); pausa(); }
+    default void pausaConSpaziatura() {
+        newLine();
+        pausa();
+    }
 }

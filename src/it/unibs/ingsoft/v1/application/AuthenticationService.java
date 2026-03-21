@@ -2,81 +2,82 @@ package it.unibs.ingsoft.v1.application;
 
 import it.unibs.ingsoft.v1.domain.Configuratore;
 import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
-import it.unibs.ingsoft.v1.persistence.dto.UtenteData;
+import it.unibs.ingsoft.v1.persistence.dto.UsersData;
 
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Handles configurator authentication and registration.
+ *
+ * <p>First access uses default credentials (config/config).
+ * After personal credentials are registered, the default account is disabled.</p>
+ */
 public final class AuthenticationService
 {
     public static final String USERNAME_PREDEFINITO = "config";
     public static final String PASSWORD_PREDEFINITA = "config";
 
+    private static final int MIN_USERNAME_LENGTH = 3;
+    private static final int MIN_PASSWORD_LENGTH = 4;
+
     private final IUtenteRepository repo;
-    private final UtenteData        utenti;
+    private final UsersData utenti;
 
     /**
      * @pre repo   != null
      * @pre utenti != null
      */
-    public AuthenticationService(IUtenteRepository repo, UtenteData utenti)
+    public AuthenticationService(IUtenteRepository repo)
     {
         this.repo   = Objects.requireNonNull(repo);
-        this.utenti = Objects.requireNonNull(utenti);
+        this.utenti = repo.load();
     }
 
     /**
-     * Attempts to log in with the given credentials.
+     * Attempts to log in with the supplied credentials.
      *
-     * @return a non-empty {@link Optional} containing the authenticated {@link Configuratore},
-     *         or {@link Optional#empty()} if credentials do not match
+     * @return the logged-in configurator, or empty if credentials are invalid
      */
     public Optional<Configuratore> login(String username, String password)
     {
         if (username == null || password == null)
             return Optional.empty();
 
-        String normalised = username.trim().toLowerCase();
-
-        if (normalised.equals(USERNAME_PREDEFINITO) && password.equals(PASSWORD_PREDEFINITA))
+        // Default credentials: valid only when no personal accounts exist yet
+        if (USERNAME_PREDEFINITO.equals(username) &&
+            PASSWORD_PREDEFINITA.equals(password) &&
+            utenti.getConfiguratori().isEmpty())
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
-        String passSalvata = utenti.getConfiguratori().get(normalised);
-        if (passSalvata != null && passSalvata.equals(password))
-            return Optional.of(new Configuratore(normalised));
+        String stored = utenti.getConfiguratori().get(username);
+        if (stored != null && stored.equals(password))
+            return Optional.of(new Configuratore(username));
 
         return Optional.empty();
     }
 
     /**
-     * Registers a new configurator with the given personal credentials.
+     * Registers a new configurator with personal credentials.
      *
-     * @throws IllegalArgumentException if credentials are too short, reserved, or already taken
+     * @throws IllegalArgumentException if credentials are reserved, duplicate, or too short
      */
-    public Configuratore registraNuovoConfiguratore(String newUsername, String newPassword)
+    public Configuratore registraNuovoConfiguratore(String username, String password)
     {
-        validaCredenziali(newUsername, newPassword);
+        validaCredenziali(username, password);
 
-        String normalised = newUsername.trim().toLowerCase();
+        if (USERNAME_PREDEFINITO.equalsIgnoreCase(username))
+            throw new IllegalArgumentException("Lo username \"" + username + "\" è riservato.");
 
-        if (USERNAME_PREDEFINITO.equalsIgnoreCase(normalised))
-            throw new IllegalArgumentException("Username non consentito (riservato).");
+        if (utenti.getConfiguratori().containsKey(username))
+            throw new IllegalArgumentException("Esiste già un configuratore con username \"" + username + "\".");
 
-        if (utenti.getConfiguratori().containsKey(normalised))
-            throw new IllegalArgumentException("Username già esistente.");
-
-        utenti.addConfiguratore(normalised, newPassword);
+        utenti.addConfiguratore(username, password);
         repo.save(utenti);
-
-        return new Configuratore(normalised);
+        return new Configuratore(username);
     }
 
-    public boolean esistonoConfiguratori()
-    {
-        return !utenti.getConfiguratori().isEmpty();
-    }
-
-    /** Returns {@code true} if the given username is already registered (UX guard for controllers). */
+    /** Returns true if a configurator with this username is already registered. */
     public boolean esisteUsername(String username)
     {
         if (username == null) return false;
@@ -91,10 +92,11 @@ public final class AuthenticationService
         if (password == null || password.isBlank())
             throw new IllegalArgumentException("Password non valida.");
 
-        if (username.trim().length() < 3)
-            throw new IllegalArgumentException("Username troppo corto (min 3 caratteri).");
-
-        if (password.trim().length() < 4)
-            throw new IllegalArgumentException("Password troppo corta (min 4 caratteri).");
+        if (username.length() < MIN_USERNAME_LENGTH)
+            throw new IllegalArgumentException(
+                    "Lo username deve avere almeno " + MIN_USERNAME_LENGTH + " caratteri.");
+        if (password.length() < MIN_PASSWORD_LENGTH)
+            throw new IllegalArgumentException(
+                    "La password deve avere almeno " + MIN_PASSWORD_LENGTH + " caratteri.");
     }
 }

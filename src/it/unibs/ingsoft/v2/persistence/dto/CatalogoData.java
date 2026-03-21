@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * JSON-serializable snapshot of the field/category catalogue.
+ * Pure serializable DTO for the field/category catalogue.
+ * Contains no domain query logic — all business operations live in the service layer.
+ * Structural mutations (add/remove/replace) are deliberately kept here so the
+ * service does not need to rebuild the full list on every change.
  */
-public final class CatalogoData
-{
+public final class CatalogoData {
     private final List<Campo>     campiBase;
-    private boolean               campiBaseFissati;
+    private boolean         campiBaseFissati;
     private final List<Campo>     campiComuni;
     private final List<Categoria> categorie;
 
@@ -28,7 +30,7 @@ public final class CatalogoData
         this.categorie        = new ArrayList<>();
     }
 
-    /** Jackson deserialisation factory. */
+    /** Jackson deserialization factory. */
     @JsonCreator
     public static CatalogoData fromJson(
             @JsonProperty("campiBase")        List<Campo>     campiBase,
@@ -44,27 +46,89 @@ public final class CatalogoData
         return d;
     }
 
-    // ---- base fields ----
+    // ---------------------------------------------------------------
+    // CAMPI BASE
+    // ---------------------------------------------------------------
 
-    public List<Campo> getCampiBase()       { return Collections.unmodifiableList(campiBase); }
-    public boolean isCampiBaseFissati()     { return campiBaseFissati; }
-    public void setCampiBaseFissati(boolean value) { this.campiBaseFissati = value; }
-    public void addCampoBase(Campo c)       { campiBase.add(c); }
+    public List<Campo> getCampiBase() {
+        return Collections.unmodifiableList(campiBase);
+    }
 
-    // ---- common fields ----
+    public boolean isCampiBaseFissati() {
+        return campiBaseFissati;
+    }
 
-    public List<Campo> getCampiComuni()     { return Collections.unmodifiableList(campiComuni); }
-    public void addCampoComune(Campo c)     { campiComuni.add(c); }
+    /** One-way: once base fields are marked as fixed they cannot be un-fixed. */
+    public void setCampiBaseFissati()
+    {
+        this.campiBaseFissati = true;
+    }
+
+    /** Guarded: throws if base fields are already fixed. */
+    public void addCampoBase(Campo c)
+    {
+        if (campiBaseFissati)
+            throw new IllegalStateException("I campi base sono già fissati e immutabili.");
+        campiBase.add(c);
+    }
+
+    /** Guarded: throws if base fields are already fixed. */
+    public void clearCampiBase()
+    {
+        if (campiBaseFissati)
+            throw new IllegalStateException("I campi base sono già fissati e immutabili.");
+        campiBase.clear();
+    }
+
+    // ---------------------------------------------------------------
+    // CAMPI COMUNI
+    // ---------------------------------------------------------------
+
+    public List<Campo> getCampiComuni()
+    {
+        return Collections.unmodifiableList(campiComuni);
+    }
+
+    public void addCampoComune(Campo c)
+    {
+        campiComuni.add(c);
+    }
 
     public boolean removeCampoComune(String nome)
     {
         return campiComuni.removeIf(c -> c.getNome().equalsIgnoreCase(nome));
     }
 
-    // ---- categories ----
+    /**
+     * Replaces the common field whose name matches {@code nome} (case-insensitive)
+     * with {@code nuovoCampo}. Used to update the {@code obbligatorio} flag immutably.
+     *
+     * @return true if found and replaced, false otherwise
+     */
+    public boolean replaceCampoComune(String nome, Campo nuovoCampo)
+    {
+        for (int i = 0; i < campiComuni.size(); i++)
+        {
+            if (campiComuni.get(i).getNome().equalsIgnoreCase(nome))
+            {
+                campiComuni.set(i, nuovoCampo);
+                return true;
+            }
+        }
+        return false;
+    }
 
-    public List<Categoria> getCategorie()   { return Collections.unmodifiableList(categorie); }
-    public void addCategoria(Categoria cat) { categorie.add(cat); }
+    // ---------------------------------------------------------------
+    // CATEGORIE
+    // ---------------------------------------------------------------
+
+    public List<Categoria> getCategorie() {
+        return Collections.unmodifiableList(categorie);
+    }
+
+    public void addCategoria(Categoria c) {
+        categorie.add(c);
+    }
 
     public boolean removeCategoria(String nome)
     {

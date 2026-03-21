@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import it.unibs.ingsoft.v1.domain.Campo;
 import it.unibs.ingsoft.v1.domain.Categoria;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Pure serializable DTO for the field/category catalogue.
@@ -13,14 +15,19 @@ import java.util.*;
  * Structural mutations (add/remove/replace) are deliberately kept here so the
  * service does not need to rebuild the full list on every change.
  */
-public final class CatalogoData
-{
-    private final List<Campo>     campiBase    = new ArrayList<>();
-    private       boolean         campiBaseFissati = false;
-    private final List<Campo>     campiComuni  = new ArrayList<>();
-    private final List<Categoria> categorie    = new ArrayList<>();
+public final class CatalogoData {
+    private final List<Campo>     campiBase;
+    private boolean         campiBaseFissati;
+    private final List<Campo>     campiComuni;
+    private final List<Categoria> categorie;
 
-    public CatalogoData() {}
+    public CatalogoData()
+    {
+        this.campiBase        = new ArrayList<>();
+        this.campiBaseFissati = false;
+        this.campiComuni      = new ArrayList<>();
+        this.categorie        = new ArrayList<>();
+    }
 
     /** Jackson deserialization factory. */
     @JsonCreator
@@ -39,21 +46,19 @@ public final class CatalogoData
     }
 
     // ---------------------------------------------------------------
-    // CAMPI BASE — one-time setup, immutable after marking
+    // CAMPI BASE
     // ---------------------------------------------------------------
 
-    public List<Campo> getCampiBase()
-    {
+    public List<Campo> getCampiBase() {
         return Collections.unmodifiableList(campiBase);
     }
 
-    public boolean isCampiBaseFissati()
-    {
+    public boolean isCampiBaseFissati() {
         return campiBaseFissati;
     }
 
     /** One-way: once base fields are marked as fixed they cannot be un-fixed. */
-    public void markCampiBaseFissati()
+    public void setCampiBaseFissati()
     {
         this.campiBaseFissati = true;
     }
@@ -94,18 +99,18 @@ public final class CatalogoData
     }
 
     /**
-     * Replaces the common field whose name matches {@code nome} with {@code aggiornato}.
-     * Used to update the {@code obbligatorio} flag on an immutable {@link Campo}.
+     * Replaces the common field whose name matches {@code nome} (case-insensitive)
+     * with {@code nuovoCampo}. Used to update the {@code obbligatorio} flag immutably.
      *
-     * @return {@code true} if the field was found and replaced, {@code false} otherwise
+     * @return true if found and replaced, false otherwise
      */
-    public boolean replaceCampoComune(String nome, Campo aggiornato)
+    public boolean replaceCampoComune(String nome, Campo nuovoCampo)
     {
         for (int i = 0; i < campiComuni.size(); i++)
         {
             if (campiComuni.get(i).getNome().equalsIgnoreCase(nome))
             {
-                campiComuni.set(i, aggiornato);
+                campiComuni.set(i, nuovoCampo);
                 return true;
             }
         }
@@ -116,13 +121,11 @@ public final class CatalogoData
     // CATEGORIE
     // ---------------------------------------------------------------
 
-    public List<Categoria> getCategorie()
-    {
+    public List<Categoria> getCategorie() {
         return Collections.unmodifiableList(categorie);
     }
 
-    public void addCategoria(Categoria c)
-    {
+    public void addCategoria(Categoria c) {
         categorie.add(c);
     }
 

@@ -38,11 +38,11 @@ public final class PropostaService
     private final IPropostaRepository propostaRepo;
     private final PropostaData        proposteData;
 
-    public PropostaService(CatalogoData catalogo, IPropostaRepository propostaRepo, PropostaData proposteData)
+    public PropostaService(IPropostaRepository propostaRepo, CategoriaService categoriaService)
     {
-        this.catalogo     = Objects.requireNonNull(catalogo);
         this.propostaRepo = Objects.requireNonNull(propostaRepo);
-        this.proposteData = Objects.requireNonNull(proposteData);
+        this.proposteData = propostaRepo.load();
+        this.catalogo = categoriaService.getCatalogo();
     }
 
     // ----------------------------------------------------------------
@@ -245,11 +245,20 @@ public final class PropostaService
         return tutti;
     }
 
-    /** Returns the subset of fields whose names appear in the error list. */
+    /**
+     * Returns the subset of fields whose names appear in the error list.
+     *
+     * <p>Uses quoted matching ({@code "\"nome\""}) so that a field named
+     * {@code "Data"} is not spuriously matched by an error message that
+     * mentions {@code "Data conclusiva"}.</p>
+     */
     public List<Campo> getCampiConErrore(Proposta p, List<String> errori)
     {
         return getTuttiCampi(p).stream()
-                .filter(c -> errori.stream().anyMatch(e -> e.contains(c.getNome())))
+                .filter(c -> {
+                    String quoted = "\"" + c.getNome() + "\"";
+                    return errori.stream().anyMatch(e -> e.contains(quoted));
+                })
                 .collect(Collectors.toList());
     }
 

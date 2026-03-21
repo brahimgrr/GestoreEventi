@@ -3,6 +3,7 @@ package it.unibs.ingsoft.v2.presentation.controller;
 import it.unibs.ingsoft.v2.application.AuthenticationService;
 import it.unibs.ingsoft.v2.domain.Configuratore;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
 
 /**
  * Handles configuratore login and first-time credential setup.
@@ -22,7 +23,7 @@ public final class AuthController
     /**
      * Loops until a successful login is performed.
      * If default credentials are used, forces the user to register personal ones
-     * with field-level inline validation (only the failed field is re-asked).
+     * with field-level inline validation and re-prompt (only the failed field is re-asked).
      *
      * @return the authenticated Configuratore
      */
@@ -52,9 +53,18 @@ public final class AuthController
                 ui.newLine();
                 ui.stampa("Primo accesso con credenziali predefinite.");
                 ui.stampa("Scegli le tue credenziali personali.");
-                Configuratore registered = registrazioneInterattiva();
-                ui.newLine();
-                return registered;
+                try
+                {
+                    Configuratore registered = registrazioneInterattiva();
+                    ui.newLine();
+                    return registered;
+                }
+                catch (OperationCancelledException e)
+                {
+                    ui.stampaInfo("Registrazione annullata. Effettua nuovamente il login.");
+                    ui.newLine();
+                    continue;
+                }
             }
 
             ui.newLine();
@@ -63,8 +73,8 @@ public final class AuthController
     }
 
     /**
-     * Guides the user through first-time credential registration.
-     * Shows all constraints upfront, then re-prompts only the failing field.
+     * Guides the user through first-time credential registration with field-level re-prompts.
+     * Throws {@link OperationCancelledException} if the user aborts.
      */
     private Configuratore registrazioneInterattiva()
     {
@@ -72,6 +82,7 @@ public final class AuthController
         ui.stampaInfo("Username: minimo 3 caratteri, non può essere '" +
                       AuthenticationService.USERNAME_PREDEFINITO + "'.");
         ui.stampaInfo("Password: minimo 4 caratteri.");
+        ui.stampaInfo(IAppView.HINT_ANNULLA); // TODO IMPLEMENT
         ui.newLine();
 
         while (true)
@@ -87,7 +98,6 @@ public final class AuthController
             }
             catch (IllegalArgumentException e)
             {
-                // Defensive: service-level catch (should not trigger after field validation)
                 ui.stampaErrore(e.getMessage());
                 ui.newLine();
             }
@@ -107,13 +117,13 @@ public final class AuthController
 
             if (newU.equalsIgnoreCase(AuthenticationService.USERNAME_PREDEFINITO))
             {
-                ui.stampaErrore("Username riservato. Scegliere un nome diverso.");
+                ui.stampaErrore("Username riservato. Scegli un nome diverso.");
                 continue;
             }
 
             if (auth.esisteUsername(newU))
             {
-                ui.stampaErrore("Username già in uso. Scegliere un nome diverso.");
+                ui.stampaErrore("Username già in uso. Scegli un nome diverso.");
                 continue;
             }
 

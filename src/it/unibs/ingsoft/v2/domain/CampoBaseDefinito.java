@@ -18,14 +18,17 @@ public enum CampoBaseDefinito
     private final String   nomeCampo;
     private final TipoDato tipoDato;
 
-    CampoBaseDefinito(String nomeCampo, TipoDato tipoDato)
-    {
+    CampoBaseDefinito(String nomeCampo, TipoDato tipoDato) {
         this.nomeCampo = nomeCampo;
-        this.tipoDato  = tipoDato;
+        this.tipoDato = tipoDato;
     }
 
-    public String getNomeCampo() { return nomeCampo; }
-    public TipoDato getTipoDato() { return tipoDato; }
+    public String getNomeCampo() {
+        return nomeCampo;
+    }
+    public TipoDato getTipoDato() {
+        return tipoDato;
+    }
 
     /** Case-insensitive lookup by field name; returns null if not found. */
     public static CampoBaseDefinito fromNome(String nome)

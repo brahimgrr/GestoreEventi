@@ -3,26 +3,29 @@ package it.unibs.ingsoft.v1.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- * Rich domain object for a category.
- * Enforces its own invariants: specific fields must have type SPECIFICO and names must
- * be unique within this category. Cross-category uniqueness is the service's concern.
+ * Represents an event category. Each category has a unique name and a list of
+ * category-specific fields (sorted alphabetically by name).
  */
 public final class Categoria
 {
-    private final String      nome;
-    private final List<Campo> campiSpecifici = new ArrayList<>();
+    private final String     nome;
+    private final List<Campo> campiSpecifici;
 
     public Categoria(String nome)
     {
         if (nome == null || nome.isBlank())
-            throw new IllegalArgumentException("Nome categoria non valido.");
-        this.nome = nome.trim();
+            throw new IllegalArgumentException("Il nome della categoria non può essere vuoto.");
+        this.nome           = nome.trim();
+        this.campiSpecifici = new ArrayList<>();
     }
 
-    /** Jackson deserialization factory — restores both name and specific fields. */
+    /** Jackson deserialisation factory — restores the name and its specific fields. */
     @JsonCreator
     public static Categoria fromJson(
             @JsonProperty("nome")           String      nome,
@@ -41,34 +44,41 @@ public final class Categoria
         return Collections.unmodifiableList(campiSpecifici);
     }
 
-    // ---------------------------------------------------------------
-    // Domain invariant enforcement
-    // ---------------------------------------------------------------
-
+    /**
+     * Adds a specific field to this category.
+     *
+     * @pre c.getTipo() == TipoCampo.SPECIFICO
+     * @pre no existing specific field has the same name (case-insensitive)
+     * @throws IllegalArgumentException if the field type is wrong or name is duplicate
+     */
     public void addCampoSpecifico(Campo campoSpecifico)
     {
-        Objects.requireNonNull(campoSpecifico, "Campo nullo.");
-
         if (campoSpecifico.getTipo() != TipoCampo.SPECIFICO)
-            throw new IllegalArgumentException("Il campo deve avere scope SPECIFICO.");
-
-        if (Campo.containsNome(campiSpecifici, campoSpecifico.getNome()))
+            throw new IllegalArgumentException("Solo campi di tipo SPECIFICO possono essere aggiunti a una categoria.");
+        if (containsCampo(campoSpecifico.getNome()))
             throw new IllegalArgumentException(
-                "Esiste già un campo specifico con questo nome nella categoria.");
+                    "La categoria \"" + nome + "\" ha già un campo chiamato \"" + campoSpecifico.getNome() + "\".");
 
         campiSpecifici.add(campoSpecifico);
+        campiSpecifici.sort(Comparator.comparing(Campo::getNome, String.CASE_INSENSITIVE_ORDER));
     }
 
+    /**
+     * Removes the specific field with the given name (case-insensitive).
+     *
+     * @return true if removed, false if not found
+     */
     public boolean removeCampoSpecifico(String nomeCampo)
     {
         return campiSpecifici.removeIf(c -> c.getNome().equalsIgnoreCase(nomeCampo));
     }
 
     /**
-     * Replaces the specific field with the updated {@code obbligatorio} value.
-     * {@code Campo} is immutable, so the element is replaced rather than mutated.
+     * Updates the mandatory flag of the named specific field.
+     * Replaces the existing (immutable) {@link Campo} with a new instance via
+     * {@link Campo#withObbligatorio(boolean)}.
      *
-     * @return {@code true} if the field was found and replaced, {@code false} otherwise
+     * @return true if the field was found and updated, false otherwise
      */
     public boolean setObbligatorietaCampoSpecifico(String nomeCampo, boolean obbligatorio)
     {
@@ -83,16 +93,18 @@ public final class Categoria
         return false;
     }
 
-    // ---------------------------------------------------------------
-    // equals / hashCode / toString — identity is name only
-    // ---------------------------------------------------------------
-
-    @Override
-    public boolean equals(Object o)
+    private boolean containsCampo(String nomeCampo)
     {
-        if (this == o) return true;
-        if (!(o instanceof Categoria)) return false;
-        return nome.equalsIgnoreCase(((Categoria) o).nome);
+        return campiSpecifici.stream().anyMatch(c -> c.getNome().equalsIgnoreCase(nomeCampo));
+    }
+
+    /** Case-insensitive name equality. */
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (!(obj instanceof Categoria)) return false;
+        return nome.equalsIgnoreCase(((Categoria) obj).nome);
     }
 
     @Override

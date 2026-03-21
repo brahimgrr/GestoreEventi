@@ -49,8 +49,8 @@ abstract class AbstractFileRepository<T>
         }
         catch (IOException e)
         {
-            System.err.println("[WARN] Failed to load " + path + ": " + e.getMessage()
-                    + " — starting with empty state.");
+            System.err.println("[WARN] Impossibile leggere " + path + ": " + e.getMessage()
+                    + " — avvio con stato vuoto.");
             return defaultValue.get();
         }
     }
@@ -71,7 +71,7 @@ abstract class AbstractFileRepository<T>
         }
         catch (IOException e)
         {
-            throw new UncheckedIOException("Failed to save to " + path, e);
+            throw new UncheckedIOException("Impossibile salvare i dati in: " + path, e);
         }
     }
 }

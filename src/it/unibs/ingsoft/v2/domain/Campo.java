@@ -3,20 +3,25 @@ package it.unibs.ingsoft.v2.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 /**
- * Represents a field definition (base, common, or category-specific).
- * Immutable except for the {@code obbligatorio} flag, which configurators may change.
+ * Immutable value object representing a field definition (base, common, or category-specific).
  */
 public final class Campo
 {
     private final String    nome;
     private final TipoCampo tipo;
     private final TipoDato  tipoDato;
-    private boolean         obbligatorio;
+    private final boolean   obbligatorio;
 
-    /** Primary constructor — also used as the Jackson deserialisation entry point. */
+    /**
+     * @pre  nome != null &amp;&amp; !nome.isBlank()
+     * @pre  tipo != null
+     * @pre  tipoDato != null
+     * @post getNome().equals(nome.trim())
+     * @post getTipo() == tipo
+     * @post getTipoDato() == tipoDato
+     * @post isObbligatorio() == obbligatorio
+     */
     @JsonCreator
     public Campo(@JsonProperty("nome")         String    nome,
                  @JsonProperty("tipo")         TipoCampo tipo,
@@ -36,43 +41,48 @@ public final class Campo
         this.obbligatorio = obbligatorio;
     }
 
-    public String    getNome()        { return nome; }
-    public TipoCampo getTipo()        { return tipo; }
-    public TipoDato  getTipoDato()    { return tipoDato; }
-    public boolean   isObbligatorio() { return obbligatorio; }
-
-    public void setObbligatorio(boolean obbligatorio)
-    {
-        this.obbligatorio = obbligatorio;
+    public String getNome() {
+        return nome;
     }
 
-    /** Case-insensitive name + tipo equality. */
-    @Override
-    public boolean equals(Object obj)
+    public TipoCampo getTipo(){
+        return tipo;
+    }
+
+    public TipoDato getTipoDato() {
+        return tipoDato;
+    }
+
+    public boolean isObbligatorio() {
+        return obbligatorio;
+    }
+
+    /**
+     * Returns a new Campo identical to this one but with the given {@code obbligatorio} value.
+     */
+    public Campo withObbligatorio(boolean obbligatorio)
     {
-        if (this == obj) return true;
-        if (!(obj instanceof Campo)) return false;
-        Campo other = (Campo) obj;
-        return nome.equalsIgnoreCase(other.nome) && tipo == other.tipo;
+        return new Campo(this.nome, this.tipo, this.tipoDato, obbligatorio);
+    }
+
+    /** Case-insensitive name equality. */
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (!(o instanceof Campo)) return false;
+        return nome.equalsIgnoreCase(((Campo) o).nome);
     }
 
     @Override
     public int hashCode()
     {
-        return 31 * nome.toLowerCase().hashCode() + tipo.hashCode();
+        return nome.toLowerCase().hashCode();
     }
 
     @Override
     public String toString()
     {
-        return nome + " [" + tipo + ", " + tipoDato + "] ("
-               + (obbligatorio ? "obbligatorio" : "facoltativo") + ")";
-    }
-
-    /** Utility: case-insensitive search by name in a list. */
-    public static boolean containsNome(List<Campo> campi, String nome)
-    {
-        if (nome == null) return false;
-        return campi.stream().anyMatch(c -> c.getNome().equalsIgnoreCase(nome.trim()));
+        return nome + " [" + tipoDato + "]" + (obbligatorio ? "  (obbligatorio)" : "");
     }
 }

@@ -11,19 +11,19 @@ import java.util.Map;
  * Pure DTO for user credentials.
  * Security is explicitly out-of-scope per project spec.
  */
-public final class UtenteData {
+public final class UsersData {
     private final Map<String, String> configuratori;
 
-    public UtenteData() {
+    public UsersData() {
         this.configuratori = new HashMap<>();
     }
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static UtenteData fromJson(
+    public static UsersData fromJson(
             @JsonProperty("configuratori") Map<String, String> configuratori)
     {
-        UtenteData d = new UtenteData();
+        UsersData d = new UsersData();
         if (configuratori != null)
             d.configuratori.putAll(configuratori);
         return d;

@@ -2,7 +2,7 @@ package it.unibs.ingsoft.v2.application;
 
 import it.unibs.ingsoft.v2.domain.Configuratore;
 import it.unibs.ingsoft.v2.persistence.api.IUtenteRepository;
-import it.unibs.ingsoft.v2.persistence.dto.UtenteData;
+import it.unibs.ingsoft.v2.persistence.dto.UsersData;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -22,12 +22,16 @@ public final class AuthenticationService
     private static final int MIN_PASSWORD_LENGTH = 4;
 
     private final IUtenteRepository repo;
-    private final UtenteData        utenti;
+    private final UsersData utenti;
 
-    public AuthenticationService(IUtenteRepository repo, UtenteData utenti)
+    /**
+     * @pre repo     != null
+     * @pre utenti   != null
+     */
+    public AuthenticationService(IUtenteRepository repo)
     {
         this.repo   = Objects.requireNonNull(repo);
-        this.utenti = Objects.requireNonNull(utenti);
+        this.utenti = repo.load();
     }
 
     /**
@@ -37,15 +41,14 @@ public final class AuthenticationService
      */
     public Optional<Configuratore> login(String username, String password)
     {
-        if (username == null || password == null) return Optional.empty();
+        if (username == null || password == null)
+            return Optional.empty();
 
         // Default credentials: valid only when no personal accounts exist yet
         if (USERNAME_PREDEFINITO.equals(username) &&
             PASSWORD_PREDEFINITA.equals(password) &&
             utenti.getConfiguratori().isEmpty())
-        {
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
-        }
 
         String stored = utenti.getConfiguratori().get(username);
         if (stored != null && stored.equals(password))
@@ -77,15 +80,22 @@ public final class AuthenticationService
     /** Returns true if a configurator with this username is already registered. */
     public boolean esisteUsername(String username)
     {
-        return utenti.getConfiguratori().containsKey(username);
+        if (username == null) return false;
+        return utenti.getConfiguratori().containsKey(username.trim().toLowerCase());
     }
 
-    private void validaCredenziali(String username, String password)
+    private static void validaCredenziali(String username, String password)
     {
-        if (username == null || username.length() < MIN_USERNAME_LENGTH)
+        if (username == null || username.isBlank())
+            throw new IllegalArgumentException("Username non valido.");
+
+        if (password == null || password.isBlank())
+            throw new IllegalArgumentException("Password non valida.");
+
+        if (username.length() < MIN_USERNAME_LENGTH)
             throw new IllegalArgumentException(
                     "Lo username deve avere almeno " + MIN_USERNAME_LENGTH + " caratteri.");
-        if (password == null || password.length() < MIN_PASSWORD_LENGTH)
+        if (password.length() < MIN_PASSWORD_LENGTH)
             throw new IllegalArgumentException(
                     "La password deve avere almeno " + MIN_PASSWORD_LENGTH + " caratteri.");
     }

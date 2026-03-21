@@ -20,10 +20,10 @@ public final class CampoService
     private final ICategoriaRepository repo;
     private final CatalogoData         catalogo;
 
-    public CampoService(ICategoriaRepository repo, CatalogoData catalogo)
+    public CampoService(ICategoriaRepository repo)
     {
         this.repo     = Objects.requireNonNull(repo);
-        this.catalogo = Objects.requireNonNull(catalogo);
+        this.catalogo = repo.load();
         inizializzaCampiBaseFissi();
     }
 
@@ -70,12 +70,12 @@ public final class CampoService
 
             if (CampoBaseDefinito.isNomeFisso(nome))
                 throw new IllegalArgumentException("\"" + nome + "\" è un campo base fisso; non può essere aggiunto come extra.");
-            if (nomeEsistente(nome))
+            if (nomeEsiste(nome))
                 throw new IllegalArgumentException("Esiste già un campo con il nome: \"" + nome + "\".");
 
             catalogo.addCampoBase(new Campo(nome, TipoCampo.BASE, td, true));
         }
-        catalogo.setCampiBaseFissati(true);
+        catalogo.setCampiBaseFissati();
         repo.save(catalogo);
     }
 
@@ -84,7 +84,7 @@ public final class CampoService
     {
         if (!catalogo.isCampiBaseFissati())
         {
-            catalogo.setCampiBaseFissati(true);
+            catalogo.setCampiBaseFissati();
             repo.save(catalogo);
         }
     }
@@ -104,7 +104,7 @@ public final class CampoService
     public void addCampoComune(String nome, TipoDato tipoDato, boolean obbligatorio)
     {
         nome = normalizza(nome);
-        if (nomeEsistente(nome))
+        if (nomeEsiste(nome))
             throw new IllegalArgumentException("Esiste già un campo con il nome: \"" + nome + "\".");
         catalogo.addCampoComune(new Campo(nome, TipoCampo.COMUNE, tipoDato, obbligatorio));
         repo.save(catalogo);
@@ -124,6 +124,8 @@ public final class CampoService
 
     /**
      * Changes the mandatory flag of an existing common field.
+     * Replaces the existing (immutable) {@link Campo} with a new instance via
+     * {@link Campo#withObbligatorio(boolean)}.
      *
      * @return true if found and updated, false otherwise
      */
@@ -134,7 +136,7 @@ public final class CampoService
         {
             if (c.getNome().equalsIgnoreCase(nome))
             {
-                c.setObbligatorio(obbligatorio);
+                catalogo.replaceCampoComune(nome, c.withObbligatorio(obbligatorio));
                 repo.save(catalogo);
                 return true;
             }
@@ -158,8 +160,8 @@ public final class CampoService
         return false;
     }
 
-    /** Full global uniqueness check: base + common + all specific fields. */
-    private boolean nomeEsistente(String nome)
+    /** Full global uniqueness check: base + common + all specific fields across all categories. */
+    public boolean nomeEsiste(String nome)
     {
         if (nomeBaseOComuneEsistente(nome)) return true;
         for (Categoria cat : catalogo.getCategorie())

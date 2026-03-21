@@ -1,11 +1,10 @@
 package it.unibs.ingsoft.v1.domain;
 
-import java.io.Serializable;
-import java.util.Objects;
-
-public abstract class Persona implements Serializable
+/**
+ * Abstract base class for all application users.
+ */
+public abstract class Persona
 {
-    private static final long serialVersionUID = 1L;
     private final String username;
 
     /**
@@ -17,13 +16,11 @@ public abstract class Persona implements Serializable
     protected Persona(String username)
     {
         if (username == null || username.isBlank())
-            throw new IllegalArgumentException("Username non valido.");
-
+            throw new IllegalArgumentException("Lo username non può essere vuoto.");
         this.username = username.trim();
     }
 
-    public String getUsername()
-    {
+    public String getUsername() {
         return username;
     }
 
@@ -49,12 +46,12 @@ public abstract class Persona implements Serializable
     @Override
     public final int hashCode()
     {
-        return Objects.hash(username);
+        return username.hashCode();
     }
 
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "{username='" + username + "'}";
+        return getClass().getSimpleName() + "[" + username + "]";
     }
 }

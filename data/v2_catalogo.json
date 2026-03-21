@@ -50,7 +50,15 @@
     "nome" : "Campo Comune di Prova",
     "tipo" : "COMUNE",
     "tipoDato" : "INTERO",
-    "obbligatorio" : true
+    "obbligatorio" : false
   } ],
-  "categorie" : [ ]
+  "categorie" : [ {
+    "nome" : "Sport",
+    "campiSpecifici" : [ {
+      "nome" : "Certificato Medico",
+      "tipo" : "SPECIFICO",
+      "tipoDato" : "BOOLEANO",
+      "obbligatorio" : true
+    } ]
+  } ]
 }

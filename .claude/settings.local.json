@@ -20,7 +20,24 @@
       "Bash(rm -f src/it/unibs/ingsoft/v2/persistence/AbstractFileRepository.java src/it/unibs/ingsoft/v2/persistence/CatalogoData.java src/it/unibs/ingsoft/v2/persistence/UtenteData.java src/it/unibs/ingsoft/v2/persistence/PropostaData.java src/it/unibs/ingsoft/v2/persistence/ICategoriaRepository.java src/it/unibs/ingsoft/v2/persistence/IUtenteRepository.java src/it/unibs/ingsoft/v2/persistence/IPropostaRepository.java src/it/unibs/ingsoft/v2/persistence/FileCategoriaRepository.java src/it/unibs/ingsoft/v2/persistence/FileUtenteRepository.java src/it/unibs/ingsoft/v2/persistence/FilePropostaRepository.java)",
       "Bash(rm -f tst/it/unibs/ingsoft/v2/model/CampoTest.java tst/it/unibs/ingsoft/v2/model/CategoriaTest.java tst/it/unibs/ingsoft/v2/model/PropostaTest.java tst/it/unibs/ingsoft/v2/model/StatoPropostaTest.java tst/it/unibs/ingsoft/v2/model/CampoBaseDefinitoTest.java tst/it/unibs/ingsoft/v2/model/TipoDatoTest.java tst/it/unibs/ingsoft/v2/model/PersonaTest.java tst/it/unibs/ingsoft/v2/model/ConfiguratoreTest.java tst/it/unibs/ingsoft/v2/model/TipoCampoTest.java tst/it/unibs/ingsoft/v2/model/ApplicationConstantsTest.java)",
       "Bash(rm -f tst/it/unibs/ingsoft/v2/service/AuthenticationServiceTest.java tst/it/unibs/ingsoft/v2/service/CategoriaServiceTest.java tst/it/unibs/ingsoft/v2/service/PropostaServiceTest.java)",
-      "Bash(rmdir tst/it/unibs/ingsoft/v2/model tst/it/unibs/ingsoft/v2/service)"
+      "Bash(rmdir tst/it/unibs/ingsoft/v2/model tst/it/unibs/ingsoft/v2/service)",
+      "Bash(find /c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/src/it/unibs/ingsoft/v3 -type f -name *.java)",
+      "Bash(ls -la /c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/data/v3*)",
+      "Bash(find c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/src/it/unibs/ingsoft/v3/persistence/ -type f -name *.java)",
+      "Bash(find c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/src/it/unibs/ingsoft/v3/controller/ -type f -name *.java)",
+      "Read(//c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/$USERPROFILE/.m2/repository/com/fasterxml/jackson/core/jackson-databind/**)",
+      "Read(//c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/$HOME/.m2/repository/com/fasterxml/jackson/core/jackson-databind/**)",
+      "Bash(BASE=\"c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/src/it/unibs/ingsoft/v3\")",
+      "Bash(mkdir -p \"$BASE/domain\")",
+      "Bash(mkdir -p \"$BASE/application\")",
+      "Bash(mkdir -p \"$BASE/composition\")",
+      "Bash(mkdir -p \"$BASE/presentation/controller\")",
+      "Bash(python3 -:*)",
+      "Bash(python3 reorg_v3.py)",
+      "Bash(where py:*)",
+      "Bash(where python:*)",
+      "Bash(where python3:*)",
+      "Bash(py reorg_v3.py)"
     ]
   }
 }

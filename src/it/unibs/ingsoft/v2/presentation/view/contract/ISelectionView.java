@@ -1,6 +1,6 @@
 package it.unibs.ingsoft.v2.presentation.view.contract;
 
-import it.unibs.ingsoft.v2.presentation.view.cli.viewmodel.CategoriaVM;
+import it.unibs.ingsoft.v2.presentation.view.viewmodel.CategoriaVM;
 
 import java.util.List;
 import java.util.OptionalInt;

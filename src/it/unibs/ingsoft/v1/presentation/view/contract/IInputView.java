@@ -1,5 +1,7 @@
 package it.unibs.ingsoft.v1.presentation.view.contract;
 
+import it.unibs.ingsoft.v1.domain.TipoDato;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -15,55 +17,36 @@ public interface IInputView
     /** Context hint shown at the start of every form that accepts free-text input. */
     String HINT_ANNULLA = "Digita 'annulla' per annullare.";
 
+    /**
+     * Reads a string from the user. Implementations must detect the cancel keyword
+     * ("annulla") and throw OperationCancelledException when it is typed.
+     */
     String acquisisciStringa(String prompt);
 
-    /**
-     * Acquires a string, re-prompting inline until {@code validator} passes.
-     * Throws {@link OperationCancelledException} if the user types the cancel keyword.
-     *
-     * @param messaggioErrore shown with ❌ on each failed validation attempt
-     */
-    String acquisisciStringaConValidazione(String prompt,
-                                           Predicate<String> validator,
-                                           String messaggioErrore);
+    /** Prompts until the supplied predicate is satisfied, showing errorMsg on failure. */
+    String acquisisciStringaConValidazione(String prompt, Predicate<String> validatore, String errorMsg);
 
-    /**
-     * Acquires a password, masking input via {@link java.io.Console#readPassword}
-     * when available. Falls back to plain {@link #acquisisciStringa} otherwise.
-     */
     String acquisisciPassword(String prompt);
-
-    /**
-     * @pre min &lt;= max
-     */
-    int acquisisciIntero(String prompt, int min, int max);
-
+    int    acquisisciIntero(String prompt, int min, int max);
     boolean acquisisciSiNo(String prompt);
+    TipoDato acquisisciTipoDato(String prompt);
 
     /**
-     * Presents the available data types and returns the user's choice.
-     */
-    it.unibs.ingsoft.v1.domain.TipoDato acquisisciTipoDato(String prompt);
-
-    /**
-     * Interactively collects a list of names, one per line.
-     * Detects duplicates inline (case-insensitive) and warns without discarding.
-     * Shows a running count in the prompt and a review/confirm step before returning.
-     * Blank line terminates entry.
+     * Interactively collects a list of names with inline duplicate detection
+     * and a review/confirm step before returning.
      */
     List<String> acquisisciListaNomi(String titolo);
 
     /**
-     * Presents a numbered list (1..N + 0 to abort) and returns the chosen element.
-     * Returns {@code Optional.empty()} when the list is empty or the user chooses 0.
+     * Presents a numbered list and returns the selected element,
+     * or {@link Optional#empty()} if the user chooses 0 (Annulla).
      */
     <T> Optional<T> selezionaElemento(String prompt, List<T> elementi);
 
     /**
-     * Like {@link #selezionaElemento} but appends {@code infoMapper.apply(element)}
-     * in square brackets after each element name — e.g. {@code "  1) Durata  [obbligatorio]"}.
+     * Like {@link #selezionaElemento} but appends extra info per element
+     * (e.g., "[obbligatorio]" or "[facoltativo]").
      */
-    <T> Optional<T> selezionaElementoConInfo(String prompt,
-                                              List<T> elementi,
+    <T> Optional<T> selezionaElementoConInfo(String prompt, List<T> elementi,
                                               Function<T, String> infoMapper);
 }

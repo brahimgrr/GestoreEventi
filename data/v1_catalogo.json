@@ -2,24 +2,29 @@
   "campiBase" : [ {
     "nome" : "Campo1",
     "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
     "obbligatorio" : true
   }, {
     "nome" : "Campo2",
     "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
     "obbligatorio" : true
   }, {
     "nome" : "Campo3",
     "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
     "obbligatorio" : true
   } ],
   "campiBaseFissati" : true,
   "campiComuni" : [ {
     "nome" : "Campo Comune di prova",
     "tipo" : "COMUNE",
-    "obbligatorio" : false
+    "tipoDato" : "STRINGA",
+    "obbligatorio" : true
   }, {
-    "nome" : "Pericolo",
+    "nome" : "Difficoltà",
     "tipo" : "COMUNE",
+    "tipoDato" : "STRINGA",
     "obbligatorio" : true
   } ],
   "categorie" : [ {
@@ -27,7 +32,8 @@
     "campiSpecifici" : [ {
       "nome" : "campo specifico per prova",
       "tipo" : "SPECIFICO",
-      "obbligatorio" : true
+      "tipoDato" : "STRINGA",
+      "obbligatorio" : false
     } ]
   } ]
 }

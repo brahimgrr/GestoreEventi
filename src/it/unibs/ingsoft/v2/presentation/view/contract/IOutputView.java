@@ -2,11 +2,19 @@ package it.unibs.ingsoft.v2.presentation.view.contract;
 
 import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Categoria;
-import it.unibs.ingsoft.v2.presentation.view.cli.viewmodel.PropostaVM;
+import it.unibs.ingsoft.v2.presentation.view.viewmodel.PropostaVM;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * ISP sub-interface: pure output / display operations.
+ * Implementations that only need to produce output (e.g., a logger, a test spy)
+ * depend only on this narrow interface.
+ *
+ * <p>This interface is deliberately free of domain imports to support GUI migration (NFR-05).
+ * Controllers must convert domain objects to primitives before calling display methods.</p>
+ */
 public interface IOutputView
 {
     void stampa(String testo);
@@ -15,7 +23,16 @@ public interface IOutputView
     void stampaSezione(String titolo);
     void stampaCampi(List<Campo> campi);
     void stampaCategorie(List<Categoria> categorie);
+
+    /** Displays categories with their specific fields listed below each. */
+    void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi);
+
+    /** Displays a numbered menu; {@code 0} exits/goes back with the label "Esci". */
     void stampaMenu(String titolo, String[] voci);
+
+    /** Displays a numbered menu; {@code 0} exits/goes back with the custom {@code uscitaLabel}. */
+    void stampaMenu(String titolo, String[] voci, String uscitaLabel);
+
     void pausa();
 
     void stampaSuccesso(String msg);
@@ -29,8 +46,8 @@ public interface IOutputView
     /** Displays a single-proposal summary box. */
     void mostraRiepilogoProposta(PropostaVM proposta);
 
-    default void pausaConSpaziatura()
-    {
+    /** Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern. */
+    default void pausaConSpaziatura() {
         newLine();
         pausa();
     }

@@ -1,4 +1,4 @@
-package it.unibs.ingsoft.v2.presentation.view.cli.viewmodel;
+package it.unibs.ingsoft.v2.presentation.view.viewmodel;
 
 import it.unibs.ingsoft.v2.domain.AppConstants;
 import it.unibs.ingsoft.v2.domain.Campo;

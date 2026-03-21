@@ -18,11 +18,11 @@ public final class CategoriaService
     private final CatalogoData         catalogo;
     private final CampoService         campoService;
 
-    public CategoriaService(ICategoriaRepository repo, CatalogoData catalogo, CampoService campoService)
+    public CategoriaService(ICategoriaRepository repo, CampoService campoService)
     {
         this.repo         = Objects.requireNonNull(repo);
-        this.catalogo     = Objects.requireNonNull(catalogo);
         this.campoService = Objects.requireNonNull(campoService);
+        this.catalogo     = repo.load();
     }
 
     // ---------------------------------------------------------------
@@ -81,12 +81,11 @@ public final class CategoriaService
     public void addCampoSpecifico(String nomeCategoria, String nomeCampo, TipoDato tipoDato, boolean obbligatorio)
     {
         nomeCampo = normalizza(nomeCampo);
-        if (campoService.nomeBaseOComuneEsistente(nomeCampo))
+        if (campoService.nomeEsiste(nomeCampo))
             throw new IllegalArgumentException(
-                    "Esiste già un campo base o comune con il nome: \"" + nomeCampo + "\".");
+                    "Esiste già un campo con il nome: \"" + nomeCampo + "\".");
 
         Categoria cat = getCategoriaOrThrow(nomeCategoria);
-        // Categoria.addCampoSpecifico enforces within-category uniqueness
         cat.addCampoSpecifico(new Campo(nomeCampo, TipoCampo.SPECIFICO, tipoDato, obbligatorio));
         repo.save(catalogo);
     }
@@ -131,5 +130,9 @@ public final class CategoriaService
     {
         if (s == null) throw new IllegalArgumentException("Nome non valido (null).");
         return s.trim();
+    }
+
+    public CatalogoData getCatalogo() {
+        return catalogo;
     }
 }

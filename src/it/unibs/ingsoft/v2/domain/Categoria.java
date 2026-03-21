@@ -17,7 +17,6 @@ public final class Categoria
     private final String     nome;
     private final List<Campo> campiSpecifici;
 
-    /** Creates a new empty category. */
     public Categoria(String nome)
     {
         if (nome == null || nome.isBlank())
@@ -52,15 +51,15 @@ public final class Categoria
      * @pre no existing specific field has the same name (case-insensitive)
      * @throws IllegalArgumentException if the field type is wrong or name is duplicate
      */
-    public void addCampoSpecifico(Campo c)
+    public void addCampoSpecifico(Campo campoSpecifico)
     {
-        if (c.getTipo() != TipoCampo.SPECIFICO)
+        if (campoSpecifico.getTipo() != TipoCampo.SPECIFICO)
             throw new IllegalArgumentException("Solo campi di tipo SPECIFICO possono essere aggiunti a una categoria.");
-        if (containsCampo(c.getNome()))
+        if (containsCampo(campoSpecifico.getNome()))
             throw new IllegalArgumentException(
-                    "La categoria \"" + nome + "\" ha già un campo chiamato \"" + c.getNome() + "\".");
+                    "La categoria \"" + nome + "\" ha già un campo chiamato \"" + campoSpecifico.getNome() + "\".");
 
-        campiSpecifici.add(c);
+        campiSpecifici.add(campoSpecifico);
         campiSpecifici.sort(Comparator.comparing(Campo::getNome, String.CASE_INSENSITIVE_ORDER));
     }
 
@@ -76,16 +75,18 @@ public final class Categoria
 
     /**
      * Updates the mandatory flag of the named specific field.
+     * Replaces the existing (immutable) {@link Campo} with a new instance via
+     * {@link Campo#withObbligatorio(boolean)}.
      *
      * @return true if the field was found and updated, false otherwise
      */
     public boolean setObbligatorietaCampoSpecifico(String nomeCampo, boolean obbligatorio)
     {
-        for (Campo c : campiSpecifici)
+        for (int i = 0; i < campiSpecifici.size(); i++)
         {
-            if (c.getNome().equalsIgnoreCase(nomeCampo))
+            if (campiSpecifici.get(i).getNome().equalsIgnoreCase(nomeCampo))
             {
-                c.setObbligatorio(obbligatorio);
+                campiSpecifici.set(i, campiSpecifici.get(i).withObbligatorio(obbligatorio));
                 return true;
             }
         }

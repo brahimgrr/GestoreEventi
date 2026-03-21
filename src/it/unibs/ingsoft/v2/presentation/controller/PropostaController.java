@@ -5,7 +5,7 @@ import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v2.presentation.view.cli.PropostaFormBuilder;
-import it.unibs.ingsoft.v2.presentation.view.cli.viewmodel.ViewModelMapper;
+import it.unibs.ingsoft.v2.presentation.view.viewmodel.ViewModelMapper;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 
 import java.util.List;

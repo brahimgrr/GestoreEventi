@@ -1,4 +1,7 @@
 package it.unibs.ingsoft.v1.presentation.view.contract;
 
-public class BackException {
+/** Thrown when the user types the back keyword during any string input. */
+public class BackException extends RuntimeException
+{
+    public BackException() { super(); }
 }

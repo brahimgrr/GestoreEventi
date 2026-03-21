@@ -52,9 +52,8 @@ public final class DefaultTypeValidator implements TypeValidator
         try { LocalDate.parse(s.trim(), AppConstants.DATE_FMT); return null; }
         catch (Exception e)
         {
-            return "Valore non valido: inserire una data nel formato " +
-                   AppConstants.DATE_FMT.toString().replace("Value(DayOfMonth,2)'/'Value(MonthOfYear,2)'/'Value(YearOfEra,4,19,EXCEEDS_PAD)", "dd/MM/yyyy") +
-                   " (es. 25/12/2026).";
+            return "Valore non valido: inserire una data nel formato "
+                   + AppConstants.DATE_FORMAT_LABEL + " (es. 25/12/2026).";
         }
     }
 

@@ -1,6 +1,6 @@
 package it.unibs.ingsoft.v1.persistence.api;
 
-import it.unibs.ingsoft.v1.persistence.dto.UtenteData;
+import it.unibs.ingsoft.v1.persistence.dto.UsersData;
 
 /**
  * Repository abstraction for user credentials.
@@ -11,11 +11,11 @@ public interface IUtenteRepository
 {
     /**
      * Loads user data from persistent storage, or returns a fresh
-     * {@link UtenteData} if no data has been saved yet.
+     * {@link UsersData} if no data has been saved yet.
      *
      * @return the loaded or freshly-created user data; never {@code null}
      */
-    UtenteData load();
+    UsersData load();
 
     /**
      * Persists the given user data snapshot.
@@ -23,5 +23,5 @@ public interface IUtenteRepository
      * @pre  data != null
      * @post the data is durably stored and can be reloaded by {@link #load()}
      */
-    void save(UtenteData data);
+    void save(UsersData data);
 }

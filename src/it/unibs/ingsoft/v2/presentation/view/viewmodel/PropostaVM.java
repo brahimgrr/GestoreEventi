@@ -1,4 +1,4 @@
-package it.unibs.ingsoft.v2.presentation.view.cli.viewmodel;
+package it.unibs.ingsoft.v2.presentation.view.viewmodel;
 
 import java.util.List;
 import java.util.Map;

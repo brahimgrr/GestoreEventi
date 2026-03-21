@@ -6,7 +6,6 @@ import it.unibs.ingsoft.v1.persistence.impl.FileCategoriaRepository;
 import it.unibs.ingsoft.v1.persistence.impl.FileUtenteRepository;
 import it.unibs.ingsoft.v1.persistence.api.ICategoriaRepository;
 import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
-import it.unibs.ingsoft.v1.persistence.dto.UtenteData;
 import it.unibs.ingsoft.v1.application.AuthenticationService;
 import it.unibs.ingsoft.v1.application.CatalogoService;
 import it.unibs.ingsoft.v1.presentation.controller.AuthController;
@@ -18,42 +17,39 @@ import java.nio.file.Path;
 import java.util.Scanner;
 
 /**
- * Composition root: wires repositories, services, and controllers,
- * then runs the top-level login loop.
+ * Composition root: wires all components and runs the application loop.
  */
 public final class Application
 {
+    private static final Path DATA_CATALOGO = Path.of("data", "v1_catalogo.json");
+    private static final Path DATA_UTENTI   = Path.of("data", "v1_utenti.json");
+
     public void start()
     {
-        ICategoriaRepository catRepo    = new FileCategoriaRepository(Path.of("data", "v1_catalogo.json"));
-        IUtenteRepository    utenteRepo = new FileUtenteRepository(Path.of("data", "v1_utenti.json"));
+        // Persistence
+        ICategoriaRepository catRepo      = new FileCategoriaRepository(DATA_CATALOGO);
+        IUtenteRepository    utenteRepo   = new FileUtenteRepository(DATA_UTENTI);
 
-        CatalogoData catalogo = catRepo.load();
-        UtenteData   utenti   = utenteRepo.load();
+        // Services
+        AuthenticationService authService      = new AuthenticationService(utenteRepo);
+        CatalogoService       catalogoService  = new CatalogoService(catRepo);
 
-        AuthenticationService auth        = new AuthenticationService(utenteRepo, utenti);
-        CatalogoService       catService  = new CatalogoService(catRepo, catalogo);
+        // View & Controllers
+        IAppView ui = new ConsoleUI(new Scanner(System.in));
+        AuthController authCtrl = new AuthController(ui, authService);
+        ConfiguratoreController confCtrl = new ConfiguratoreController(ui, catalogoService);
 
-        try (Scanner sc = new Scanner(System.in))
-        {
-            IAppView ui = new ConsoleUI(sc);
-            ui.header("Iniziative - Versione 1 (solo configuratore)");
+        ui.header("Iniziative - Versione 1 (solo configuratore)");
+        do {
+            Configuratore logged = authCtrl.loginConfiguratore();
+            ui.stampa("Benvenuto, " + logged.getUsername() + "!");
+            ui.newLine();
 
-            AuthController authCtrl = new AuthController(ui, auth);
-            ConfiguratoreController confCtrl = new ConfiguratoreController(ui, catService);
+            confCtrl.run();
 
-            do
-            {
-                Configuratore logged = authCtrl.loginConfiguratore();
-                ui.stampa("Benvenuto, " + logged.getUsername() + "!");
-                ui.newLine();
+            ui.stampa("Logout effettuato.");
+            ui.newLine();
 
-                confCtrl.run();
-
-                ui.stampa("Logout effettuato.");
-                ui.newLine();
-
-            } while (ui.acquisisciSiNo("Vuoi accedere di nuovo?"));
-        }
+        } while (ui.acquisisciSiNo("Vuoi accedere di nuovo?"));
     }
 }
