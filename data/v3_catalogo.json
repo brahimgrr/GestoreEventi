@@ -1,0 +1,64 @@
+{
+  "campiBase" : [ {
+    "nome" : "Titolo",
+    "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Numero di partecipanti",
+    "tipo" : "BASE",
+    "tipoDato" : "INTERO",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Termine ultimo di iscrizione",
+    "tipo" : "BASE",
+    "tipoDato" : "DATA",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Luogo",
+    "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Data",
+    "tipo" : "BASE",
+    "tipoDato" : "DATA",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Ora",
+    "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Quota individuale",
+    "tipo" : "BASE",
+    "tipoDato" : "DECIMALE",
+    "obbligatorio" : true
+  }, {
+    "nome" : "Data conclusiva",
+    "tipo" : "BASE",
+    "tipoDato" : "DATA",
+    "obbligatorio" : true
+  }, {
+    "nome" : "CampoBaseExtraTest",
+    "tipo" : "BASE",
+    "tipoDato" : "STRINGA",
+    "obbligatorio" : true
+  } ],
+  "campiBaseFissati" : true,
+  "campiComuni" : [ {
+    "nome" : "Campo Comune di Prova",
+    "tipo" : "COMUNE",
+    "tipoDato" : "INTERO",
+    "obbligatorio" : false
+  } ],
+  "categorie" : [ {
+    "nome" : "Sport",
+    "campiSpecifici" : [ {
+      "nome" : "Certificato Medico",
+      "tipo" : "SPECIFICO",
+      "tipoDato" : "BOOLEANO",
+      "obbligatorio" : true
+    } ]
+  } ]
+}

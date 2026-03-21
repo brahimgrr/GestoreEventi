@@ -1,9 +1,0 @@
-# categoria
-Arte
-# campi specifici (nome,tipo,obbligatorio)
-Artista,STRINGA,true
-Museo,STRINGA,false
-# categoria
-Sport
-# campi specifici
-Squadre,INTERO,false

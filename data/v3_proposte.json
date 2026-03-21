@@ -1,0 +1,29 @@
+{
+  "proposte" : [ {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Data conclusiva" : "30/03/2026",
+      "Titolo" : "Torneo Calcetto",
+      "CampoBaseExtraTest" : "a",
+      "Termine ultimo di iscrizione" : "21/03/2026",
+      "Quota individuale" : "10,4",
+      "Certificato Medico" : "si",
+      "Data" : "25/03/2026",
+      "Numero di partecipanti" : "10",
+      "Luogo" : "Brescia",
+      "Ora" : "5"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "20/03/2026",
+    "termineIscrizione" : "21/03/2026",
+    "dataEvento" : "25/03/2026"
+  } ]
+}
