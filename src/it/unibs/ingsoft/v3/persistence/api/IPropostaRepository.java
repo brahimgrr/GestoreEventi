@@ -1,9 +1,9 @@
 package it.unibs.ingsoft.v3.persistence.api;
 
-import it.unibs.ingsoft.v3.persistence.dto.PropostaData;
+import it.unibs.ingsoft.v3.domain.Bacheca;
 
 public interface IPropostaRepository
 {
-    PropostaData load();
-    void save(PropostaData data);
+    Bacheca load();
+    void save(Bacheca data);
 }

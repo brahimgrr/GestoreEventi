@@ -1,9 +1,7 @@
-package it.unibs.ingsoft.v3.persistence.dto;
+package it.unibs.ingsoft.v3.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.unibs.ingsoft.v3.domain.Campo;
-import it.unibs.ingsoft.v3.domain.Categoria;
 
 import java.util.*;
 
@@ -11,24 +9,24 @@ import java.util.*;
  * JSON-serializable DTO for the category catalogue (fields + categories).
  * No sorting side-effects; ordering is a service/view concern.
  */
-public final class CatalogoData
+public final class Catalogo
 {
     private final List<Campo>     campiBase        = new ArrayList<>();
     private boolean               campiBaseFissati = false;
     private final List<Campo>     campiComuni      = new ArrayList<>();
     private final List<Categoria> categorie        = new ArrayList<>();
 
-    public CatalogoData() {}
+    public Catalogo() {}
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static CatalogoData fromJson(
+    public static Catalogo fromJson(
             @JsonProperty("campiBase")        List<Campo>     campiBase,
             @JsonProperty("campiBaseFissati") boolean         campiBaseFissati,
             @JsonProperty("campiComuni")      List<Campo>     campiComuni,
             @JsonProperty("categorie")        List<Categoria> categorie)
     {
-        CatalogoData d = new CatalogoData();
+        Catalogo d = new Catalogo();
         if (campiBase   != null) d.campiBase.addAll(campiBase);
         if (campiBaseFissati)    d.campiBaseFissati = true;
         if (campiComuni != null) d.campiComuni.addAll(campiComuni);

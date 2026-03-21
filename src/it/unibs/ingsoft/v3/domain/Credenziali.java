@@ -1,4 +1,4 @@
-package it.unibs.ingsoft.v3.persistence.dto;
+package it.unibs.ingsoft.v3.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,19 +15,19 @@ import java.util.*;
  * }
  * </pre>
  */
-public final class UsersData
+public final class Credenziali
 {
     private final Map<String, String> configuratori = new HashMap<>();
     private final Map<String, String> fruitori      = new HashMap<>();
 
-    public UsersData() {}
+    public Credenziali() {}
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static UsersData fromJson(@JsonProperty("configuratori") Map<String, String> configuratori,
-                                     @JsonProperty("fruitori")      Map<String, String> fruitori)
+    public static Credenziali fromJson(@JsonProperty("configuratori") Map<String, String> configuratori,
+                                       @JsonProperty("fruitori")      Map<String, String> fruitori)
     {
-        UsersData d = new UsersData();
+        Credenziali d = new Credenziali();
         if (configuratori != null) configuratori.forEach(d::addConfiguratore);
         if (fruitori      != null) fruitori     .forEach(d::addFruitore);
         return d;

@@ -1,9 +1,9 @@
 package it.unibs.ingsoft.v3.application;
 
 import it.unibs.ingsoft.v3.domain.*;
-import it.unibs.ingsoft.v3.persistence.dto.CatalogoData;
+import it.unibs.ingsoft.v3.domain.Catalogo;
 import it.unibs.ingsoft.v3.persistence.api.IPropostaRepository;
-import it.unibs.ingsoft.v3.persistence.dto.PropostaData;
+import it.unibs.ingsoft.v3.domain.Bacheca;
 import it.unibs.ingsoft.v3.domain.AppConstants;
 
 import java.time.LocalDate;
@@ -21,20 +21,20 @@ public class PropostaService
     public static final String CAMPO_QUOTA              = "Quota individuale";
     public static final String CAMPO_NUM_PARTECIPANTI   = "Numero di partecipanti";
 
-    private final CatalogoData        catalogo;
+    private final Catalogo catalogo;
     private final IPropostaRepository propostaRepo;
-    private final PropostaData        proposteData;
+    private final Bacheca bacheca;
 
     /**
      * @pre catalogo     != null
      * @pre propostaRepo != null
      * @pre proposteData != null
      */
-    public PropostaService(CatalogoData catalogo, IPropostaRepository propostaRepo, PropostaData proposteData)
+    public PropostaService(Catalogo catalogo, IPropostaRepository propostaRepo, Bacheca bacheca)
     {
         this.catalogo     = Objects.requireNonNull(catalogo);
         this.propostaRepo = Objects.requireNonNull(propostaRepo);
-        this.proposteData = Objects.requireNonNull(proposteData);
+        this.bacheca = Objects.requireNonNull(bacheca);
     }
 
     public Proposta creaProposta(String nomeCategoria)
@@ -43,8 +43,8 @@ public class PropostaService
                 .orElseThrow(() -> new IllegalArgumentException("Categoria non trovata: " + nomeCategoria));
 
         Proposta p = new Proposta(cat);
-        proposteData.addProposta(p);
-        propostaRepo.save(proposteData);
+        bacheca.addProposta(p);
+        propostaRepo.save(bacheca);
         return p;
     }
 
@@ -129,7 +129,7 @@ public class PropostaService
         String ora     = p.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim();
         String luogo   = p.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim();
 
-        boolean duplicato = proposteData.getProposte().stream()
+        boolean duplicato = bacheca.getProposte().stream()
                 .filter(existing -> existing != p)   // exclude the proposal being published
                 .anyMatch(existing ->
                         existing.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().equalsIgnoreCase(titolo) &&
@@ -145,12 +145,12 @@ public class PropostaService
         p.setDataPubblicazione(LocalDate.now());
 
         // proposal is already in proposteData (added when BOZZA was created)
-        propostaRepo.save(proposteData);
+        propostaRepo.save(bacheca);
     }
 
     public List<Proposta> getBacheca()
     {
-        return proposteData.getProposte().stream()
+        return bacheca.getProposte().stream()
                 .filter(p -> p.getStato() == StatoProposta.APERTA)
                 .collect(Collectors.toList());
     }
@@ -168,19 +168,19 @@ public class PropostaService
 
     public List<Proposta> getProposteAperte()
     {
-        return proposteData.getProposte().stream()
+        return bacheca.getProposte().stream()
                 .filter(p -> p.getStato() == StatoProposta.APERTA)
                 .collect(Collectors.toList());
     }
 
     public List<Proposta> getTutteLeProposte()
     {
-        return proposteData.getProposte();
+        return bacheca.getProposte();
     }
 
     public List<Proposta> getPropostePerStato(StatoProposta stato)
     {
-        return proposteData.getProposte().stream()
+        return bacheca.getProposte().stream()
                 .filter(p -> p.getStato() == stato)
                 .collect(Collectors.toList());
     }

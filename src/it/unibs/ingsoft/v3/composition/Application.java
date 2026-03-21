@@ -1,7 +1,6 @@
 package it.unibs.ingsoft.v3.composition;
 
-import it.unibs.ingsoft.v3.domain.Configuratore;
-import it.unibs.ingsoft.v3.domain.Fruitore;
+import it.unibs.ingsoft.v3.domain.*;
 import it.unibs.ingsoft.v3.persistence.impl.*;
 import it.unibs.ingsoft.v3.persistence.api.*;
 import it.unibs.ingsoft.v3.persistence.dto.*;
@@ -29,10 +28,10 @@ public final class Application
         INotificaRepository  notificaRepo = new FileNotificaRepository(Path.of("data", "v3_notifiche.json"));
         IPropostaRepository  propostaRepo = new FilePropostaRepository(Path.of("data", "v3_proposte.json"));
 
-        CatalogoData catalogo     = catRepo.load();
-        UsersData    utenti       = utenteRepo.load();
+        Catalogo catalogo     = catRepo.load();
+        Credenziali utenti       = utenteRepo.load();
         NotificaData notificaData = notificaRepo.load();
-        PropostaData proposteData = propostaRepo.load();
+        Bacheca proposteData = propostaRepo.load();
 
         AuthenticationService auth            = new AuthenticationService(utenteRepo, utenti);
         CampoService          campoService    = new CampoService(catRepo, catalogo);

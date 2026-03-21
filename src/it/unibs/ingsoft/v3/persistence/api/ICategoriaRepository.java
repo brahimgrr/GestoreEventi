@@ -1,9 +1,9 @@
 package it.unibs.ingsoft.v3.persistence.api;
 
-import it.unibs.ingsoft.v3.persistence.dto.CatalogoData;
+import it.unibs.ingsoft.v3.domain.Catalogo;
 
 public interface ICategoriaRepository
 {
-    CatalogoData load();
-    void save(CatalogoData data);
+    Catalogo load();
+    void save(Catalogo data);
 }

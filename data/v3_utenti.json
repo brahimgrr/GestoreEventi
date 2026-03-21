@@ -1,5 +1,7 @@
 {
   "configuratori" : {
+    "brahim" : "config",
     "brahim3" : "config3"
-  }
+  },
+  "fruitori" : { }
 }

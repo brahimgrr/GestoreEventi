@@ -24,6 +24,31 @@
     "stato" : "APERTA",
     "dataPubblicazione" : "20/03/2026",
     "termineIscrizione" : "21/03/2026",
-    "dataEvento" : "25/03/2026"
+    "dataEvento" : "25/03/2026",
+    "dataConclus" : null,
+    "iscrizioni" : [ ],
+    "storiaStati" : { },
+    "numeroIscritti" : 0
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : { },
+    "stato" : "BOZZA",
+    "dataPubblicazione" : null,
+    "termineIscrizione" : null,
+    "dataEvento" : null,
+    "dataConclus" : null,
+    "iscrizioni" : [ ],
+    "storiaStati" : {
+      "BOZZA" : "21/03/2026"
+    },
+    "numeroIscritti" : 0
   } ]
 }

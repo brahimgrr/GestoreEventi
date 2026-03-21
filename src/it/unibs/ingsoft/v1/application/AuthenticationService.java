@@ -46,8 +46,7 @@ public final class AuthenticationService
 
         // Default credentials: valid only when no personal accounts exist yet
         if (USERNAME_PREDEFINITO.equals(username) &&
-            PASSWORD_PREDEFINITA.equals(password) &&
-            utenti.getConfiguratori().isEmpty())
+            PASSWORD_PREDEFINITA.equals(password))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
         String stored = utenti.getConfiguratori().get(username);

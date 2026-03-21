@@ -2,7 +2,7 @@ package it.unibs.ingsoft.v3.application;
 
 import it.unibs.ingsoft.v3.domain.*;
 import it.unibs.ingsoft.v3.persistence.api.IPropostaRepository;
-import it.unibs.ingsoft.v3.persistence.dto.PropostaData;
+import it.unibs.ingsoft.v3.domain.Bacheca;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +13,7 @@ public final class IscrizioneService
     private static final String CAMPO_NUM_PARTECIPANTI = PropostaService.CAMPO_NUM_PARTECIPANTI;
 
     private final IPropostaRepository      propostaRepo;
-    private final PropostaData             proposteData;
+    private final Bacheca proposteData;
     private final List<NotificaListener>   listeners;
 
     /**
@@ -21,7 +21,7 @@ public final class IscrizioneService
      * @pre proposteData != null
      * @pre listeners    != null (may be empty)
      */
-    public IscrizioneService(IPropostaRepository propostaRepo, PropostaData proposteData,
+    public IscrizioneService(IPropostaRepository propostaRepo, Bacheca proposteData,
                              List<NotificaListener> listeners)
     {
         this.propostaRepo = Objects.requireNonNull(propostaRepo);

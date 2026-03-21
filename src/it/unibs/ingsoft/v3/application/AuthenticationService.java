@@ -4,7 +4,7 @@ import it.unibs.ingsoft.v3.domain.AppConstants;
 import it.unibs.ingsoft.v3.domain.Configuratore;
 import it.unibs.ingsoft.v3.domain.Fruitore;
 import it.unibs.ingsoft.v3.persistence.api.IUtenteRepository;
-import it.unibs.ingsoft.v3.persistence.dto.UsersData;
+import it.unibs.ingsoft.v3.domain.Credenziali;
 
 import java.util.Objects;
 
@@ -18,13 +18,13 @@ public final class AuthenticationService
     private static final int MIN_PASSWORD_LENGTH = 4;
 
     private final IUtenteRepository repo;
-    private final UsersData         utenti;
+    private final Credenziali utenti;
 
     /**
      * @pre repo   != null
      * @pre utenti != null
      */
-    public AuthenticationService(IUtenteRepository repo, UsersData utenti)
+    public AuthenticationService(IUtenteRepository repo, Credenziali utenti)
     {
         this.repo   = Objects.requireNonNull(repo);
         this.utenti = Objects.requireNonNull(utenti);
