@@ -6,19 +6,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.*;
 
 /**
- * JSON-serializable DTO for the category catalogue (fields + categories).
- * No sorting side-effects; ordering is a service/view concern.
+ * Pure serializable DTO for the field/category catalogue.
+ * Contains no domain query logic — all business operations live in the service layer.
+ * Structural mutations (add/remove/replace) are deliberately kept here so the
+ * service does not need to rebuild the full list on every change.
  */
-public final class Catalogo
-{
-    private final List<Campo>     campiBase        = new ArrayList<>();
-    private boolean               campiBaseFissati = false;
-    private final List<Campo>     campiComuni      = new ArrayList<>();
-    private final List<Categoria> categorie        = new ArrayList<>();
+public final class Catalogo {
+    private final List<Campo> campiBase = new ArrayList<>();
+    private final List<Campo> campiComuni = new ArrayList<>();
+    private final List<Categoria> categorie = new ArrayList<>();
 
-    public Catalogo() {}
+    private boolean campiBaseFissati;
 
-    /** Jackson deserialisation factory. */
+    /** Jackson deserialization factory. */
     @JsonCreator
     public static Catalogo fromJson(
             @JsonProperty("campiBase")        List<Campo>     campiBase,
@@ -33,49 +33,131 @@ public final class Catalogo
         if (categorie   != null) d.categorie.addAll(categorie);
         return d;
     }
+    // ---------------- CAMPI BASE ----------------
 
-    public List<Campo> getCampiBase()              { return Collections.unmodifiableList(campiBase); }
-    public boolean     isCampiBaseFissati()        { return campiBaseFissati; }
-    public void        setCampiBaseFissati(boolean v) { this.campiBaseFissati = v; }
-    public void        addCampoBase(Campo c)       { campiBase.add(c); }
+    public void fissareCampiBase(List<Campo> base, List<String> extra) {
+        if (campiBaseFissati)
+            throw new IllegalStateException("Campi base già fissati.");
 
-    public List<Campo> getCampiComuni()            { return Collections.unmodifiableList(campiComuni); }
-    public void        addCampoComune(Campo c)     { campiComuni.add(c); }
+        campiBase.clear();
 
-    public boolean removeCampoComune(String nome)
-    {
+        Set<String> nomi = new HashSet<>();
+
+        for (Campo c : base) {
+            addNomeUnico(nomi, c.getNome());
+            campiBase.add(c);
+        }
+
+        if (extra != null) {
+            for (String nome : extra) {
+                if (nome == null || nome.isBlank()) continue;
+
+                nome = nome.trim();
+                addNomeUnico(nomi, nome);
+
+                if (nomeEsistenteGlobale(nome))
+                    throw new IllegalArgumentException("Campo già esistente: " + nome);
+
+                campiBase.add(new Campo(nome, TipoCampo.BASE, TipoDato.STRINGA, true));
+            }
+        }
+
+        campiBaseFissati = true;
+    }
+
+    private void addNomeUnico(Set<String> set, String nome) {
+        if (!set.add(nome.toLowerCase()))
+            throw new IllegalArgumentException("Duplicato: " + nome);
+    }
+
+    public boolean isCampiBaseFissati() {
+        return campiBaseFissati;
+    }
+
+    // ---------------- CAMPI COMUNI ----------------
+
+    public void addCampoComune(Campo campo) {
+        if (nomeEsistenteGlobale(campo.getNome()))
+            throw new IllegalArgumentException("Campo già esistente.");
+
+        campiComuni.add(campo);
+    }
+
+    public boolean removeCampoComune(String nome) {
         return campiComuni.removeIf(c -> c.getNome().equalsIgnoreCase(nome));
     }
 
-    /**
-     * Replaces the common field whose name matches {@code nome} (case-insensitive)
-     * with {@code nuovoCampo}. Used to update the {@code obbligatorio} flag immutably.
-     */
-    public boolean replaceCampoComune(String nome, Campo nuovoCampo)
-    {
-        for (int i = 0; i < campiComuni.size(); i++)
-        {
-            if (campiComuni.get(i).getNome().equalsIgnoreCase(nome))
-            {
-                campiComuni.set(i, nuovoCampo);
+    public boolean updateCampoComune(String nome, boolean obbligatorio) {
+        for (int i = 0; i < campiComuni.size(); i++) {
+            Campo c = campiComuni.get(i);
+            if (c.getNome().equalsIgnoreCase(nome)) {
+                campiComuni.set(i, c.withObbligatorio(obbligatorio));
                 return true;
             }
         }
         return false;
     }
 
-    public List<Categoria> getCategorie()          { return Collections.unmodifiableList(categorie); }
-    public void            addCategoria(Categoria c) { categorie.add(c); }
+    // ---------------- CATEGORIE ----------------
 
-    public boolean removeCategoria(String nome)
-    {
+    public Categoria addCategoria(String nome) {
+        if (findCategoria(nome).isPresent())
+            throw new IllegalArgumentException("Categoria già esistente.");
+
+        Categoria c = new Categoria(nome);
+        categorie.add(c);
+        return c;
+    }
+
+    public boolean removeCategoria(String nome) {
         return categorie.removeIf(c -> c.getNome().equalsIgnoreCase(nome));
     }
 
-    public Optional<Categoria> findCategoria(String nome)
-    {
+    public Categoria getCategoriaOrThrow(String nome) {
+        return findCategoria(nome)
+                .orElseThrow(() -> new IllegalArgumentException("Categoria non trovata."));
+    }
+
+    private Optional<Categoria> findCategoria(String nome) {
         return categorie.stream()
                 .filter(c -> c.getNome().equalsIgnoreCase(nome))
                 .findFirst();
+    }
+
+    // ---------------- CAMPI SPECIFICI ----------------
+
+    public void addCampoSpecifico(String categoria, Campo campo) {
+        if (nomeEsistenteGlobale(campo.getNome()))
+            throw new IllegalArgumentException("Campo già esistente.");
+
+        getCategoriaOrThrow(categoria).addCampoSpecifico(campo);
+    }
+
+    public boolean removeCampoSpecifico(String categoria, String nome) {
+        return getCategoriaOrThrow(categoria).removeCampoSpecifico(nome);
+    }
+
+    public boolean updateCampoSpecifico(String categoria, String nome, boolean obbligatorio) {
+        return getCategoriaOrThrow(categoria)
+                .setObbligatorietaCampoSpecifico(nome, obbligatorio);
+    }
+
+    // ---------------- QUERY ----------------
+
+    public List<Campo> getCampiBase() {
+        return List.copyOf(campiBase);
+    }
+
+    public List<Campo> getCampiComuni() {
+        return List.copyOf(campiComuni);
+    }
+
+    public List<Categoria> getCategorie() {
+        return List.copyOf(categorie);
+    }
+
+    public boolean nomeEsistenteGlobale(String nome) {
+        return campiBase.stream().anyMatch(c -> c.getNome().equalsIgnoreCase(nome)) ||
+                campiComuni.stream().anyMatch(c -> c.getNome().equalsIgnoreCase(nome));
     }
 }

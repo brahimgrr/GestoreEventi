@@ -1,7 +1,6 @@
 package it.unibs.ingsoft.v3.application;
 
 import it.unibs.ingsoft.v3.domain.*;
-import it.unibs.ingsoft.v3.persistence.api.IPropostaRepository;
 import it.unibs.ingsoft.v3.domain.Bacheca;
 
 import java.time.LocalDate;

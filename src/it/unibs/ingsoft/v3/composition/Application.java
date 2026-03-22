@@ -1,5 +1,8 @@
 package it.unibs.ingsoft.v3.composition;
 
+import it.unibs.ingsoft.v3.persistence.api.IBachecaRepository;
+import it.unibs.ingsoft.v3.persistence.impl.FileBachecaRepository;
+import it.unibs.ingsoft.v3.presentation.controller.PropostaController;
 import it.unibs.ingsoft.v3.domain.*;
 import it.unibs.ingsoft.v3.persistence.impl.*;
 import it.unibs.ingsoft.v3.persistence.api.*;
@@ -21,79 +24,85 @@ import java.util.Scanner;
  */
 public final class Application
 {
-    public void inizializzazione()
+    private static final Path DATA_CATALOGO = Path.of("data", "catalogo.json");
+    private static final Path DATA_UTENTI   = Path.of("data", "utenti.json");
+    private static final Path DATA_PROPOSTE = Path.of("data", "proposte.json");
+    private static final Path DATA_NOTIFICHE = Path.of("data", "notifiche.json");
+
+    public void start()
     {
-        ICategoriaRepository catRepo      = new FileCategoriaRepository(Path.of("data", "v3_catalogo.json"));
-        IUtenteRepository    utenteRepo   = new FileUtenteRepository(Path.of("data", "v3_utenti.json"));
-        INotificaRepository  notificaRepo = new FileNotificaRepository(Path.of("data", "v3_notifiche.json"));
-        IPropostaRepository  propostaRepo = new FilePropostaRepository(Path.of("data", "v3_proposte.json"));
+        // Persistence
+        ICatalogoRepository catalogoRepo      = new FileCatalogoRepository(DATA_CATALOGO);
+        ICredenzialiRepository credenzialiRepo   = new FileCredenzialiRepository(DATA_UTENTI);
+        IBachecaRepository bachecaRepo = new FileBachecaRepository(DATA_PROPOSTE);
+        INotificaRepository  notificaRepo = new FileNotificaRepository(DATA_NOTIFICHE);
 
-        Catalogo catalogo     = catRepo.load();
-        Credenziali utenti       = utenteRepo.load();
-        NotificaData notificaData = notificaRepo.load();
-        Bacheca proposteData = propostaRepo.load();
+        // Services
+        AuthenticationService authService      = new AuthenticationService(credenzialiRepo);
+        CatalogoService          catalogoService     = new CatalogoService(catalogoRepo);
+        PropostaService       propostaService  = new PropostaService(bachecaRepo);
+        NotificaService notificaService = new NotificaService(notificaRepo);
+        IscrizioneService iscrizioneService = new IscrizioneService(bachecaRepo, List.of(notificaService))
 
-        AuthenticationService auth            = new AuthenticationService(utenteRepo, utenti);
-        CampoService          campoService    = new CampoService(catRepo, catalogo);
-        CategoriaService      catService      = new CategoriaService(catRepo, catalogo, campoService);
-        PropostaService       propService     = new PropostaService(catalogo, propostaRepo, proposteData);
-        NotificaService       notificaService = new NotificaService(notificaRepo, notificaData);
-        IscrizioneService     iscService      = new IscrizioneService(propostaRepo, proposteData,
-                                                                       List.of(notificaService));
+        // View & Controllers
+        IAppView ui = new ConsoleUI(new Scanner(System.in));
+        AuthController authCtrl = new AuthController(ui, authService);
+        PropostaController propostaController = new PropostaController(ui, propostaService);
+        ConfiguratoreController configuratoreController;
+        FruitoreController fruitoreController;
 
-        try (Scanner sc = new Scanner(System.in))
-        {
-            IAppView ui = new ConsoleUI(sc);
-            ui.header("Iniziative - Versione 3");
+        ui.header("Iniziative – Versione 3");
+        do {
+            ui.stampa("Accedi come:");
+            ui.stampa("1) Configuratore");
+            ui.stampa("2) Fruitore");
+            ui.stampa("0) Esci");
+            ui.newLine();
+            int tipoUtente = ui.acquisisciIntero("Scelta: ", 0, 2);
 
-            AuthController          authCtrl = new AuthController(ui, auth);
-            ConfiguratoreController confCtrl = new ConfiguratoreController(ui, campoService, catService, propService);
-            FruitoreController      fruCtrl  = new FruitoreController(ui, propService, iscService, notificaService);
+            if (tipoUtente == 0)
+                break;
 
-            while (true)
-            {
-                ui.stampa("Accedi come:");
-                ui.stampa("1) Configuratore");
-                ui.stampa("2) Fruitore");
-                ui.stampa("0) Esci");
+            // Check and process expired proposals on every login
+            iscService.controllaScadenzeAlAvvio();
+
+            if (tipoUtente == 1) {
+                Configuratore configuratore = authCtrl.loginConfiguratore();
+                ui.stampa("Benvenuto, " + configuratore.getUsername() + "!");
                 ui.newLine();
-                int tipoUtente = ui.acquisisciIntero("Scelta: ", 0, 2);
 
-                if (tipoUtente == 0)
-                    break;
+                configuratoreController = new ConfiguratoreController(configuratore, ui, catalogoService, propostaController);
+                configuratoreController.run();
 
-                // Check and process expired proposals on every login
-                iscService.controllaScadenzeAlAvvio();
+                // Discard unpublished valid proposals on logout
+                // (requirement: "una proposta valida non pubblicata non viene salvata")
+                propostaService.clearProposteValide();
 
-                if (tipoUtente == 1)
-                {
-                    Configuratore logged = authCtrl.loginConfiguratore();
-                    ui.stampa("Benvenuto, " + logged.getUsername());
+                ui.stampa("Logout effettuato.");
+                ui.newLine();
+            } else {
+                Fruitore fruitore = authCtrl.loginFruitore();
+
+                if (fruitore == null) {
                     ui.newLine();
-                    confCtrl.run();
-                    ui.stampa("Logout effettuato.");
-                    ui.newLine();
+                    continue;
                 }
-                else
-                {
-                    Fruitore logged = authCtrl.loginFruitore();
 
-                    if (logged == null)
-                    {
-                        ui.newLine();
-                        continue;
-                    }
+                ui.stampa("Benvenuto, " + fruitore.getUsername() + "!");
+                ui.newLine();
 
-                    ui.stampa("Benvenuto, " + logged.getUsername());
-                    int nuoveNotifiche = notificaService.getNotifiche(logged.getUsername()).size();
-                    if (nuoveNotifiche > 0)
-                        ui.stampaAvviso("Hai " + nuoveNotifiche + " notifiche. Vai in Spazio Personale per leggerle.");
-                    ui.newLine();
-                    fruCtrl.run(logged);
-                    ui.stampa("Logout effettuato.");
-                    ui.newLine();
-                }
+
+                int nuoveNotifiche = notificaService.getNotifiche(fruitore.getUsername()).size();
+                if (nuoveNotifiche > 0)
+                    ui.stampaAvviso("Hai " + nuoveNotifiche + " notifiche. Vai in Spazio Personale per leggerle.");
+                ui.newLine();
+
+                fruitoreController = new FruitoreController(fruitore)
+                fruitoreController.run(fruitore);
+
+                ui.stampa("Logout effettuato.");
+                ui.newLine();
             }
-        }
+        } while (ui.acquisisciSiNo("Vuoi accedere di nuovo?"));
     }
 }

@@ -3,13 +3,8 @@ package it.unibs.ingsoft.v3.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
 /**
  * Immutable value object representing a field definition (base, common, or category-specific).
- *
- * <p>To change the {@code obbligatorio} flag, use {@link #withObbligatorio(boolean)},
- * which returns a new instance rather than mutating this one.</p>
  */
 public final class Campo
 {
@@ -18,7 +13,15 @@ public final class Campo
     private final TipoDato  tipoDato;
     private final boolean   obbligatorio;
 
-    /** Primary constructor — also used as the Jackson deserialisation entry point. */
+    /**
+     * @pre  nome != null &amp;&amp; !nome.isBlank()
+     * @pre  tipo != null
+     * @pre  tipoDato != null
+     * @post getNome().equals(nome.trim())
+     * @post getTipo() == tipo
+     * @post getTipoDato() == tipoDato
+     * @post isObbligatorio() == obbligatorio
+     */
     @JsonCreator
     public Campo(@JsonProperty("nome")         String    nome,
                  @JsonProperty("tipo")         TipoCampo tipo,
@@ -26,45 +29,67 @@ public final class Campo
                  @JsonProperty("obbligatorio") boolean   obbligatorio)
     {
         if (nome == null || nome.isBlank())
-            throw new IllegalArgumentException("Nome campo non valido.");
+            throw new IllegalArgumentException("Il nome del campo non può essere vuoto.");
+        if (tipo == null)
+            throw new IllegalArgumentException("Il tipo del campo non può essere null.");
+        if (tipoDato == null)
+            throw new IllegalArgumentException("Il tipo dato del campo non può essere null.");
 
         this.nome         = nome.trim();
-        this.tipo         = Objects.requireNonNull(tipo,     "TipoCampo nullo.");
-        this.tipoDato     = Objects.requireNonNull(tipoDato, "TipoDato nullo.");
+        this.tipo         = tipo;
+        this.tipoDato     = tipoDato;
         this.obbligatorio = obbligatorio;
     }
 
-    public String    getNome()        { return nome; }
-    public TipoCampo getTipo()        { return tipo; }
-    public TipoDato  getTipoDato()    { return tipoDato; }
-    public boolean   isObbligatorio() { return obbligatorio; }
+    public Campo(Campo oldCampo) {
+        this.nome = oldCampo.nome;
+        this.tipo = oldCampo.tipo;
+        this.tipoDato = oldCampo.tipoDato;
+        this.obbligatorio = oldCampo.obbligatorio;
+    }
 
-    /** Returns a new Campo identical to this one but with the given {@code obbligatorio} value. */
+    public String getNome() {
+        return nome;
+    }
+
+    public TipoCampo getTipo(){
+        return tipo;
+    }
+
+    public TipoDato getTipoDato() {
+        return tipoDato;
+    }
+
+    public boolean isObbligatorio() {
+        return obbligatorio;
+    }
+
+    /**
+     * Returns a new Campo identical to this one but with the given {@code obbligatorio} value.
+     */
     public Campo withObbligatorio(boolean obbligatorio)
     {
         return new Campo(this.nome, this.tipo, this.tipoDato, obbligatorio);
     }
 
+    /** Case-insensitive name equality. */
     @Override
     public boolean equals(Object o)
     {
         if (this == o) return true;
         if (!(o instanceof Campo)) return false;
-        Campo campo = (Campo) o;
-        return nome.equalsIgnoreCase(campo.nome) && tipo == campo.tipo;
+        return nome.equalsIgnoreCase(((Campo) o).nome);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(nome.toLowerCase(), tipo);
+        return nome.toLowerCase().hashCode();
     }
 
     @Override
     public String toString()
     {
-        return nome
-                + " [" + tipo + ", " + tipoDato + "]"
-                + (obbligatorio ? " (obbligatorio)" : " (facoltativo)");
+        return nome + " [" + tipoDato + "]" + (obbligatorio ? "  (obbligatorio)" : "");
     }
 }

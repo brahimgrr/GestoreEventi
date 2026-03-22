@@ -2,7 +2,7 @@ package it.unibs.ingsoft.v3.application;
 
 import it.unibs.ingsoft.v3.domain.Notifica;
 import it.unibs.ingsoft.v3.persistence.api.INotificaRepository;
-import it.unibs.ingsoft.v3.persistence.dto.NotificaData;
+import it.unibs.ingsoft.v3.domain.ArchivioNotifiche;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -15,16 +15,16 @@ import java.util.Objects;
 public final class NotificaService implements NotificaListener
 {
     private final INotificaRepository repo;
-    private final NotificaData        notificaData;
+    private final ArchivioNotifiche archivioNotifiche;
 
     /**
      * @pre repo         != null
      * @pre notificaData != null
      */
-    public NotificaService(INotificaRepository repo, NotificaData notificaData)
+    public NotificaService(INotificaRepository repo, ArchivioNotifiche archivioNotifiche)
     {
         this.repo         = Objects.requireNonNull(repo);
-        this.notificaData = Objects.requireNonNull(notificaData);
+        this.archivioNotifiche = Objects.requireNonNull(archivioNotifiche);
     }
 
     // ---------------------------------------------------------------
@@ -68,7 +68,7 @@ public final class NotificaService implements NotificaListener
         Objects.requireNonNull(username,  "Username non può essere null.");
         Objects.requireNonNull(messaggio, "Messaggio non può essere null.");
 
-        notificaData.addNotifica(username, new Notifica(messaggio, LocalDate.now()));
+        archivioNotifiche.addNotifica(username, new Notifica(messaggio, LocalDate.now()));
     }
 
     /**
@@ -80,7 +80,7 @@ public final class NotificaService implements NotificaListener
     public void aggiungiNotificaESalva(String username, String messaggio)
     {
         aggiungiNotifica(username, messaggio);
-        repo.save(notificaData);
+        repo.save(archivioNotifiche);
     }
 
     /**
@@ -89,7 +89,7 @@ public final class NotificaService implements NotificaListener
      */
     public void salva()
     {
-        repo.save(notificaData);
+        repo.save(archivioNotifiche);
     }
 
     /**
@@ -101,7 +101,7 @@ public final class NotificaService implements NotificaListener
     public List<Notifica> getNotifiche(String username)
     {
         Objects.requireNonNull(username, "Username non può essere null.");
-        List<Notifica> lista = notificaData.getNotifiche().get(username);
+        List<Notifica> lista = archivioNotifiche.getNotifiche().get(username);
         return lista == null ? Collections.emptyList() : Collections.unmodifiableList(lista);
     }
 
@@ -115,7 +115,7 @@ public final class NotificaService implements NotificaListener
     public void eliminaNotifica(String username, int index)
     {
         Objects.requireNonNull(username, "Username non può essere null.");
-        notificaData.removeNotifica(username, index);
-        repo.save(notificaData);
+        archivioNotifiche.removeNotifica(username, index);
+        repo.save(archivioNotifiche);
     }
 }

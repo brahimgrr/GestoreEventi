@@ -1,7 +1,8 @@
 package it.unibs.ingsoft.v3.domain;
 
-import java.util.Objects;
-
+/**
+ * Abstract base class for all application users.
+ */
 public abstract class Persona
 {
     private final String username;
@@ -15,8 +16,7 @@ public abstract class Persona
     protected Persona(String username)
     {
         if (username == null || username.isBlank())
-            throw new IllegalArgumentException("Username non valido.");
-
+            throw new IllegalArgumentException("Lo username non può essere vuoto.");
         this.username = username.trim();
 
         // Class invariant: username must never be blank after construction
@@ -24,11 +24,16 @@ public abstract class Persona
             throw new IllegalStateException("Invariant violated: username must not be blank after construction.");
     }
 
-    public String getUsername()
-    {
+    public String getUsername() {
         return username;
     }
 
+    /**
+     * Two {@code Persona} instances are equal iff they are of the same concrete type
+     * and have the same username. This uses {@code getClass()} comparison (not {@code instanceof})
+     * intentionally: a {@code Configuratore} and a {@code Fruitore} with the same username
+     * are considered distinct entities, which is correct since they represent different user roles.
+     */
     @Override
     public final boolean equals(Object o)
     {
@@ -45,12 +50,12 @@ public abstract class Persona
     @Override
     public final int hashCode()
     {
-        return Objects.hash(username);
+        return username.hashCode();
     }
 
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "{username='" + username + "'}";
+        return getClass().getSimpleName() + "[" + username + "]";
     }
 }

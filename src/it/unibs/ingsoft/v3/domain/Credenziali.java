@@ -3,33 +3,34 @@ package it.unibs.ingsoft.v3.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * JSON-serializable DTO for all user credentials (configuratori and fruitori).
- * Serialises to/from a single JSON file with two maps:
- * <pre>
- * {
- *   "configuratori": { "alice": "s3cr3t" },
- *   "fruitori":      { "bob":   "p4ss"  }
- * }
- * </pre>
+ * Pure DTO for user credentials.
+ * Security is explicitly out-of-scope per project spec.
  */
-public final class Credenziali
-{
-    private final Map<String, String> configuratori = new HashMap<>();
-    private final Map<String, String> fruitori      = new HashMap<>();
+public final class Credenziali {
+    private final Map<String, String> configuratori;
+    private final Map<String, String> fruitori;
 
-    public Credenziali() {}
+    public Credenziali() {
+        this.configuratori = new HashMap<>();
+        this.fruitori = new HashMap<>();
+    }
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static Credenziali fromJson(@JsonProperty("configuratori") Map<String, String> configuratori,
-                                       @JsonProperty("fruitori")      Map<String, String> fruitori)
+    public static Credenziali fromJson(
+            @JsonProperty("configuratori") Map<String, String> configuratori,
+            @JsonProperty("fruitori")      Map<String, String> fruitori)
     {
         Credenziali d = new Credenziali();
-        if (configuratori != null) configuratori.forEach(d::addConfiguratore);
-        if (fruitori      != null) fruitori     .forEach(d::addFruitore);
+        if (configuratori != null)
+            d.configuratori.putAll(configuratori);
+        if (fruitori != null)
+            d.fruitori.putAll(fruitori);
         return d;
     }
 

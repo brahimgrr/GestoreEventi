@@ -2,8 +2,8 @@ package it.unibs.ingsoft.v3.persistence.api;
 
 import it.unibs.ingsoft.v3.domain.Bacheca;
 
-public interface IPropostaRepository
+public interface IBachecaRepository
 {
-    Bacheca load();
-    void save(Bacheca data);
+    Bacheca get();
+    void save();
 }

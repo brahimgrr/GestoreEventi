@@ -3,19 +3,31 @@ package it.unibs.ingsoft.v3.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
+/**
+ * Represents an event category. Each category has a unique name and a list of
+ * category-specific fields (sorted alphabetically by name).
+ */
 public final class Categoria
 {
-    private final String nome; // UNICO
-    private final List<Campo> campiSpecifici = new ArrayList<>();
+    private final String     nome;
+    private final List<Campo> campiSpecifici;
 
     public Categoria(String nome)
     {
         if (nome == null || nome.isBlank())
-            throw new IllegalArgumentException("Nome categoria non valido.");
+            throw new IllegalArgumentException("Il nome della categoria non può essere vuoto.");
+        this.nome           = nome.trim();
+        this.campiSpecifici = new ArrayList<>();
+    }
 
-        this.nome = nome.trim();
+    public Categoria(Categoria oldCategoria) {
+        this.nome = oldCategoria.nome;
+        this.campiSpecifici =  oldCategoria.campiSpecifici.stream().map(Campo::new).toList();
     }
 
     /** Jackson deserialisation factory — restores the name and its specific fields. */
@@ -30,30 +42,37 @@ public final class Categoria
         return cat;
     }
 
-    public String getNome()
-    {
-        return nome;
-    }
+    public String getNome() { return nome; }
 
     public List<Campo> getCampiSpecifici()
     {
         return Collections.unmodifiableList(campiSpecifici);
     }
 
+    /**
+     * Adds a specific field to this category.
+     *
+     * @pre c.getTipo() == TipoCampo.SPECIFICO
+     * @pre no existing specific field has the same name (case-insensitive)
+     * @throws IllegalArgumentException if the field type is wrong or name is duplicate
+     */
     public void addCampoSpecifico(Campo campoSpecifico)
     {
-        Objects.requireNonNull(campoSpecifico, "Campo nullo.");
-
         if (campoSpecifico.getTipo() != TipoCampo.SPECIFICO)
-            throw new IllegalArgumentException("Il campo dev'essere di tipo SPECIFICO.");
-
+            throw new IllegalArgumentException("Solo campi di tipo SPECIFICO possono essere aggiunti a una categoria.");
         if (containsCampo(campoSpecifico.getNome()))
-            throw new IllegalArgumentException("Esiste già un campo specifico con questo nome nella categoria.");
+            throw new IllegalArgumentException(
+                    "La categoria \"" + nome + "\" ha già un campo chiamato \"" + campoSpecifico.getNome() + "\".");
 
         campiSpecifici.add(campoSpecifico);
-        campiSpecifici.sort(Comparator.comparing(c -> c.getNome().toLowerCase()));
+        campiSpecifici.sort(Comparator.comparing(Campo::getNome, String.CASE_INSENSITIVE_ORDER));
     }
 
+    /**
+     * Removes the specific field with the given name (case-insensitive).
+     *
+     * @return true if removed, false if not found
+     */
     public boolean removeCampoSpecifico(String nomeCampo)
     {
         return campiSpecifici.removeIf(c -> c.getNome().equalsIgnoreCase(nomeCampo));
@@ -76,46 +95,32 @@ public final class Categoria
                 return true;
             }
         }
-
         return false;
     }
 
-    public boolean containsCampo(String nomeCampo)
+    private boolean containsCampo(String nomeCampo)
     {
-        for (Campo c : campiSpecifici)
-        {
-            if (c.getNome().equalsIgnoreCase(nomeCampo))
-                return true;
-        }
-
-        return false;
+        return campiSpecifici.stream().anyMatch(c -> c.getNome().equalsIgnoreCase(nomeCampo));
     }
 
+    /** Case-insensitive name equality. */
     @Override
-    public String toString()
+    public boolean equals(Object obj)
     {
-        return  "nome='" + nome + '\'' +
-                ", campiSpecifici=" + campiSpecifici +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-            return true;
-
-        if (!(o instanceof Categoria))
-            return false;
-
-        Categoria categoria = (Categoria) o;
-
-        return nome.equalsIgnoreCase(categoria.nome);
+        if (this == obj) return true;
+        if (!(obj instanceof Categoria)) return false;
+        return nome.equalsIgnoreCase(((Categoria) obj).nome);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(nome.toLowerCase());
+        return nome.toLowerCase().hashCode();
+    }
+
+    @Override
+    public String toString()
+    {
+        return nome;
     }
 }

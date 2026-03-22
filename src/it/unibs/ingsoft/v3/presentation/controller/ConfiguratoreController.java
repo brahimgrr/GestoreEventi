@@ -6,8 +6,6 @@ import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Proposta;
 import it.unibs.ingsoft.v3.domain.StatoProposta;
 import it.unibs.ingsoft.v3.domain.TipoDato;
-import it.unibs.ingsoft.v3.application.CampoService;
-import it.unibs.ingsoft.v3.application.CategoriaService;
 import it.unibs.ingsoft.v3.application.PropostaService;
 import it.unibs.ingsoft.v3.presentation.view.cli.FieldValidator;
 import it.unibs.ingsoft.v3.presentation.view.cli.FormField;

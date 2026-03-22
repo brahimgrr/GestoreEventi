@@ -63,7 +63,7 @@ class AbstractFileRepository<T>
         this.defaultValue = defaultValue;
     }
 
-    public T load()
+    public T get()
     {
         if (!Files.exists(path))
             return defaultValue.get();

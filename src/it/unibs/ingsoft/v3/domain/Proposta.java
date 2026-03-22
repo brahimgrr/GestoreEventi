@@ -1,53 +1,61 @@
 package it.unibs.ingsoft.v3.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
 import java.util.*;
 
-public class Proposta
+/**
+ * Represents an event proposal.
+ *
+ * <p>Lifecycle: BOZZA → VALIDA → APERTA (terminal).
+ * Call {@link it.unibs.ingsoft.v2.application.PropostaService#validaProposta}
+ * to transition to VALIDA; call
+ * to transition to APERTA and persist.</p>
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public final class Proposta
 {
-    private Categoria                    categoria;
-    private Map<String, String>          valoriCampi;
-    private StatoProposta                stato;
-    private LocalDate                    dataPubblicazione;
-    private LocalDate                    termineIscrizione;
-    private LocalDate                    dataEvento;
+    private final List<Campo> campiBase;
+    private final List<Campo> campiComuni;
+    private final Categoria             categoria;
+    private final Map<String, String>   valoriCampi;
+    private StatoProposta               stato;
+    private LocalDate                   dataPubblicazione;
+    private LocalDate                   termineIscrizione;
+    private LocalDate                   dataEvento;
     private LocalDate                    dataConclus;
     private List<Iscrizione>             iscrizioni;
     private Map<StatoProposta, LocalDate> storiaStati;
 
     /**
-     * Creates a new proposal in BOZZA (draft) state for the given category.
+     * Creates a new draft proposal.
      *
-     * @pre  categoria != null
-     * @post getCategoria() == categoria
-     * @post getStato() == StatoProposta.BOZZA
-     * @throws IllegalArgumentException if categoria is null
+     * @pre categoria != null
      */
-    public Proposta(Categoria categoria)
+    public Proposta(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni)
     {
         if (categoria == null)
             throw new IllegalArgumentException("La categoria non può essere null.");
-        this.categoria    = categoria;
-        this.valoriCampi  = new HashMap<>();
-        this.stato        = StatoProposta.BOZZA;
+        this.categoria = new Categoria(categoria);
+        this.campiBase = campiBase == null
+                ? new ArrayList<>()
+                : campiBase.stream().map(Campo::new).toList();
+        this.campiComuni = campiComuni == null
+                ? new ArrayList<>()
+                : campiComuni.stream().map(Campo::new).toList();
+        this.valoriCampi = new LinkedHashMap<>();
+        this.stato       = StatoProposta.BOZZA;
         this.iscrizioni   = new ArrayList<>();
         this.storiaStati  = new LinkedHashMap<>();
         this.storiaStati.put(StatoProposta.BOZZA, LocalDate.now());
         checkInvariant();
     }
 
-    /** No-arg constructor for use by the Jackson factory method only. */
-    private Proposta()
-    {
-        this.valoriCampi = new HashMap<>();
-        this.iscrizioni  = new ArrayList<>();
-        this.storiaStati = new LinkedHashMap<>();
-    }
-
-    /** Jackson deserialisation factory — restores all fields without going through the state machine. */
+    /** Jackson deserialisation factory — reconstructs a fully populated (published) proposal. */
     @JsonCreator
     public static Proposta fromJson(
             @JsonProperty("categoria")         Categoria                    categoria,

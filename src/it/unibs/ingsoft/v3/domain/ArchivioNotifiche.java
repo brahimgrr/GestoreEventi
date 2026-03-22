@@ -1,26 +1,25 @@
-package it.unibs.ingsoft.v3.persistence.dto;
+package it.unibs.ingsoft.v3.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.unibs.ingsoft.v3.domain.Notifica;
 
 import java.util.*;
 
 /**
  * JSON-serializable DTO for per-user notification queues.
  */
-public final class NotificaData
+public final class ArchivioNotifiche
 {
     private final Map<String, List<Notifica>> notifiche = new HashMap<>();
 
-    public NotificaData() {}
+    public ArchivioNotifiche() {}
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static NotificaData fromJson(
+    public static ArchivioNotifiche fromJson(
             @JsonProperty("notifiche") Map<String, List<Notifica>> notifiche)
     {
-        NotificaData d = new NotificaData();
+        ArchivioNotifiche d = new ArchivioNotifiche();
         if (notifiche != null)
         {
             notifiche.forEach((username, lista) -> {

@@ -2,7 +2,6 @@ package it.unibs.ingsoft.v3.application;
 
 import it.unibs.ingsoft.v3.domain.*;
 import it.unibs.ingsoft.v3.domain.Catalogo;
-import it.unibs.ingsoft.v3.persistence.api.IPropostaRepository;
 import it.unibs.ingsoft.v3.domain.Bacheca;
 import it.unibs.ingsoft.v3.domain.AppConstants;
 

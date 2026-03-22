@@ -2,16 +2,12 @@ package it.unibs.ingsoft.v3.domain;
 
 import java.time.format.DateTimeFormatter;
 
-/**
- * Application-wide constants shared across layers.
- * Placing these here avoids view→service DIP violations.
- */
 public final class AppConstants
 {
-    private AppConstants() {}
-
-    public static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-    /** Reserved username for the default configuratore account. */
+    public static final String            DATE_FORMAT_LABEL = "dd/MM/yyyy";
+    public static final String            TIME_FORMAT_LABEL = "HH:mm";
+    public static final DateTimeFormatter DATE_FMT          = DateTimeFormatter.ofPattern(DATE_FORMAT_LABEL);
+    public static final DateTimeFormatter TIME_FMT          = DateTimeFormatter.ofPattern(TIME_FORMAT_LABEL);
     public static final String USERNAME_PREDEFINITO = "config";
+    private AppConstants() {}
 }
