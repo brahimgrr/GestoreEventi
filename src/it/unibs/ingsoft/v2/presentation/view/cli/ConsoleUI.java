@@ -10,7 +10,12 @@ import it.unibs.ingsoft.v2.presentation.view.contract.CancelException;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 
 import java.io.Console;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Scanner;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -177,15 +182,12 @@ public final class ConsoleUI implements IAppView {
         bacheca.forEach((categoria, proposte) ->
         {
             stampaSezione("Categoria: " + categoria);
-            for (int i = 0; i < proposte.size(); i++)
-            {
-                PropostaVM p = proposte.get(i);
-                System.out.println("  [" + (i + 1) + "] Proposta — Pubblicata il: "
-                        + (p.dataPubblicazione() != null ? p.dataPubblicazione() : "N/A"));
-                System.out.println("      Termine iscrizioni:   "
-                        + (p.termineIscrizione() != null ? p.termineIscrizione() : "N/A"));
-                for (String campo : p.campiOrdinati())
-                {
+            for (PropostaVM p : proposte) {
+                //System.out.println("  [" + (i + 1) + "] Proposta — Pubblicata il: "
+                //        + (p.dataPubblicazione() != null ? p.dataPubblicazione() : "N/A"));
+                //System.out.println("      Termine iscrizioni:   "
+                //        + (p.termineIscrizione() != null ? p.termineIscrizione() : "N/A"));
+                for (String campo : p.valoriCampi().keySet()) {
                     String valore = p.valoriCampi().getOrDefault(campo, "");
                     if (!valore.isBlank())
                         System.out.println("      " + campo + ": " + valore);
@@ -203,7 +205,7 @@ public final class ConsoleUI implements IAppView {
         System.out.println("  RIEPILOGO PROPOSTA — Categoria: " + p.categoriaNome()
                 + " | Stato: " + p.stato());
         System.out.println(SEPARATORE);
-        for (String campo : p.campiOrdinati())
+        for (String campo : p.valoriCampi().keySet())
         {
             String valore = p.valoriCampi().getOrDefault(campo, "");
             System.out.println("  " + campo + ": " + (valore.isBlank() ? "(non compilato)" : valore));

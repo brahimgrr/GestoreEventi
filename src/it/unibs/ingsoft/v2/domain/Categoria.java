@@ -25,6 +25,11 @@ public final class Categoria
         this.campiSpecifici = new ArrayList<>();
     }
 
+    public Categoria(Categoria oldCategoria) {
+        this.nome = oldCategoria.nome;
+        this.campiSpecifici =  oldCategoria.campiSpecifici.stream().map(Campo::new).toList();
+    }
+
     /** Jackson deserialisation factory — restores the name and its specific fields. */
     @JsonCreator
     public static Categoria fromJson(

@@ -14,17 +14,14 @@ public interface ICatalogoRepository
 {
     /**
      * Loads the catalogue from persistent storage, or returns a fresh
-     * {@link Catalogo} if no data has been saved yet.
      *
      * @return the loaded or freshly-created catalogue; never {@code null}
      */
-    Catalogo load();
+    Catalogo get();
 
     /**
      * Persists the given catalogue snapshot.
-     *
-     * @pre  data != null
-     * @post the data is durably stored and can be reloaded by {@link #load()}
      */
-    void save(Catalogo data);
+    void save();
+
 }

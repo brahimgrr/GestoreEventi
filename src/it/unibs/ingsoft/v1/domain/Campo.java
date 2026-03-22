@@ -41,6 +41,13 @@ public final class Campo
         this.obbligatorio = obbligatorio;
     }
 
+    public Campo(Campo oldCampo) {
+        this.nome = oldCampo.nome;
+        this.tipo = oldCampo.tipo;
+        this.tipoDato = oldCampo.tipoDato;
+        this.obbligatorio = oldCampo.obbligatorio;
+    }
+
     public String getNome() {
         return nome;
     }

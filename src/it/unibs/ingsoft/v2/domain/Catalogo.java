@@ -1,7 +1,11 @@
-package it.unibs.ingsoft.v1.domain;
+package it.unibs.ingsoft.v2.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import it.unibs.ingsoft.v2.domain.Campo;
+import it.unibs.ingsoft.v2.domain.Categoria;
+import it.unibs.ingsoft.v2.domain.TipoCampo;
+import it.unibs.ingsoft.v2.domain.TipoDato;
 
 import java.util.*;
 

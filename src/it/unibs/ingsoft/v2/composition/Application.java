@@ -1,9 +1,6 @@
 package it.unibs.ingsoft.v2.composition;
 
-import it.unibs.ingsoft.v2.application.AuthenticationService;
-import it.unibs.ingsoft.v2.application.CampoService;
-import it.unibs.ingsoft.v2.application.CategoriaService;
-import it.unibs.ingsoft.v2.application.PropostaService;
+import it.unibs.ingsoft.v2.application.*;
 import it.unibs.ingsoft.v2.domain.Configuratore;
 import it.unibs.ingsoft.v2.persistence.api.ICatalogoRepository;
 import it.unibs.ingsoft.v2.persistence.api.IBachecaRepository;
@@ -17,6 +14,7 @@ import it.unibs.ingsoft.v2.presentation.controller.PropostaController;
 import it.unibs.ingsoft.v2.presentation.view.cli.ConsoleUI;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 
+import javax.xml.catalog.Catalog;
 import java.nio.file.Path;
 import java.util.Scanner;
 
@@ -38,23 +36,27 @@ public final class Application
 
         // Services
         AuthenticationService authService      = new AuthenticationService(credenzialiRepo);
-        CampoService          campoService     = new CampoService(catalogoRepo);
-        CategoriaService      categoriaService = new CategoriaService(catalogoRepo, campoService);
-        PropostaService       propostaService  = new PropostaService(propostaRepo, categoriaService);
+        CatalogoService          catalogoService     = new CatalogoService(catalogoRepo);
+        PropostaService       propostaService  = new PropostaService(propostaRepo);
 
         // View & Controllers
         IAppView ui = new ConsoleUI(new Scanner(System.in));
         AuthController authCtrl = new AuthController(ui, authService);
-        PropostaController propostaCtrl = new PropostaController(ui, propostaService);
-        ConfiguratoreController confCtrl = new ConfiguratoreController(ui, campoService, categoriaService, propostaCtrl);
+        PropostaController propostaController = new PropostaController(ui, propostaService);
+        ConfiguratoreController configuratoreController;
 
         ui.header("Iniziative – Versione 2 (solo configuratore)");
         do {
-            Configuratore logged = authCtrl.loginConfiguratore();
-            ui.stampa("Benvenuto, " + logged.getUsername() + "!");
+            Configuratore configuratore = authCtrl.loginConfiguratore();
+            ui.stampa("Benvenuto, " + configuratore.getUsername() + "!");
             ui.newLine();
 
-            confCtrl.run();
+            configuratoreController = new ConfiguratoreController(configuratore, ui, catalogoService, propostaController);
+            configuratoreController.run();
+
+            // Discard unpublished valid proposals on logout
+            // (requirement: "una proposta valida non pubblicata non viene salvata")
+            propostaService.clearProposteValide();
 
             ui.stampa("Logout effettuato.");
             ui.newLine();

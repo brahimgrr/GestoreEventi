@@ -31,6 +31,7 @@ public final class AuthController
     {
         while (true)
         {
+            ui.newLine();
             ui.stampa("LOGIN CONFIGURATORE");
             String u = ui.acquisisciStringa("Username: ");
             String p = ui.acquisisciStringa("Password: ");
@@ -92,6 +93,8 @@ public final class AuthController
 
             try
             {
+                if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?"))
+                    throw new OperationCancelledException();
                 Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
                 ui.stampaSuccesso("Registrazione completata. Benvenuto, " + newU + "!");
                 return registered;

@@ -30,12 +30,12 @@ public final class PropostaFormBuilder
      * @param ps       used to resolve all fields (base + common + specific)
      * @return ordered list of {@link FormField} ready for {@code IFormView#runForm}
      */
-    public static List<FormField> build(Proposta proposta, PropostaService ps)
+    public static List<FormField> build(Proposta proposta)
     {
         List<FormField> fields = new ArrayList<>();
         Map<String, String> valori = proposta.getValoriCampi();
 
-        for (Campo c : ps.getTuttiCampi(proposta))
+        for (Campo c : proposta.getCampi())
         {
             List<FieldValidator> validators = buildValidators(c.getNome());
             fields.add(new FormField(

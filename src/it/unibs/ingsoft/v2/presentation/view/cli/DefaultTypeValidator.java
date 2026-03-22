@@ -4,6 +4,7 @@ import it.unibs.ingsoft.v2.domain.AppConstants;
 import it.unibs.ingsoft.v2.domain.TipoDato;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Set;
 
 /**
@@ -31,7 +32,16 @@ public final class DefaultTypeValidator implements TypeValidator
             case DECIMALE:  return validateDecimale(input);
             case DATA:      return validateData(input);
             case BOOLEANO:  return validateBooleano(input);
+            case ORA:       return validateOra(input);
             default:        return null;
+        }
+    }
+
+    private String validateOra(String s) {
+        try { LocalTime.parse(s.trim(), AppConstants.TIME_FMT); return null; }
+        catch (Exception e)
+        {
+            return "Valore non valido: inserire una data nel formato hh:mm (es. 16:30).";
         }
     }
 
@@ -49,7 +59,8 @@ public final class DefaultTypeValidator implements TypeValidator
 
     private String validateData(String s)
     {
-        try { LocalDate.parse(s.trim(), AppConstants.DATE_FMT); return null; }
+        try {
+            LocalDate.parse(s.trim(), AppConstants.DATE_FMT); return null; }
         catch (Exception e)
         {
             return "Valore non valido: inserire una data nel formato "

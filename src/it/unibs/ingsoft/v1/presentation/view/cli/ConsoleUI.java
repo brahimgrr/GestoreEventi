@@ -147,7 +147,6 @@ public final class ConsoleUI implements IAppView {
         IAppView.super.pausaConSpaziatura();
     }
 
-
     @Override
     public void stampaMenu(String titolo, String[] lista, String uscitaLabel) {
         if (!titolo.isBlank())

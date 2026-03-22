@@ -1,12 +1,7 @@
-package it.unibs.ingsoft.v1.application;
+package it.unibs.ingsoft.v2.application;
 
-import it.unibs.ingsoft.v1.domain.Campo;
-import it.unibs.ingsoft.v1.domain.CampoBaseDefinito;
-import it.unibs.ingsoft.v1.domain.Categoria;
-import it.unibs.ingsoft.v1.domain.TipoCampo;
-import it.unibs.ingsoft.v1.domain.TipoDato;
-import it.unibs.ingsoft.v1.domain.Catalogo;
-import it.unibs.ingsoft.v1.persistence.api.ICatalogoRepository;
+import it.unibs.ingsoft.v2.domain.*;
+import it.unibs.ingsoft.v2.persistence.api.ICatalogoRepository;
 
 import java.util.Arrays;
 import java.util.List;

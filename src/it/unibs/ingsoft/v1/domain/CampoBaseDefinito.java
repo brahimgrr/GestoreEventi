@@ -1,9 +1,5 @@
 package it.unibs.ingsoft.v1.domain;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Enumeration of the eight fixed base fields mandated by the specification.
  * Each constant defines the canonical field name and its expected data type.
@@ -15,7 +11,7 @@ public enum CampoBaseDefinito
     TERMINE_ISCRIZIONE     ("Termine ultimo di iscrizione", TipoDato.DATA),
     LUOGO                  ("Luogo",                        TipoDato.STRINGA),
     DATA                   ("Data",                         TipoDato.DATA),
-    ORA                    ("Ora",                          TipoDato.STRINGA),
+    ORA                    ("Ora",                          TipoDato.ORA),
     QUOTA_INDIVIDUALE      ("Quota individuale",            TipoDato.DECIMALE),
     DATA_CONCLUSIVA        ("Data conclusiva",              TipoDato.DATA);
 
@@ -51,16 +47,6 @@ public enum CampoBaseDefinito
     public Campo toCampo()
     {
         return new Campo(nomeCampo, TipoCampo.BASE, tipoDato, true);
-    }
-
-    /**
-     * Returns all 8 predefined base fields as {@link Campo} instances.
-     */
-    public static List<Campo> getAll()
-    {
-        return Arrays.stream(values())
-                .map(CampoBaseDefinito::toCampo)
-                .collect(Collectors.toList());
     }
 
     /** Returns true if {@code nome} matches any fixed base field (case-insensitive). */

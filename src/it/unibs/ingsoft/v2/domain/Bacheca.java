@@ -1,15 +1,14 @@
-package it.unibs.ingsoft.v2.persistence.dto;
+package it.unibs.ingsoft.v2.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.unibs.ingsoft.v2.domain.Proposta;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * JSON-serializable collection of published (APERTA) proposals.
+ * JSON-serializable collection of proposals.
  */
 public final class Bacheca
 {

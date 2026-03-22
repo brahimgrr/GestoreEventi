@@ -21,13 +21,15 @@
       "Luogo" : "Brescia",
       "Ora" : "5"
     },
-    "stato" : "APERTA",
+    "stato" : "ANNULLATA",
     "dataPubblicazione" : "20/03/2026",
     "termineIscrizione" : "21/03/2026",
     "dataEvento" : "25/03/2026",
     "dataConclus" : null,
     "iscrizioni" : [ ],
-    "storiaStati" : { },
+    "storiaStati" : {
+      "ANNULLATA" : "22/03/2026"
+    },
     "numeroIscritti" : 0
   }, {
     "categoria" : {

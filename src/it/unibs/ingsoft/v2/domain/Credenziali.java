@@ -1,4 +1,4 @@
-package it.unibs.ingsoft.v2.persistence.dto;
+package it.unibs.ingsoft.v2.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

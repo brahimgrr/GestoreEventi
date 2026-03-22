@@ -2,8 +2,7 @@ package it.unibs.ingsoft.v2.application;
 
 import it.unibs.ingsoft.v2.domain.*;
 import it.unibs.ingsoft.v2.persistence.api.IBachecaRepository;
-import it.unibs.ingsoft.v2.persistence.dto.Catalogo;
-import it.unibs.ingsoft.v2.persistence.dto.Bacheca;
+import it.unibs.ingsoft.v2.domain.Bacheca;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -34,15 +33,52 @@ public final class PropostaService
     public static final String CAMPO_QUOTA               = "Quota individuale";
     public static final String CAMPO_NUM_PARTECIPANTI    = "Numero di partecipanti";
 
-    private final Catalogo catalogo;
     private final IBachecaRepository bachecaRepo;
-    private final Bacheca proposteData;
 
-    public PropostaService(IBachecaRepository bachecaRepo, CategoriaService categoriaService)
+    /** In-memory list of valid but unpublished proposals (session-scoped, discarded on logout). */
+    private final List<Proposta> proposteValide = new ArrayList<>();
+
+    public PropostaService(IBachecaRepository bachecaRepo)
     {
         this.bachecaRepo = Objects.requireNonNull(bachecaRepo);
-        this.proposteData = bachecaRepo.load();
-        this.catalogo = categoriaService.getCatalogo();
+    }
+
+    // ----------------------------------------------------------------
+    // PROPOSTE VALIDE IN MEMORIA (session-scoped)
+    // ----------------------------------------------------------------
+
+    /**
+     * Saves a valid proposal in memory for later publication.
+     *
+     * @pre p.getStato() == StatoProposta.VALIDA
+     */
+    public void salvaProposta(Proposta p)
+    {
+        if (p.getStato() != StatoProposta.VALIDA)
+            throw new IllegalStateException("Solo una proposta VALIDA può essere salvata.");
+        proposteValide.add(p);
+    }
+
+    /** Returns the list of valid proposals saved in memory (not yet published). */
+    public List<Proposta> getProposteValide()
+    {
+        return Collections.unmodifiableList(proposteValide);
+    }
+
+    /** Removes a proposal from the in-memory valid list (e.g. after publication). */
+    public void rimuoviPropostaValida(Proposta p)
+    {
+        proposteValide.remove(p);
+    }
+
+    /** Discards all unpublished valid proposals (called on logout). */
+    public void clearProposteValide()
+    {
+        proposteValide.clear();
+    }
+
+    private Bacheca bacheca() {
+        return bachecaRepo.get();
     }
 
     // ----------------------------------------------------------------
@@ -82,11 +118,9 @@ public final class PropostaService
      *
      * @throws IllegalArgumentException if the category does not exist
      */
-    public Proposta creaProposta(String nomeCategoria)
+    public Proposta creaProposta(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni)
     {
-        Categoria cat = catalogo.findCategoria(nomeCategoria)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria non trovata: " + nomeCategoria));
-        return new Proposta(cat);
+        return new Proposta(categoria, campiBase, campiComuni);
     }
 
     // ----------------------------------------------------------------
@@ -113,9 +147,7 @@ public final class PropostaService
         Categoria cat = p.getCategoria();
 
         // 1. Mandatory fields
-        controllaCampiObbligatori(catalogo.getCampiBase(),   valori, errori);
-        controllaCampiObbligatori(catalogo.getCampiComuni(), valori, errori);
-        controllaCampiObbligatori(cat.getCampiSpecifici(),   valori, errori);
+        controllaCampiObbligatori(p.getCampi(), valori, errori);
 
         // 2. Date constraints
         LocalDate oggi        = LocalDate.now();
@@ -189,8 +221,8 @@ public final class PropostaService
 
         p.setStato(StatoProposta.APERTA);
         p.setDataPubblicazione(oggi);
-        proposteData.addProposta(p);
-        bachecaRepo.save(proposteData);
+        bacheca().addProposta(p);
+        bachecaRepo.save();
     }
 
     private void rilevaDuplicato(Proposta p)
@@ -200,7 +232,7 @@ public final class PropostaService
         String ora     = p.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim();
         String luogo   = p.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim();
 
-        boolean duplicato = proposteData.getProposte().stream().anyMatch(existing ->
+        boolean duplicato = bacheca().getProposte().stream().anyMatch(existing ->
                 existing.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().equalsIgnoreCase(titolo) &&
                 existing.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim().equals(dataStr)          &&
                 existing.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim().equalsIgnoreCase(ora)    &&
@@ -218,7 +250,7 @@ public final class PropostaService
     /** Returns all open (APERTA) proposals as a flat list. */
     public List<Proposta> getBacheca()
     {
-        return proposteData.getProposte().stream()
+        return bacheca().getProposte().stream()
                 .filter(p -> p.getStato() == StatoProposta.APERTA)
                 .collect(Collectors.toList());
     }
@@ -227,22 +259,12 @@ public final class PropostaService
     public Map<String, List<Proposta>> getBachecaPerCategoria()
     {
         Map<String, List<Proposta>> mappa = new LinkedHashMap<>();
-        for (Proposta p : proposteData.getProposte())
+        for (Proposta p : bacheca().getProposte())
         {
             if (p.getStato() == StatoProposta.APERTA)
                 mappa.computeIfAbsent(p.getCategoria().getNome(), k -> new ArrayList<>()).add(p);
         }
         return mappa;
-    }
-
-    /** Returns all fields (base + common + category-specific) for the given proposal. */
-    public List<Campo> getTuttiCampi(Proposta p)
-    {
-        List<Campo> tutti = new ArrayList<>();
-        tutti.addAll(catalogo.getCampiBase());
-        tutti.addAll(catalogo.getCampiComuni());
-        tutti.addAll(p.getCategoria().getCampiSpecifici());
-        return tutti;
     }
 
     /**
@@ -254,7 +276,7 @@ public final class PropostaService
      */
     public List<Campo> getCampiConErrore(Proposta p, List<String> errori)
     {
-        return getTuttiCampi(p).stream()
+        return p.getCampi().stream()
                 .filter(c -> {
                     String quoted = "\"" + c.getNome() + "\"";
                     return errori.stream().anyMatch(e -> e.contains(quoted));
@@ -262,6 +284,4 @@ public final class PropostaService
                 .collect(Collectors.toList());
     }
 
-    public List<Campo> getCampiBase()   { return Collections.unmodifiableList(catalogo.getCampiBase()); }
-    public List<Campo> getCampiComuni() { return Collections.unmodifiableList(catalogo.getCampiComuni()); }
 }

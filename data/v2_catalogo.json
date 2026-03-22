@@ -27,7 +27,7 @@
   }, {
     "nome" : "Ora",
     "tipo" : "BASE",
-    "tipoDato" : "STRINGA",
+    "tipoDato" : "ORA",
     "obbligatorio" : true
   }, {
     "nome" : "Quota individuale",

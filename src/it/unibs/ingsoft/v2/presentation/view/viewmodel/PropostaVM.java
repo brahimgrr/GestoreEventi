@@ -11,7 +11,4 @@ import java.util.Map;
 public record PropostaVM(
         String categoriaNome,
         String stato,
-        String dataPubblicazione,
-        String termineIscrizione,
-        List<String> campiOrdinati,
         Map<String, String> valoriCampi) {}

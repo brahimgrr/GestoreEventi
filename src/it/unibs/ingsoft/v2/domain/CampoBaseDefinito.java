@@ -11,7 +11,7 @@ public enum CampoBaseDefinito
     TERMINE_ISCRIZIONE     ("Termine ultimo di iscrizione", TipoDato.DATA),
     LUOGO                  ("Luogo",                        TipoDato.STRINGA),
     DATA                   ("Data",                         TipoDato.DATA),
-    ORA                    ("Ora",                          TipoDato.STRINGA),
+    ORA                    ("Ora",                          TipoDato.ORA),
     QUOTA_INDIVIDUALE      ("Quota individuale",            TipoDato.DECIMALE),
     DATA_CONCLUSIVA        ("Data conclusiva",              TipoDato.DATA);
 
@@ -38,6 +38,15 @@ public enum CampoBaseDefinito
             if (c.nomeCampo.equalsIgnoreCase(nome.trim()))
                 return c;
         return null;
+    }
+
+    /**
+     * Converts this enum constant to a {@link Campo} instance.
+     * Base fields are always mandatory ({@code obbligatorio = true}).
+     */
+    public Campo toCampo()
+    {
+        return new Campo(nomeCampo, TipoCampo.BASE, tipoDato, true);
     }
 
     /** Returns true if {@code nome} matches any fixed base field (case-insensitive). */

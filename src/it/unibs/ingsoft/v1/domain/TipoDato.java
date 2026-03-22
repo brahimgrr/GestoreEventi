@@ -11,5 +11,6 @@ public enum TipoDato
     INTERO,
     DECIMALE,
     DATA,
+    ORA,
     BOOLEANO
 }

@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -17,16 +18,12 @@ public final class ViewModelMapper
 {
     private ViewModelMapper() {}
 
-    public static PropostaVM toPropostaVM(Proposta p, List<Campo> campi)
+    public static PropostaVM toPropostaVM(Proposta p)
     {
-        List<String> nomi = campi.stream().map(Campo::getNome).collect(Collectors.toList());
         return new PropostaVM(
                 p.getCategoria().getNome(),
                 p.getStato().toString(),
-                formatData(p.getDataPubblicazione()),
-                formatData(p.getTermineIscrizione()),
-                nomi,
-                Map.copyOf(p.getValoriCampi())
+                p.getValoriCampi()
         );
     }
 
@@ -35,20 +32,19 @@ public final class ViewModelMapper
         return d != null ? d.format(AppConstants.DATE_FMT) : null;
     }
 
-    public static List<PropostaVM> toPropostaVMList(
-            List<Proposta> proposte, Function<Proposta, List<Campo>> campiProvider)
+    public static List<PropostaVM> toPropostaVMList(List<Proposta> proposte)
     {
         return proposte.stream()
-                .map(p -> toPropostaVM(p, campiProvider.apply(p)))
+                .map(ViewModelMapper::toPropostaVM)
                 .collect(Collectors.toList());
     }
 
     public static Map<String, List<PropostaVM>> toBachecaVM(
-            Map<String, List<Proposta>> bacheca, Function<Proposta, List<Campo>> campiProvider)
+            Map<String, List<Proposta>> bacheca)
     {
         Map<String, List<PropostaVM>> result = new LinkedHashMap<>();
         bacheca.forEach((cat, proposte) ->
-                result.put(cat, toPropostaVMList(proposte, campiProvider)));
+                result.put(cat, toPropostaVMList(proposte)));
         return result;
     }
 

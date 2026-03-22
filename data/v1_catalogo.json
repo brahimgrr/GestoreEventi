@@ -41,9 +41,19 @@
     "obbligatorio" : true
   } ],
   "campiBaseFissati" : true,
-  "campiComuni" : [ ],
+  "campiComuni" : [ {
+    "nome" : "campo comune",
+    "tipo" : "COMUNE",
+    "tipoDato" : "INTERO",
+    "obbligatorio" : true
+  } ],
   "categorie" : [ {
     "nome" : "Sport",
-    "campiSpecifici" : [ ]
+    "campiSpecifici" : [ {
+      "nome" : "campo specifico",
+      "tipo" : "SPECIFICO",
+      "tipoDato" : "STRINGA",
+      "obbligatorio" : true
+    } ]
   } ]
 }

@@ -2,6 +2,7 @@ package it.unibs.ingsoft.v2.presentation.controller;
 
 import it.unibs.ingsoft.v2.application.PropostaService;
 import it.unibs.ingsoft.v2.domain.Campo;
+import it.unibs.ingsoft.v2.domain.Categoria;
 import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v2.presentation.view.cli.PropostaFormBuilder;
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
  *
  * <p>Dependencies: only {@link IAppView} and {@link PropostaService}.
  * Category selection is performed by the caller before invoking
- * {@link #avviaCreazione(String)}.</p>
  */
 public final class PropostaController
 {
@@ -44,17 +44,15 @@ public final class PropostaController
 
     /**
      * Runs the full proposal-creation workflow for the given category.
-     *
-     * @param nomeCategoria the category already selected by the caller
      */
-    public void avviaCreazione(String nomeCategoria)
+    public void avviaCreazione(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni)
     {
         ui.header("CREA PROPOSTA");
 
         Proposta proposta;
         try
         {
-            proposta = ps.creaProposta(nomeCategoria);
+            proposta = ps.creaProposta(categoria, campiBase, campiComuni);
         }
         catch (IllegalArgumentException e)
         {
@@ -69,7 +67,7 @@ public final class PropostaController
         ui.stampa("(*) = obbligatorio | il tipo è indicato tra [  ]");
         ui.newLine();
 
-        Optional<Map<String, String>> formResult = ui.runForm(PropostaFormBuilder.build(proposta, ps));
+        Optional<Map<String, String>> formResult = ui.runForm(PropostaFormBuilder.build(proposta));
         if (formResult.isEmpty())
         {
             ui.stampa("Operazione annullata.");
@@ -90,7 +88,7 @@ public final class PropostaController
     public void mostraBacheca()
     {
         ui.header("BACHECA");
-        ui.mostraBacheca(ViewModelMapper.toBachecaVM(ps.getBachecaPerCategoria(), ps::getTuttiCampi));
+        ui.mostraBacheca(ViewModelMapper.toBachecaVM(ps.getBachecaPerCategoria()));
         ui.newLine();
         ui.pausa();
     }
@@ -126,7 +124,7 @@ public final class PropostaController
                     .map(Campo::getNome)
                     .collect(Collectors.toSet());
 
-            List<FormField> corrFields = PropostaFormBuilder.build(proposta, ps).stream()
+            List<FormField> corrFields = PropostaFormBuilder.build(proposta).stream()
                     .filter(f -> nomiConErrore.contains(f.getName()))
                     .collect(Collectors.toList());
 
@@ -145,17 +143,66 @@ public final class PropostaController
         return false;
     }
 
-    /** Shows the proposal summary and asks whether to publish it. */
+    /** Shows the proposal summary and saves it in memory for later publication. */
     private void mostraRiepilogoEPubblica(Proposta proposta)
     {
         ui.newLine();
-        ui.mostraRiepilogoProposta(ViewModelMapper.toPropostaVM(proposta, ps.getTuttiCampi(proposta)));
+        ui.mostraRiepilogoProposta(ViewModelMapper.toPropostaVM(proposta));
 
-        if (ui.acquisisciSiNo("Vuoi pubblicare la proposta in bacheca?"))
+        ps.salvaProposta(proposta);
+        ui.stampaSuccesso("Proposta valida salvata. Puoi pubblicarla dal menu 'Pubblicare una proposta di iniziativa'.");
+
+        ui.newLine();
+        ui.pausa();
+    }
+
+    /**
+     * Lists saved valid proposals, lets the user select one, and publishes it.
+     */
+    public void pubblicaPropostaSalvata()
+    {
+        ui.header("PUBBLICA PROPOSTA");
+
+        List<Proposta> valide = ps.getProposteValide();
+        if (valide.isEmpty())
+        {
+            ui.stampa("Nessuna proposta valida da pubblicare.");
+            ui.newLine();
+            ui.pausa();
+            return;
+        }
+
+        // Build display labels from the saved proposals
+        List<String> labels = new java.util.ArrayList<>();
+        for (int i = 0; i < valide.size(); i++)
+        {
+            Proposta p = valide.get(i);
+            String titolo = p.getValoriCampi().getOrDefault("Titolo", "(senza titolo)");
+            String cat    = p.getCategoria().getNome();
+            labels.add((i + 1) + ". " + titolo + "  [" + cat + "]");
+        }
+
+        ui.stampa("Proposte valide disponibili:");
+        for (String label : labels)
+            ui.stampa("  " + label);
+        ui.stampa("  0. Torna");
+        ui.newLine();
+
+        int scelta = ui.acquisisciIntero("Scelta: ", 0, valide.size());
+        if (scelta == 0)
+            return;
+
+        Proposta selezionata = valide.get(scelta - 1);
+
+        ui.newLine();
+        ui.mostraRiepilogoProposta(ViewModelMapper.toPropostaVM(selezionata));
+
+        if (ui.acquisisciSiNo("Vuoi pubblicare questa proposta in bacheca?"))
         {
             try
             {
-                ps.pubblicaProposta(proposta);
+                ps.pubblicaProposta(selezionata);
+                ps.rimuoviPropostaValida(selezionata);
                 ui.stampaSuccesso("Proposta pubblicata in bacheca!");
             }
             catch (Exception e)
@@ -165,7 +212,7 @@ public final class PropostaController
         }
         else
         {
-            ui.stampa("Proposta non pubblicata. Verrà scartata alla fine della sessione.");
+            ui.stampa("Pubblicazione annullata. La proposta resta disponibile per la pubblicazione.");
         }
 
         ui.newLine();

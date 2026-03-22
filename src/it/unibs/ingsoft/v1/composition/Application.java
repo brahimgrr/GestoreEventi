@@ -26,26 +26,26 @@ public final class Application
     public void start()
     {
         // Persistence
-        ICatalogoRepository catRepo      = new FileCatalogoRepository(DATA_CATALOGO);
-        ICredenzialiRepository utenteRepo   = new FileCredenzialiRepository(DATA_UTENTI);
+        ICatalogoRepository catalogoRepo      = new FileCatalogoRepository(DATA_CATALOGO);
+        ICredenzialiRepository credenzialiRepo   = new FileCredenzialiRepository(DATA_UTENTI);
 
         // Services
-        AuthenticationService authService      = new AuthenticationService(utenteRepo);
-        CatalogoService       catalogoService  = new CatalogoService(catRepo);
+        AuthenticationService authService      = new AuthenticationService(credenzialiRepo);
+        CatalogoService       catalogoService  = new CatalogoService(catalogoRepo);
 
         // View & Controllers
         IAppView ui = new ConsoleUI(new Scanner(System.in));
         AuthController authCtrl = new AuthController(ui, authService);
-        ConfiguratoreController confCtrl;
+        ConfiguratoreController configuratoreController;
 
         ui.header("Iniziative - Versione 1 (solo configuratore)");
         do {
-            Configuratore logged = authCtrl.loginConfiguratore();
-            ui.stampa("Benvenuto, " + logged.getUsername() + "!");
+            Configuratore configuratore = authCtrl.loginConfiguratore();
+            ui.stampa("Benvenuto, " + configuratore.getUsername() + "!");
             ui.newLine();
 
-            confCtrl = new ConfiguratoreController(logged, ui, catalogoService);
-            confCtrl.run();
+            configuratoreController = new ConfiguratoreController(configuratore, ui, catalogoService);
+            configuratoreController.run();
 
             ui.stampa("Logout effettuato.");
             ui.newLine();

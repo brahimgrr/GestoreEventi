@@ -1,6 +1,6 @@
 package it.unibs.ingsoft.v2.persistence.api;
 
-import it.unibs.ingsoft.v2.persistence.dto.Credenziali;
+import it.unibs.ingsoft.v2.domain.Credenziali;
 
 /**
  * Repository abstraction for user credentials.
@@ -15,13 +15,12 @@ public interface ICredenzialiRepository
      *
      * @return the loaded or freshly-created user data; never {@code null}
      */
-    Credenziali load();
+    Credenziali get();
 
     /**
      * Persists the given user data snapshot.
      *
      * @pre  data != null
-     * @post the data is durably stored and can be reloaded by {@link #load()}
      */
-    void save(Credenziali data);
+    void save();
 }
