@@ -1,8 +1,8 @@
 package it.unibs.ingsoft.v1.application;
 
 import it.unibs.ingsoft.v1.domain.Configuratore;
-import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
-import it.unibs.ingsoft.v1.persistence.dto.UsersData;
+import it.unibs.ingsoft.v1.persistence.api.ICredenzialiRepository;
+import it.unibs.ingsoft.v1.domain.Credenziali;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -21,17 +21,17 @@ public final class AuthenticationService
     private static final int MIN_USERNAME_LENGTH = 3;
     private static final int MIN_PASSWORD_LENGTH = 4;
 
-    private final IUtenteRepository repo;
-    private final UsersData utenti;
+    private final ICredenzialiRepository repo;
+    private final Credenziali credenziali;
 
     /**
      * @pre repo   != null
-     * @pre utenti != null
+     * @pre credenziali != null
      */
-    public AuthenticationService(IUtenteRepository repo)
+    public AuthenticationService(ICredenzialiRepository repo)
     {
         this.repo   = Objects.requireNonNull(repo);
-        this.utenti = repo.load();
+        this.credenziali = repo.load();
     }
 
     /**
@@ -49,7 +49,7 @@ public final class AuthenticationService
             PASSWORD_PREDEFINITA.equals(password))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
-        String stored = utenti.getConfiguratori().get(username);
+        String stored = credenziali.getConfiguratori().get(username);
         if (stored != null && stored.equals(password))
             return Optional.of(new Configuratore(username));
 
@@ -68,11 +68,11 @@ public final class AuthenticationService
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(username))
             throw new IllegalArgumentException("Lo username \"" + username + "\" è riservato.");
 
-        if (utenti.getConfiguratori().containsKey(username))
+        if (credenziali.getConfiguratori().containsKey(username))
             throw new IllegalArgumentException("Esiste già un configuratore con username \"" + username + "\".");
 
-        utenti.addConfiguratore(username, password);
-        repo.save(utenti);
+        credenziali.addConfiguratore(username, password);
+        repo.save(credenziali);
         return new Configuratore(username);
     }
 
@@ -80,7 +80,7 @@ public final class AuthenticationService
     public boolean esisteUsername(String username)
     {
         if (username == null) return false;
-        return utenti.getConfiguratori().containsKey(username.trim().toLowerCase());
+        return credenziali.getConfiguratori().containsKey(username.trim().toLowerCase());
     }
 
     private static void validaCredenziali(String username, String password)

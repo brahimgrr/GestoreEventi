@@ -1,24 +1,24 @@
-package it.unibs.ingsoft.v1.persistence.api;
+package it.unibs.ingsoft.v2.persistence.api;
 
-import it.unibs.ingsoft.v1.persistence.impl.FileCategoriaRepository;
-import it.unibs.ingsoft.v1.persistence.dto.CatalogoData;
+import it.unibs.ingsoft.v2.persistence.impl.FileCatalogoRepository;
+import it.unibs.ingsoft.v2.persistence.dto.Catalogo;
 
 /**
  * Repository abstraction for the field/category catalogue.
  * Services depend on this interface rather than on the concrete
- * {@link FileCategoriaRepository}, satisfying DIP.
+ * {@link FileCatalogoRepository}, satisfying DIP.
  * A different implementation (JSON, in-memory for tests) can be
  * substituted without touching any service class.
  */
-public interface ICategoriaRepository
+public interface ICatalogoRepository
 {
     /**
      * Loads the catalogue from persistent storage, or returns a fresh
-     * {@link CatalogoData} if no data has been saved yet.
+     * {@link Catalogo} if no data has been saved yet.
      *
      * @return the loaded or freshly-created catalogue; never {@code null}
      */
-    CatalogoData load();
+    Catalogo load();
 
     /**
      * Persists the given catalogue snapshot.
@@ -26,5 +26,5 @@ public interface ICategoriaRepository
      * @pre  data != null
      * @post the data is durably stored and can be reloaded by {@link #load()}
      */
-    void save(CatalogoData data);
+    void save(Catalogo data);
 }

@@ -11,23 +11,23 @@ import java.util.List;
 /**
  * JSON-serializable collection of published (APERTA) proposals.
  */
-public final class PropostaData
+public final class Bacheca
 {
     private final List<Proposta> proposte;
 
-    public PropostaData()
+    public Bacheca()
     {
         this.proposte = new ArrayList<>();
     }
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static PropostaData fromJson(
+    public static Bacheca fromJson(
             @JsonProperty("proposte") List<Proposta> proposte)
     {
-        PropostaData d = new PropostaData();
-        if (proposte != null) d.proposte.addAll(proposte);
-        return d;
+        Bacheca bacheca = new Bacheca();
+        if (proposte != null) bacheca.proposte.addAll(proposte);
+        return bacheca;
     }
 
     public List<Proposta> getProposte()

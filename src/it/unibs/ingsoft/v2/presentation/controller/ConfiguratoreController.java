@@ -91,9 +91,12 @@ public final class ConfiguratoreController {
                     menuCategorie();
                     break;
                 case 4:
-                    avviaCreazioneProposta();
+                    menuVisualizza();
                     break;
                 case 5:
+                    avviaCreazioneProposta();
+                    break;
+                case 6:
                     propostaController.mostraBacheca();
                     break;
                 case 0:
@@ -163,6 +166,23 @@ public final class ConfiguratoreController {
         ui.header("CAMPI BASE");
         ui.stampa("Stato: FISSATI (immutabili)");
         ui.stampaCampi(campoService.getCampiBase());
+        ui.newLine();
+        ui.pausaConSpaziatura();
+    }
+
+    // ---------------------------------------------------------------
+    // VISUALIZZAZIONE
+    // ---------------------------------------------------------------
+
+    private void menuVisualizza()
+    {
+        ui.header("VISUALIZZAZIONE");
+        ui.stampaSezione("Campi BASE");
+        ui.stampaCampi(campoService.getCampiBase());
+        ui.stampaSezione("Campi COMUNI");
+        ui.stampaCampi(campoService.getCampiComuni());
+        ui.stampaSezione("Categorie");
+        ui.stampaCategorie(categoriaService.getCategorie());
         ui.newLine();
         ui.pausaConSpaziatura();
     }

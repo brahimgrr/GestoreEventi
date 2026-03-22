@@ -5,18 +5,18 @@ import it.unibs.ingsoft.v1.domain.CampoBaseDefinito;
 import it.unibs.ingsoft.v1.domain.Categoria;
 import it.unibs.ingsoft.v1.domain.TipoCampo;
 import it.unibs.ingsoft.v1.domain.TipoDato;
-import it.unibs.ingsoft.v1.persistence.dto.CatalogoData;
-import it.unibs.ingsoft.v1.persistence.api.ICategoriaRepository;
+import it.unibs.ingsoft.v1.domain.Catalogo;
+import it.unibs.ingsoft.v1.persistence.api.ICatalogoRepository;
 
 import java.util.*;
 
 /** Manages base fields, common fields, categories and category-specific fields. */
 public final class CatalogoService
 {
-    private final ICategoriaRepository repo;
-    private final CatalogoData         catalogo;
+    private final ICatalogoRepository repo;
+    private final Catalogo catalogo;
 
-    public CatalogoService(ICategoriaRepository repo)
+    public CatalogoService(ICatalogoRepository repo)
     {
         this.repo     = Objects.requireNonNull(repo);
         this.catalogo = repo.load();
