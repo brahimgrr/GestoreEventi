@@ -1,9 +1,9 @@
 package it.unibs.ingsoft.v2.application;
 
 import it.unibs.ingsoft.v2.domain.*;
-import it.unibs.ingsoft.v2.persistence.api.IPropostaRepository;
-import it.unibs.ingsoft.v2.persistence.dto.CatalogoData;
-import it.unibs.ingsoft.v2.persistence.dto.PropostaData;
+import it.unibs.ingsoft.v2.persistence.api.IBachecaRepository;
+import it.unibs.ingsoft.v2.persistence.dto.Catalogo;
+import it.unibs.ingsoft.v2.persistence.dto.Bacheca;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -34,14 +34,14 @@ public final class PropostaService
     public static final String CAMPO_QUOTA               = "Quota individuale";
     public static final String CAMPO_NUM_PARTECIPANTI    = "Numero di partecipanti";
 
-    private final CatalogoData       catalogo;
-    private final IPropostaRepository propostaRepo;
-    private final PropostaData        proposteData;
+    private final Catalogo catalogo;
+    private final IBachecaRepository bachecaRepo;
+    private final Bacheca proposteData;
 
-    public PropostaService(IPropostaRepository propostaRepo, CategoriaService categoriaService)
+    public PropostaService(IBachecaRepository bachecaRepo, CategoriaService categoriaService)
     {
-        this.propostaRepo = Objects.requireNonNull(propostaRepo);
-        this.proposteData = propostaRepo.load();
+        this.bachecaRepo = Objects.requireNonNull(bachecaRepo);
+        this.proposteData = bachecaRepo.load();
         this.catalogo = categoriaService.getCatalogo();
     }
 
@@ -190,7 +190,7 @@ public final class PropostaService
         p.setStato(StatoProposta.APERTA);
         p.setDataPubblicazione(oggi);
         proposteData.addProposta(p);
-        propostaRepo.save(proposteData);
+        bachecaRepo.save(proposteData);
     }
 
     private void rilevaDuplicato(Proposta p)

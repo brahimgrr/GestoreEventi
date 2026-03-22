@@ -94,6 +94,8 @@ public final class AuthController
             try
             {
                 Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
+                if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?"))
+                    throw new OperationCancelledException();
                 ui.stampaSuccesso("Registrazione completata. Benvenuto, " + newU + "!");
                 return registered;
             }

@@ -1,4 +1,4 @@
-package it.unibs.ingsoft.v1.persistence.dto;
+package it.unibs.ingsoft.v1.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,19 +11,19 @@ import java.util.Map;
  * Pure DTO for user credentials.
  * Security is explicitly out-of-scope per project spec.
  */
-public final class UsersData {
+public final class Credenziali {
     private final Map<String, String> configuratori;
 
-    public UsersData() {
+    public Credenziali() {
         this.configuratori = new HashMap<>();
     }
 
     /** Jackson deserialisation factory. */
     @JsonCreator
-    public static UsersData fromJson(
+    public static Credenziali fromJson(
             @JsonProperty("configuratori") Map<String, String> configuratori)
     {
-        UsersData d = new UsersData();
+        Credenziali d = new Credenziali();
         if (configuratori != null)
             d.configuratori.putAll(configuratori);
         return d;

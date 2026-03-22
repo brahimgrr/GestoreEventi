@@ -1,9 +1,7 @@
-package it.unibs.ingsoft.v1.persistence.dto;
+package it.unibs.ingsoft.v1.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.unibs.ingsoft.v1.domain.Campo;
-import it.unibs.ingsoft.v1.domain.Categoria;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,13 +13,13 @@ import java.util.List;
  * Structural mutations (add/remove/replace) are deliberately kept here so the
  * service does not need to rebuild the full list on every change.
  */
-public final class CatalogoData {
+public final class Catalogo {
     private final List<Campo>     campiBase;
     private boolean         campiBaseFissati;
     private final List<Campo>     campiComuni;
     private final List<Categoria> categorie;
 
-    public CatalogoData()
+    public Catalogo()
     {
         this.campiBase        = new ArrayList<>();
         this.campiBaseFissati = false;
@@ -31,13 +29,13 @@ public final class CatalogoData {
 
     /** Jackson deserialization factory. */
     @JsonCreator
-    public static CatalogoData fromJson(
+    public static Catalogo fromJson(
             @JsonProperty("campiBase")        List<Campo>     campiBase,
             @JsonProperty("campiBaseFissati") boolean         campiBaseFissati,
             @JsonProperty("campiComuni")      List<Campo>     campiComuni,
             @JsonProperty("categorie")        List<Categoria> categorie)
     {
-        CatalogoData d = new CatalogoData();
+        Catalogo d = new Catalogo();
         if (campiBase   != null) d.campiBase.addAll(campiBase);
         if (campiBaseFissati)    d.campiBaseFissati = true;
         if (campiComuni != null) d.campiComuni.addAll(campiComuni);

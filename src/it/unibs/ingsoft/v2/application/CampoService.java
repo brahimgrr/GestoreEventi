@@ -1,8 +1,8 @@
 package it.unibs.ingsoft.v2.application;
 
 import it.unibs.ingsoft.v2.domain.*;
-import it.unibs.ingsoft.v2.persistence.api.ICategoriaRepository;
-import it.unibs.ingsoft.v2.persistence.dto.CatalogoData;
+import it.unibs.ingsoft.v2.persistence.api.ICatalogoRepository;
+import it.unibs.ingsoft.v2.persistence.dto.Catalogo;
 
 import java.util.*;
 
@@ -17,10 +17,10 @@ import java.util.*;
  */
 public final class CampoService
 {
-    private final ICategoriaRepository repo;
-    private final CatalogoData         catalogo;
+    private final ICatalogoRepository repo;
+    private final Catalogo catalogo;
 
-    public CampoService(ICategoriaRepository repo)
+    public CampoService(ICatalogoRepository repo)
     {
         this.repo     = Objects.requireNonNull(repo);
         this.catalogo = repo.load();

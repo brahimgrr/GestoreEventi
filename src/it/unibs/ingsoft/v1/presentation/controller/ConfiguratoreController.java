@@ -1,8 +1,6 @@
 package it.unibs.ingsoft.v1.presentation.controller;
 
-import it.unibs.ingsoft.v1.domain.CampoBaseDefinito;
-import it.unibs.ingsoft.v1.domain.Categoria;
-import it.unibs.ingsoft.v1.domain.TipoDato;
+import it.unibs.ingsoft.v1.domain.*;
 import it.unibs.ingsoft.v1.application.CatalogoService;
 import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
@@ -38,10 +36,12 @@ public final class ConfiguratoreController {
         "Cambia obbligatorietà campo specifico"
     };
 
+    private final Configuratore configuratore;
     private final IAppView       ui;
     private final CatalogoService catalogoService;
 
-    public ConfiguratoreController(IAppView ui, CatalogoService catalogoService) {
+    public ConfiguratoreController(Configuratore configuratore, IAppView ui, CatalogoService catalogoService) {
+        this.configuratore = configuratore;
         this.ui  = ui;
         this.catalogoService = catalogoService;
     }
@@ -150,7 +150,7 @@ public final class ConfiguratoreController {
     // CAMPI COMUNI
     // ---------------------------------------------------------------
 
-    private void menuCampiComuni()
+    private void xmenuCampiComuni()
     {
         while (true)
         {
@@ -303,7 +303,7 @@ public final class ConfiguratoreController {
     // CAMPI SPECIFICI
     // ---------------------------------------------------------------
 
-    private void menuCampiSpecifici(String nomeCategoria)
+    private void xmenuCampiSpecifici(String nomeCategoria)
     {
         while (true)
         {
@@ -386,5 +386,142 @@ public final class ConfiguratoreController {
                     return;
             }
         }
+    }
+
+    private void menuCampiGenerico(String titolo, GestioneCampi ops)
+    {
+        while (true)
+        {
+            ui.header(titolo);
+            ui.stampaCampi(ops.getCampi());
+            ui.newLine();
+            ui.stampaMenu("", MENU_CAMPI_COMUNI, "Torna"); // same menu
+            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI_COMUNI.length);
+            ui.newLine();
+
+            switch (choice)
+            {
+                case 1: // ADD
+                    try {
+                        ui.stampaInfo(IAppView.HINT_ANNULLA);
+                        String nome = ui.acquisisciStringaConValidazione(
+                                "Nome campo: ",
+                                n -> !n.isBlank() && !catalogoService.nomeEsistente(n),
+                                "Nome non valido o già esistente."
+                        );
+
+                        TipoDato tipo = ui.acquisisciTipoDato("Tipo di dato:");
+                        boolean obbl = ui.acquisisciSiNo("Obbligatorio?");
+
+                        if (!ui.acquisisciSiNo(
+                                "Aggiungere '" + nome + "' [" + tipo + ", " +
+                                        (obbl ? "obbligatorio" : "facoltativo") + "]?"))
+                        {
+                            ui.stampaInfo("Operazione annullata.");
+                            break;
+                        }
+
+                        ops.add(nome, tipo, obbl);
+                        ui.stampaSuccesso("Campo aggiunto.");
+                    }
+                    catch (OperationCancelledException e) {
+                        ui.stampaInfo("Operazione annullata.");
+                    }
+                    catch (IllegalArgumentException e) {
+                        ui.stampaErrore(e.getMessage());
+                    }
+                    ui.pausaConSpaziatura();
+                    break;
+
+                case 2: // REMOVE
+                    ui.selezionaElemento("Seleziona campo da rimuovere:", ops.getCampi())
+                            .ifPresentOrElse(c -> {
+                                if (!ui.acquisisciSiNo("Rimuovere '" + c.getNome() + "'?"))
+                                {
+                                    ui.stampaInfo("Operazione annullata.");
+                                    return;
+                                }
+                                if (ops.remove(c.getNome()))
+                                    ui.stampaSuccesso("Campo rimosso.");
+                                else
+                                    ui.stampaErrore("Campo non trovato.");
+                            }, () -> ui.stampaInfo("Operazione annullata."));
+                    ui.pausaConSpaziatura();
+                    break;
+
+                case 3: // TOGGLE
+                    ui.selezionaElementoConInfo(
+                            "Seleziona campo:",
+                            ops.getCampi(),
+                            c -> c.isObbligatorio() ? "obbligatorio" : "facoltativo"
+                    ).ifPresentOrElse(c -> {
+                        boolean nuovo = ui.acquisisciSiNo("Impostare come obbligatorio?");
+                        if (nuovo == c.isObbligatorio())
+                        {
+                            ui.stampaAvviso("Nessuna modifica.");
+                            return;
+                        }
+
+                        if (ops.setObbl(c.getNome(), nuovo))
+                            ui.stampaSuccesso("Aggiornato.");
+                        else
+                            ui.stampaErrore("Campo non trovato.");
+                    }, () -> ui.stampaInfo("Operazione annullata."));
+                    ui.pausaConSpaziatura();
+                    break;
+
+                case 0:
+                    return;
+            }
+        }
+    }
+
+    private void menuCampiComuni()
+    {
+        menuCampiGenerico("CAMPI COMUNI", new GestioneCampi() {
+            public List<Campo> getCampi() {
+                return catalogoService.getCampiComuni();
+            }
+
+            public void add(String nome, TipoDato tipo, boolean obbl) {
+                catalogoService.addCampoComune(nome, tipo, obbl);
+            }
+
+            public boolean remove(String nome) {
+                return catalogoService.removeCampoComune(nome);
+            }
+
+            public boolean setObbl(String nome, boolean obbl) {
+                return catalogoService.setObbligatorietaCampoComune(nome, obbl);
+            }
+        });
+    }
+
+    private void menuCampiSpecifici(String nomeCategoria)
+    {
+        menuCampiGenerico(nomeCategoria, new GestioneCampi() {
+            public List<Campo> getCampi() {
+                return catalogoService.getCategoriaOrThrow(nomeCategoria).getCampiSpecifici();
+            }
+
+            public void add(String nome, TipoDato tipo, boolean obbl) {
+                catalogoService.addCampoSpecifico(nomeCategoria, nome, tipo, obbl);
+            }
+
+            public boolean remove(String nome) {
+                return catalogoService.removeCampoSpecifico(nomeCategoria, nome);
+            }
+
+            public boolean setObbl(String nome, boolean obbl) {
+                return catalogoService.setObbligatorietaCampoSpecifico(nomeCategoria, nome, obbl);
+            }
+        });
+    }
+
+    private interface GestioneCampi {
+        List<Campo> getCampi();
+        void add(String nome, TipoDato tipo, boolean obbl);
+        boolean remove(String nome);
+        boolean setObbl(String nome, boolean obbl);
     }
 }

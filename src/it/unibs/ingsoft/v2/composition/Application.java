@@ -5,12 +5,12 @@ import it.unibs.ingsoft.v2.application.CampoService;
 import it.unibs.ingsoft.v2.application.CategoriaService;
 import it.unibs.ingsoft.v2.application.PropostaService;
 import it.unibs.ingsoft.v2.domain.Configuratore;
-import it.unibs.ingsoft.v2.persistence.api.ICategoriaRepository;
-import it.unibs.ingsoft.v2.persistence.api.IPropostaRepository;
-import it.unibs.ingsoft.v2.persistence.api.IUtenteRepository;
-import it.unibs.ingsoft.v2.persistence.impl.FileCategoriaRepository;
-import it.unibs.ingsoft.v2.persistence.impl.FilePropostaRepository;
-import it.unibs.ingsoft.v2.persistence.impl.FileUtenteRepository;
+import it.unibs.ingsoft.v2.persistence.api.ICatalogoRepository;
+import it.unibs.ingsoft.v2.persistence.api.IBachecaRepository;
+import it.unibs.ingsoft.v2.persistence.api.ICredenzialiRepository;
+import it.unibs.ingsoft.v2.persistence.impl.FileCatalogoRepository;
+import it.unibs.ingsoft.v2.persistence.impl.FileBachecaRepository;
+import it.unibs.ingsoft.v2.persistence.impl.FileCredenzialiRepository;
 import it.unibs.ingsoft.v2.presentation.controller.AuthController;
 import it.unibs.ingsoft.v2.presentation.controller.ConfiguratoreController;
 import it.unibs.ingsoft.v2.presentation.controller.PropostaController;
@@ -32,14 +32,14 @@ public final class Application
     public void start()
     {
         // Persistence
-        ICategoriaRepository catRepo      = new FileCategoriaRepository(DATA_CATALOGO);
-        IUtenteRepository    utenteRepo   = new FileUtenteRepository(DATA_UTENTI);
-        IPropostaRepository  propostaRepo = new FilePropostaRepository(DATA_PROPOSTE);
+        ICatalogoRepository catalogoRepo      = new FileCatalogoRepository(DATA_CATALOGO);
+        ICredenzialiRepository credenzialiRepo   = new FileCredenzialiRepository(DATA_UTENTI);
+        IBachecaRepository propostaRepo = new FileBachecaRepository(DATA_PROPOSTE);
 
         // Services
-        AuthenticationService authService      = new AuthenticationService(utenteRepo);
-        CampoService          campoService     = new CampoService(catRepo);
-        CategoriaService      categoriaService = new CategoriaService(catRepo, campoService);
+        AuthenticationService authService      = new AuthenticationService(credenzialiRepo);
+        CampoService          campoService     = new CampoService(catalogoRepo);
+        CategoriaService      categoriaService = new CategoriaService(catalogoRepo, campoService);
         PropostaService       propostaService  = new PropostaService(propostaRepo, categoriaService);
 
         // View & Controllers

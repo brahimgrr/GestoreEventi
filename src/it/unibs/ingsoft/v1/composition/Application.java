@@ -1,11 +1,10 @@
 package it.unibs.ingsoft.v1.composition;
 
 import it.unibs.ingsoft.v1.domain.Configuratore;
-import it.unibs.ingsoft.v1.persistence.dto.CatalogoData;
-import it.unibs.ingsoft.v1.persistence.impl.FileCategoriaRepository;
-import it.unibs.ingsoft.v1.persistence.impl.FileUtenteRepository;
-import it.unibs.ingsoft.v1.persistence.api.ICategoriaRepository;
-import it.unibs.ingsoft.v1.persistence.api.IUtenteRepository;
+import it.unibs.ingsoft.v1.persistence.impl.FileCatalogoRepository;
+import it.unibs.ingsoft.v1.persistence.impl.FileCredenzialiRepository;
+import it.unibs.ingsoft.v1.persistence.api.ICatalogoRepository;
+import it.unibs.ingsoft.v1.persistence.api.ICredenzialiRepository;
 import it.unibs.ingsoft.v1.application.AuthenticationService;
 import it.unibs.ingsoft.v1.application.CatalogoService;
 import it.unibs.ingsoft.v1.presentation.controller.AuthController;
@@ -27,8 +26,8 @@ public final class Application
     public void start()
     {
         // Persistence
-        ICategoriaRepository catRepo      = new FileCategoriaRepository(DATA_CATALOGO);
-        IUtenteRepository    utenteRepo   = new FileUtenteRepository(DATA_UTENTI);
+        ICatalogoRepository catRepo      = new FileCatalogoRepository(DATA_CATALOGO);
+        ICredenzialiRepository utenteRepo   = new FileCredenzialiRepository(DATA_UTENTI);
 
         // Services
         AuthenticationService authService      = new AuthenticationService(utenteRepo);
@@ -37,7 +36,7 @@ public final class Application
         // View & Controllers
         IAppView ui = new ConsoleUI(new Scanner(System.in));
         AuthController authCtrl = new AuthController(ui, authService);
-        ConfiguratoreController confCtrl = new ConfiguratoreController(ui, catalogoService);
+        ConfiguratoreController confCtrl;
 
         ui.header("Iniziative - Versione 1 (solo configuratore)");
         do {
@@ -45,6 +44,7 @@ public final class Application
             ui.stampa("Benvenuto, " + logged.getUsername() + "!");
             ui.newLine();
 
+            confCtrl = new ConfiguratoreController(logged, ui, catalogoService);
             confCtrl.run();
 
             ui.stampa("Logout effettuato.");
