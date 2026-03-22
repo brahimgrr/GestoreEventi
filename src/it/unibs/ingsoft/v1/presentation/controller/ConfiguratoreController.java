@@ -6,6 +6,7 @@ import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -98,7 +99,7 @@ public final class ConfiguratoreController {
         ui.header("PRIMA CONFIGURAZIONE – Campi base");
         ui.newLine();
         ui.stampa("I seguenti campi base sono già presenti (definiti dalla traccia):");
-        ui.stampaCampi(catalogoService.getCampiBase());
+        ui.stampaCampi(Arrays.stream(CampoBaseDefinito.values()).map(CampoBaseDefinito::toCampo).toList());
         ui.newLine();
         ui.stampa("Puoi aggiungere campi base EXTRA (obbligatori e immutabili).");
         ui.stampa("Questi campi NON potranno essere modificati o rimossi in futuro.");
