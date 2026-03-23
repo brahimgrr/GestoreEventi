@@ -36,6 +36,6 @@ public final class Credenziali {
 
     public void addConfiguratore(String username, String password)
     {
-        configuratori.put(username, password);
+        configuratori.put(username.trim().toLowerCase(), password);
     }
 }

@@ -69,13 +69,15 @@ class FruitoreControllerTest {
         iscrizioneService = new IscrizioneService(bachecaRepo, stateTransitionService);
 
         proposta = propostaService.creaProposta(new Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-        proposta.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Partita");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_NUM_PARTECIPANTI, "3");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA, "18/01/2025");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_ORA, "15:00");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Stadio");
+        proposta.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Partita",
+                PropostaService.CAMPO_NUM_PARTECIPANTI, "3",
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025",
+                PropostaService.CAMPO_DATA, "18/01/2025",
+                PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025",
+                PropostaService.CAMPO_ORA, "15:00",
+                PropostaService.CAMPO_LUOGO, "Stadio"
+        ));
         assertTrue(propostaService.validaProposta(proposta).isEmpty());
         propostaService.pubblicaProposta(proposta);
     }

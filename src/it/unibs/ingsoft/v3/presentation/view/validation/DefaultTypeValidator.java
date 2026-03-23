@@ -1,7 +1,7 @@
-package it.unibs.ingsoft.v2.presentation.view.cli;
+package it.unibs.ingsoft.v3.presentation.view.validation;
 
-import it.unibs.ingsoft.v2.domain.AppConstants;
-import it.unibs.ingsoft.v2.domain.TipoDato;
+import it.unibs.ingsoft.v3.domain.AppConstants;
+import it.unibs.ingsoft.v3.domain.TipoDato;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -23,7 +23,7 @@ public final class DefaultTypeValidator implements TypeValidator
     @Override
     public String validate(String input, TipoDato tipo)
     {
-        if (input == null || input.isBlank()) return null; // blank handled separately
+        if (input == null || input.isBlank()) return null;
 
         switch (tipo)
         {
@@ -37,7 +37,8 @@ public final class DefaultTypeValidator implements TypeValidator
         }
     }
 
-    private String validateOra(String s) {
+    private String validateOra(String s)
+    {
         try { LocalTime.parse(s.trim(), AppConstants.TIME_FMT); return null; }
         catch (Exception e)
         {
@@ -59,12 +60,11 @@ public final class DefaultTypeValidator implements TypeValidator
 
     private String validateData(String s)
     {
-        try {
-            LocalDate.parse(s.trim(), AppConstants.DATE_FMT); return null; }
+        try { LocalDate.parse(s.trim(), AppConstants.DATE_FMT); return null; }
         catch (Exception e)
         {
             return "Valore non valido: inserire una data nel formato "
-                   + AppConstants.DATE_FORMAT_LABEL + " (es. 25/12/2026).";
+                    + AppConstants.DATE_FORMAT_LABEL + " (es. 25/12/2026).";
         }
     }
 

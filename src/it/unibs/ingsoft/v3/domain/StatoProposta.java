@@ -4,9 +4,9 @@ package it.unibs.ingsoft.v3.domain;
  * State machine for proposals.
  *
  * <pre>
- *   BOZZA ──→ VALIDA ──→ APERTA (terminal)
- *               ↑
- *             BOZZA ←── VALIDA (revert on re-validation)
+ *   BOZZA ──→ VALIDA ──→ APERTA ──→ CONFERMATA ──→ CONCLUSA
+ *                          │
+ *                          └──→ ANNULLATA
  * </pre>
  */
 public enum StatoProposta

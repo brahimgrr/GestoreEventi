@@ -4,8 +4,6 @@ import it.unibs.ingsoft.v3.application.PropostaService;
 import it.unibs.ingsoft.v3.domain.Campo;
 import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Proposta;
-import it.unibs.ingsoft.v3.presentation.view.cli.FormField;
-import it.unibs.ingsoft.v3.presentation.view.cli.PropostaFormBuilder;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v3.presentation.view.contract.OperationCancelledException;
 
@@ -69,7 +67,7 @@ public final class PropostaController
 
         try
         {
-            Optional<Map<String, String>> formResult = ui.runForm(PropostaFormBuilder.build(proposta));
+            Optional<Map<String, String>> formResult = ui.acquisisciValoriProposta(proposta, ps::validaCampo);
             if (formResult.isEmpty())
             {
                 ui.stampa("Operazione annullata.");
@@ -133,11 +131,7 @@ public final class PropostaController
                     .map(Campo::getNome)
                     .collect(Collectors.toSet());
 
-            List<FormField> corrFields = PropostaFormBuilder.build(proposta).stream()
-                    .filter(f -> nomiConErrore.contains(f.getName()))
-                    .collect(Collectors.toList());
-
-            Optional<Map<String, String>> corrResult = ui.runForm(corrFields);
+            Optional<Map<String, String>> corrResult = ui.correggiCampiProposta(proposta, nomiConErrore, ps::validaCampo);
             if (corrResult.isEmpty())
             {
                 ui.stampa("Proposta scartata.");

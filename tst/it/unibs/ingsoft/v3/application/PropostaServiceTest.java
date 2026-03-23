@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,13 +41,15 @@ class PropostaServiceTest {
     // -----------------------------------------------------------------
     private Proposta buildValidProposal() {
         Proposta p = service.creaProposta(new Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-        p.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Partita di calcio");
-        p.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025"); // 5 days future
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA, "18/01/2025");               // termine+3 days
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025");    // == data
-        p.getValoriCampi().put(PropostaService.CAMPO_NUM_PARTECIPANTI, "5");
-        p.getValoriCampi().put(PropostaService.CAMPO_ORA, "15:00");
-        p.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Stadio");
+        p.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Partita di calcio",
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025",
+                PropostaService.CAMPO_DATA, "18/01/2025",
+                PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025",
+                PropostaService.CAMPO_NUM_PARTECIPANTI, "5",
+                PropostaService.CAMPO_ORA, "15:00",
+                PropostaService.CAMPO_LUOGO, "Stadio"
+        ));
         return p;
     }
 
@@ -130,7 +133,7 @@ class PropostaServiceTest {
     @Test
     void testValidaProposta_TermineScaduto_ReturnsErrore() {
         Proposta p = buildValidProposal();
-        p.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "09/01/2025"); // yesterday
+        updateProposalValues(p, PropostaService.CAMPO_TERMINE_ISCRIZIONE, "09/01/2025");
         List<String> errori = service.validaProposta(p);
         assertFalse(errori.isEmpty());
         assertEquals(StatoProposta.BOZZA, p.getStato());
@@ -140,7 +143,7 @@ class PropostaServiceTest {
     void testValidaProposta_DataEventoTroppoVicina_ReturnsErrore() {
         Proposta p = buildValidProposal();
         // termine = 15/01, data = 16/01 (only 1 day gap — must be > 1 day)
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA, "16/01/2025");
+        updateProposalValues(p, PropostaService.CAMPO_DATA, "16/01/2025");
         List<String> errori = service.validaProposta(p);
         assertFalse(errori.isEmpty());
         assertEquals(StatoProposta.BOZZA, p.getStato());
@@ -150,10 +153,40 @@ class PropostaServiceTest {
     void testValidaProposta_DataConclusivaAntecedente_ReturnsErrore() {
         Proposta p = buildValidProposal();
         // data evento = 18/01, conclusiva = 17/01 (before event)
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, "17/01/2025");
+        updateProposalValues(p, PropostaService.CAMPO_DATA_CONCLUSIVA, "17/01/2025");
         List<String> errori = service.validaProposta(p);
         assertFalse(errori.isEmpty());
         assertEquals(StatoProposta.BOZZA, p.getStato());
+    }
+
+    @Test
+    void testValidaCampo_DataEventoTroppoVicina_ReturnsErroreImmediato() {
+        Proposta p = buildValidProposal();
+
+        List<String> errori = service.validaCampo(
+                p,
+                Map.of(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025"),
+                PropostaService.CAMPO_DATA,
+                "16/01/2025"
+        );
+
+        assertFalse(errori.isEmpty());
+        assertTrue(errori.stream().anyMatch(e -> e.contains("\"Data\"")));
+    }
+
+    @Test
+    void testValidaCampo_TermineRendeDataEsistenteNonValida_ReturnsErroreImmediato() {
+        Proposta p = buildValidProposal();
+
+        List<String> errori = service.validaCampo(
+                p,
+                Map.of(PropostaService.CAMPO_DATA, "18/01/2025"),
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE,
+                "17/01/2025"
+        );
+
+        assertFalse(errori.isEmpty());
+        assertTrue(errori.stream().anyMatch(e -> e.contains("\"Data\"")));
     }
 
     @Test
@@ -257,29 +290,35 @@ class PropostaServiceTest {
     void testGetBachecaPerCategoria_GruppaPerNomeCategoria() {
         // Two APERTA Sport proposals
         Proposta sport1 = new Proposta(new Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-        sport1.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Sport1");
-        sport1.getValoriCampi().put(PropostaService.CAMPO_DATA, "20/01/2025");
-        sport1.getValoriCampi().put(PropostaService.CAMPO_ORA, "10:00");
-        sport1.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Campo A");
+        sport1.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Sport1",
+                PropostaService.CAMPO_DATA, "20/01/2025",
+                PropostaService.CAMPO_ORA, "10:00",
+                PropostaService.CAMPO_LUOGO, "Campo A"
+        ));
         sport1.setStato(StatoProposta.VALIDA);
         sport1.setStato(StatoProposta.APERTA);
         bachecaMock.addProposta(sport1);
 
         Proposta sport2 = new Proposta(new Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-        sport2.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Sport2");
-        sport2.getValoriCampi().put(PropostaService.CAMPO_DATA, "21/01/2025");
-        sport2.getValoriCampi().put(PropostaService.CAMPO_ORA, "11:00");
-        sport2.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Campo B");
+        sport2.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Sport2",
+                PropostaService.CAMPO_DATA, "21/01/2025",
+                PropostaService.CAMPO_ORA, "11:00",
+                PropostaService.CAMPO_LUOGO, "Campo B"
+        ));
         sport2.setStato(StatoProposta.VALIDA);
         sport2.setStato(StatoProposta.APERTA);
         bachecaMock.addProposta(sport2);
 
         // One APERTA Musica proposal
         Proposta musica = new Proposta(new Categoria("Musica"), new ArrayList<>(), new ArrayList<>());
-        musica.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Concerto");
-        musica.getValoriCampi().put(PropostaService.CAMPO_DATA, "22/01/2025");
-        musica.getValoriCampi().put(PropostaService.CAMPO_ORA, "20:00");
-        musica.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Teatro");
+        musica.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Concerto",
+                PropostaService.CAMPO_DATA, "22/01/2025",
+                PropostaService.CAMPO_ORA, "20:00",
+                PropostaService.CAMPO_LUOGO, "Teatro"
+        ));
         musica.setStato(StatoProposta.VALIDA);
         musica.setStato(StatoProposta.APERTA);
         bachecaMock.addProposta(musica);
@@ -310,9 +349,11 @@ class PropostaServiceTest {
         service.salvaProposta(p1);
 
         Proposta p2 = new Proposta(new Categoria("Arte"), new ArrayList<>(), new ArrayList<>());
-        p2.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025");
-        p2.getValoriCampi().put(PropostaService.CAMPO_DATA, "18/01/2025");
-        p2.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025");
+        p2.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025",
+                PropostaService.CAMPO_DATA, "18/01/2025",
+                PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025"
+        ));
         service.validaProposta(p2);
         service.salvaProposta(p2);
 
@@ -321,5 +362,11 @@ class PropostaServiceTest {
         service.clearProposteValide();
 
         assertTrue(service.getProposteValide().isEmpty());
+    }
+
+    private void updateProposalValues(Proposta proposta, String key, String value) {
+        Map<String, String> valori = new LinkedHashMap<>(proposta.getValoriCampi());
+        valori.put(key, value);
+        proposta.putAllValoriCampi(valori);
     }
 }

@@ -8,13 +8,19 @@ import it.unibs.ingsoft.v2.presentation.view.contract.BackException;
 import it.unibs.ingsoft.v2.presentation.view.contract.CancelException;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
+import it.unibs.ingsoft.v2.presentation.view.contract.ProposalFieldValidator;
+import it.unibs.ingsoft.v2.presentation.view.validation.DefaultTypeValidator;
+import it.unibs.ingsoft.v2.presentation.view.validation.TypeValidator;
 
 import java.io.Console;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.Scanner;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -452,18 +458,103 @@ public final class ConsoleUI implements IAppView {
         }
     }
 
-    // ----------------------------------------------------------------
-    // IFormView
-    // ----------------------------------------------------------------
+    @Override
+    public Optional<Map<String, String>> acquisisciValoriProposta(Proposta proposta, ProposalFieldValidator validator)
+    {
+        return eseguiForm(proposta, proposta.getCampi(), validator);
+    }
 
     @Override
-    public Optional<Map<String, String>> runForm(List<FormField> fields)
+    public Optional<Map<String, String>> correggiCampiProposta(Proposta proposta, Set<String> nomiCampi, ProposalFieldValidator validator)
     {
-        return new StepByStepFormRunner(this, this, DefaultTypeValidator.INSTANCE, fields).run();
+        List<Campo> campiDaCorreggere = proposta.getCampi().stream()
+                .filter(c -> nomiCampi.contains(c.getNome()))
+                .toList();
+        return eseguiForm(proposta, campiDaCorreggere, validator);
+    }
+
+    private Optional<Map<String, String>> eseguiForm(Proposta proposta, List<Campo> campi, ProposalFieldValidator validator)
+    {
+        Map<String, String> ctx = new LinkedHashMap<>(proposta.getValoriCampi());
+        TypeValidator typeValidator = DefaultTypeValidator.INSTANCE;
+        int i = 0;
+
+        while (i < campi.size())
+        {
+            Campo campo = campi.get(i);
+            String nome = campo.getNome();
+            String current = ctx.get(nome);
+
+            String obbLabel = campo.isObbligatorio() ? "(*) " : "";
+            String attualeLabel = (current != null && !current.isBlank())
+                    ? " [attuale: " + current + "]"
+                    : "";
+            String prompt = "[" + (i + 1) + "/" + campi.size() + "] " + obbLabel
+                    + nome + " [" + campo.getTipoDato() + "]" + attualeLabel + ": ";
+
+            String raw;
+            try
+            {
+                raw = acquisisciStringa(prompt).trim();
+            }
+            catch (CancelException e)
+            {
+                return Optional.empty();
+            }
+            catch (BackException e)
+            {
+                if (i > 0) i--;
+                continue;
+            }
+
+            if (raw.isBlank())
+            {
+                if (current != null && !current.isBlank())
+                {
+                    stampaSuccesso("  Campo invariato: " + current);
+                    i++;
+                }
+                else if (!campo.isObbligatorio())
+                {
+                    i++;
+                }
+                else
+                {
+                    stampaErrore("  Campo obbligatorio. Inserire un valore.");
+                }
+                continue;
+            }
+
+            String typeError = typeValidator.validate(raw, campo.getTipoDato());
+            if (typeError != null)
+            {
+                stampaErrore("  " + typeError);
+                continue;
+            }
+
+            List<String> businessErrors = validator.validate(
+                    proposta,
+                    Collections.unmodifiableMap(ctx),
+                    nome,
+                    raw
+            );
+            if (!businessErrors.isEmpty())
+            {
+                for (String businessError : businessErrors)
+                    stampaErrore("  " + businessError);
+                continue;
+            }
+
+            ctx.put(nome, raw);
+            stampaSuccesso("  OK");
+            i++;
+        }
+
+        return Optional.of(ctx);
     }
 
     // ----------------------------------------------------------------
-    // ISelectionView
+    // Input specializations
     // ----------------------------------------------------------------
 
     @Override

@@ -1,0 +1,334 @@
+@startuml
+' =====================================================================
+'  DIAGRAMMA CLASSI V1 — GestoreEventi
+'  Verde (#D5F5E3) = classe del baseline V1
+' =====================================================================
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 24
+skinparam ranksep 28
+
+' ===========================================================
+' COMPOSITION
+' ===========================================================
+
+class Main #D5F5E3 {
+  + main(String[]) : void
+}
+
+class Application #D5F5E3 {
+  + DATA_CATALOGO : Path
+  + DATA_UTENTI : Path
+  __
+  + start() : void
+}
+
+Main --> Application : create
+
+' ===========================================================
+' CONTROLLERS
+' ===========================================================
+
+class AuthController #D5F5E3 {
+  + loginConfiguratore() : Configuratore
+  - registrazioneInterattiva() : Configuratore
+  - raccogliUsername() : String
+  - raccogliPassword() : String
+}
+
+class ConfiguratoreController #D5F5E3 {
+  + MENU_PRINCIPALE : String[]
+  + MENU_CAMPI : String[]
+  + MENU_CATEGORIE : String[]
+  + MENU_CAMPI_SPECIFICI : String[]
+  __
+  + run() : void
+  - mainMenu() : void
+  - menuCampiBaseExtra() : boolean
+  - menuCategorie() : void
+  - menuVisualizza() : void
+  - menuCampiGenerico(String, GestioneCampi) : void
+  - menuCampiComuni() : void
+  - menuCampiSpecifici(Categoria) : void
+}
+
+' ===========================================================
+' APPLICATION SERVICES
+' ===========================================================
+
+class AuthenticationService #D5F5E3 {
+  + USERNAME_PREDEFINITO : String
+  + PASSWORD_PREDEFINITA : String
+  __
+  + login(String, String) : Optional
+  + registraNuovoConfiguratore(String, String) : Configuratore
+  + esisteUsername(String) : boolean
+}
+
+class CatalogoService #D5F5E3 {
+  + nomeEsistente(String) : boolean
+  + initiateCampiBase() : void
+  + addCampiBaseConExtra(List, List) : void
+  + getCampiBase() : List
+  + addCampoComune(String, TipoDato, boolean) : void
+  + removeCampoComune(String) : boolean
+  + setObbligatorietaCampoComune(String, boolean) : boolean
+  + getCampiComuni() : List
+  + createCategoria(String) : Categoria
+  + removeCategoria(String) : boolean
+  + getCategorie() : List
+  + addCampoSpecifico(String, String, TipoDato, boolean) : void
+  + removeCampoSpecifico(String, String) : boolean
+  + setObbligatorietaCampoSpecifico(String, String, boolean) : boolean
+}
+
+' ===========================================================
+' PERSISTENCE — INTERFACES
+' ===========================================================
+
+interface ICatalogoRepository #D5F5E3 {
+  + get() : Catalogo
+  + save() : void
+}
+
+interface ICredenzialiRepository #D5F5E3 {
+  + get() : Credenziali
+  + save() : void
+}
+
+' ===========================================================
+' PERSISTENCE — IMPLEMENTATIONS
+' ===========================================================
+
+abstract class AbstractFileRepository #D5F5E3 {
+  + load() : T
+  + save(T) : void
+}
+
+class FileCatalogoRepository #D5F5E3 {
+  + get() : Catalogo
+  + save() : void
+}
+
+class FileCredenzialiRepository #D5F5E3 {
+  + get() : Credenziali
+  + save() : void
+}
+
+' ===========================================================
+' DOMAIN
+' ===========================================================
+
+class Catalogo #D5F5E3 {
+  + fromJson(List, boolean, List, List) : Catalogo
+  + fissareCampiBase(List, List) : void
+  + isCampiBaseFissati() : boolean
+  + addCampoComune(Campo) : void
+  + removeCampoComune(String) : boolean
+  + updateCampoComune(String, boolean) : boolean
+  + addCategoria(String) : Categoria
+  + removeCategoria(String) : boolean
+  + getCategoriaOrThrow(String) : Categoria
+  + addCampoSpecifico(String, Campo) : void
+  + removeCampoSpecifico(String, String) : boolean
+  + updateCampoSpecifico(String, String, boolean) : boolean
+  + getCampiBase() : List
+  + getCampiComuni() : List
+  + getCategorie() : List
+  + nomeEsistenteGlobale(String) : boolean
+}
+
+class Categoria #D5F5E3 {
+  + fromJson(String, List) : Categoria
+  + getNome() : String
+  + getCampiSpecifici() : List
+  + addCampoSpecifico(Campo) : void
+  + removeCampoSpecifico(String) : boolean
+  + setObbligatorietaCampoSpecifico(String, boolean) : boolean
+}
+
+class Campo #D5F5E3 {
+  + getNome() : String
+  + getTipo() : TipoCampo
+  + getTipoDato() : TipoDato
+  + isObbligatorio() : boolean
+  + withObbligatorio(boolean) : Campo
+}
+
+enum CampoBaseDefinito #D5F5E3 {
+  + TITOLO
+  + NUMERO_PARTECIPANTI
+  + TERMINE_ISCRIZIONE
+  + LUOGO
+  + DATA
+  + ORA
+  + QUOTA_INDIVIDUALE
+  + DATA_CONCLUSIVA
+  __
+  + getNomeCampo() : String
+  + getTipoDato() : TipoDato
+  + toCampo() : Campo
+  + fromNome(String) : CampoBaseDefinito
+  + isNomeFisso(String) : boolean
+}
+
+abstract class Persona #D5F5E3 {
+  + toString() : String
+}
+
+class Configuratore #D5F5E3 {
+}
+
+class Credenziali #D5F5E3 {
+  + fromJson(Map) : Credenziali
+  + getConfiguratori() : Map
+  + addConfiguratore(String, String) : void
+}
+
+enum TipoCampo #D5F5E3 {
+  + BASE
+  + COMUNE
+  + SPECIFICO
+}
+
+enum TipoDato #D5F5E3 {
+  + STRINGA
+  + INTERO
+  + DECIMALE
+  + DATA
+  + ORA
+  + BOOLEANO
+}
+
+' ===========================================================
+' VIEW
+' ===========================================================
+
+together {
+  interface IInputView #D5F5E3 {
+    + HINT_ANNULLA : String
+    + acquisisciStringa(String) : String
+    + acquisisciStringaConValidazione(String, Predicate, String) : String
+    + acquisisciPassword(String) : String
+    + acquisisciIntero(String, int, int) : int
+    + acquisisciSiNo(String) : boolean
+    + acquisisciTipoDato(String) : TipoDato
+    + acquisisciListaNomi(String) : List
+    + selezionaElemento(String, List) : Optional
+    + selezionaElementoConInfo(String, List, Function) : Optional
+  }
+
+  interface IOutputView #D5F5E3 {
+    + stampa(String) : void
+    + newLine() : void
+    + header(String) : void
+    + stampaSezione(String) : void
+    + stampaCampi(List<Campo>) : void
+    + stampaCategorie(List<Categoria>) : void
+    + stampaCategorieDettaglio(Map<String, List<String>>) : void
+    + stampaMenu(String, String[]) : void
+    + stampaMenu(String, String[], String) : void
+    + pausa() : void
+    + stampaSuccesso(String) : void
+    + stampaErrore(String) : void
+    + stampaAvviso(String) : void
+    + stampaInfo(String) : void
+    + pausaConSpaziatura() : void
+  }
+
+  interface IAppView #D5F5E3 {
+  }
+
+  class ConsoleUI #D5F5E3 {
+    + CANCEL_KEYWORD : String
+    + BACK_KEYWORD : String
+    + HINT_ANNULLA : String
+    __
+    + stampa(String) : void
+    + newLine() : void
+    + header(String) : void
+    + stampaSezione(String) : void
+    + stampaCampi(List) : void
+    + stampaCategorie(List) : void
+    + stampaCategorieDettaglio(Map) : void
+    + stampaMenu(String, String[]) : void
+    + stampaMenu(String, String[], String) : void
+    + pausa() : void
+    + stampaSuccesso(String) : void
+    + stampaErrore(String) : void
+    + stampaAvviso(String) : void
+    + stampaInfo(String) : void
+    + pausaConSpaziatura() : void
+    + acquisisciStringa(String) : String
+    + acquisisciStringaConValidazione(String, Predicate, String) : String
+    + acquisisciPassword(String) : String
+    + acquisisciIntero(String, int, int) : int
+    + acquisisciSiNo(String) : boolean
+    + acquisisciTipoDato(String) : TipoDato
+    + acquisisciListaNomi(String) : List
+    + selezionaElemento(String, List) : Optional
+    + selezionaElementoConInfo(String, List, Function) : Optional
+  }
+}
+
+' ===========================================================
+' EXCEPTIONS
+' ===========================================================
+
+together {
+  class OperationCancelledException #D5F5E3
+  class CancelException #D5F5E3
+  class BackException #D5F5E3
+}
+
+' ===========================================================
+' RELAZIONI
+' ===========================================================
+
+Application ..> AuthenticationService : create
+Application ..> CatalogoService : create
+Application ..> AuthController : create
+Application ..> ConfiguratoreController : create
+Application ..> ConsoleUI : create
+Application ..> FileCatalogoRepository : create
+Application ..> FileCredenzialiRepository : create
+
+Configuratore --|> Persona
+OperationCancelledException --|> RuntimeException
+CancelException --|> OperationCancelledException
+BackException --|> OperationCancelledException
+
+IAppView --|> IOutputView
+IAppView --|> IInputView
+ConsoleUI ..|> IAppView
+
+FileCatalogoRepository --|> AbstractFileRepository
+FileCredenzialiRepository --|> AbstractFileRepository
+FileCatalogoRepository ..|> ICatalogoRepository
+FileCredenzialiRepository ..|> ICredenzialiRepository
+
+FileCatalogoRepository --> Catalogo : stores
+FileCredenzialiRepository --> Credenziali : stores
+
+AuthController --> IAppView
+AuthController --> AuthenticationService
+
+ConfiguratoreController --> IAppView
+ConfiguratoreController --> CatalogoService
+ConfiguratoreController --> Configuratore
+
+AuthenticationService --> ICredenzialiRepository
+CatalogoService --> ICatalogoRepository
+
+Catalogo *-- Campo : campiBase
+Catalogo *-- Campo : campiComuni
+Catalogo *-- Categoria : categorie
+Categoria *-- Campo : campiSpecifici
+Campo --> TipoCampo
+Campo --> TipoDato
+CampoBaseDefinito --> TipoDato
+CampoBaseDefinito ..> Campo : create
+
+@enduml

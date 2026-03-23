@@ -11,10 +11,8 @@ import java.util.*;
 /**
  * Represents an event proposal.
  *
- * <p>Lifecycle: BOZZA → VALIDA → APERTA (terminal).
- * Call {@link PropostaService#validaProposta}
- * to transition to VALIDA; call
- * to transition to APERTA and persist.</p>
+ * <p>Lifecycle: BOZZA → VALIDA → APERTA → CONFERMATA → CONCLUSA
+ *                                         → ANNULLATA</p>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class Proposta
@@ -99,9 +97,18 @@ public final class Proposta
     }
 
     public Map<String, String> getValoriCampi() {
-        return valoriCampi;
+        return Collections.unmodifiableMap(valoriCampi);
     }
-
+    /**
+     * Resets state to BOZZA without recording the change in stateHistory.
+     * Used only during proposal validation to avoid polluting the history
+     * with pre-publication BOZZA/VALIDA cycles.
+     */
+    public void revertToBozzaSilent() {
+        if (this.stato == StatoProposta.VALIDA) {
+            this.stato = StatoProposta.BOZZA;
+        }
+    }
 
     public void putAllValoriCampi(Map<String, String> valori)
     {

@@ -63,7 +63,7 @@ class IscrizioneServiceTest {
             p.setTermineIscrizione(java.time.LocalDate.parse(scadenza, AppConstants.DATE_FMT));
         }
         
-        p.getValoriCampi().putAll(valori);
+        p.putAllValoriCampi(valori);
         p.setStato(StatoProposta.VALIDA);
         p.setStato(StatoProposta.APERTA);
         bachecaMock.addProposta(p);

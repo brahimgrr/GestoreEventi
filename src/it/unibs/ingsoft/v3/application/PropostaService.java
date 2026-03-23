@@ -17,20 +17,19 @@ import java.util.stream.Collectors;
  *
  * <h3>Date helpers</h3>
  * The three static {@code is*Valido} methods are the single source of truth for
- * date boundary checks.  They are called both from {@link #validaProposta} and
- * from the form validators in the controller, eliminating duplication.
+ * date boundary checks used by {@link #validaProposta}.
  */
 public final class PropostaService
 {
-    // ---- canonical field-name constants (single source of truth) ----
-    public static final String CAMPO_TITOLO              = "Titolo";
-    public static final String CAMPO_TERMINE_ISCRIZIONE  = "Termine ultimo di iscrizione";
-    public static final String CAMPO_DATA                = "Data";
-    public static final String CAMPO_DATA_CONCLUSIVA     = "Data conclusiva";
-    public static final String CAMPO_ORA                 = "Ora";
-    public static final String CAMPO_LUOGO               = "Luogo";
-    public static final String CAMPO_QUOTA               = "Quota individuale";
-    public static final String CAMPO_NUM_PARTECIPANTI    = "Numero di partecipanti";
+    // ---- field-name constants — aliases of AppConstants (single source of truth in domain layer) ----
+    public static final String CAMPO_TITOLO              = AppConstants.CAMPO_TITOLO;
+    public static final String CAMPO_TERMINE_ISCRIZIONE  = AppConstants.CAMPO_TERMINE_ISCRIZIONE;
+    public static final String CAMPO_DATA                = AppConstants.CAMPO_DATA;
+    public static final String CAMPO_DATA_CONCLUSIVA     = AppConstants.CAMPO_DATA_CONCLUSIVA;
+    public static final String CAMPO_ORA                 = AppConstants.CAMPO_ORA;
+    public static final String CAMPO_LUOGO               = AppConstants.CAMPO_LUOGO;
+    public static final String CAMPO_QUOTA               = AppConstants.CAMPO_QUOTA;
+    public static final String CAMPO_NUM_PARTECIPANTI    = AppConstants.CAMPO_NUM_PARTECIPANTI;
 
     private final IBachecaRepository bachecaRepo;
 
@@ -76,7 +75,7 @@ public final class PropostaService
     }
 
     // ----------------------------------------------------------------
-    // STATIC DATE HELPERS — shared with form validators (DRY)
+    // STATIC DATE HELPERS — reused by application-level validation
     // ----------------------------------------------------------------
 
     /**
@@ -132,9 +131,8 @@ public final class PropostaService
      */
     public List<String> validaProposta(Proposta p)
     {
-        // Revert to BOZZA so the method is idempotent for VALIDA proposals
-        if (p.getStato() == StatoProposta.VALIDA)
-            p.setStato(StatoProposta.BOZZA);
+        // Revert to BOZZA silently (no history entry) so the method is idempotent
+        p.revertToBozzaSilent();
 
         List<String> errori = new ArrayList<>();
         Map<String, String> valori = p.getValoriCampi();
@@ -143,7 +141,19 @@ public final class PropostaService
         // 1. Mandatory fields
         controllaCampiObbligatori(p.getCampi(), valori, errori);
 
-        // 2. Date constraints
+        // 2. Numero di partecipanti must be a positive integer
+        String numStr = valori.get(CAMPO_NUM_PARTECIPANTI);
+        if (numStr != null && !numStr.isBlank()) {
+            try {
+                int n = Integer.parseInt(numStr.trim());
+                if (n <= 0)
+                    errori.add("\"" + CAMPO_NUM_PARTECIPANTI + "\" deve essere un intero positivo.");
+            } catch (NumberFormatException e) {
+                errori.add("\"" + CAMPO_NUM_PARTECIPANTI + "\" deve essere un intero valido.");
+            }
+        }
+
+        // 3. Date constraints
         LocalDate oggi        = LocalDate.now(AppConstants.clock);
         LocalDate termineIscr = parseData(valori.get(CAMPO_TERMINE_ISCRIZIONE));
         LocalDate dataEvento  = parseData(valori.get(CAMPO_DATA));
@@ -164,6 +174,51 @@ public final class PropostaService
             p.setTermineIscrizione(termineIscr);
             p.setDataEvento(dataEvento);
             p.setStato(StatoProposta.VALIDA);
+        }
+
+        return errori;
+    }
+
+    /**
+     * Validates a single field in the context of the current proposal values.
+     * This is used during interactive entry to provide immediate business-rule feedback.
+     */
+    public List<String> validaCampo(Proposta proposta, Map<String, String> valoriCorrenti, String nomeCampo, String valore)
+    {
+        Map<String, String> valori = new LinkedHashMap<>(proposta.getValoriCampi());
+        valori.putAll(valoriCorrenti);
+        valori.put(nomeCampo, valore);
+
+        List<String> errori = new ArrayList<>();
+        LocalDate termineIscr = parseData(valori.get(CAMPO_TERMINE_ISCRIZIONE));
+        LocalDate dataEvento  = parseData(valori.get(CAMPO_DATA));
+        LocalDate dataConclus = parseData(valori.get(CAMPO_DATA_CONCLUSIVA));
+
+        switch (nomeCampo)
+        {
+            case CAMPO_TERMINE_ISCRIZIONE:
+                if (termineIscr != null && !isTermineIscrizioneValido(termineIscr))
+                    errori.add("\"" + CAMPO_TERMINE_ISCRIZIONE + "\" deve essere successivo alla data odierna.");
+                if (termineIscr != null && dataEvento != null && !isDataEventoValida(dataEvento, termineIscr))
+                    errori.add("\"" + CAMPO_DATA + "\" deve essere successivo di almeno 2 giorni rispetto a \"" +
+                            CAMPO_TERMINE_ISCRIZIONE + "\".");
+                break;
+
+            case CAMPO_DATA:
+                if (termineIscr != null && dataEvento != null && !isDataEventoValida(dataEvento, termineIscr))
+                    errori.add("\"" + CAMPO_DATA + "\" deve essere successivo di almeno 2 giorni rispetto a \"" +
+                            CAMPO_TERMINE_ISCRIZIONE + "\".");
+                if (dataEvento != null && dataConclus != null && !isDataConclusivaValida(dataConclus, dataEvento))
+                    errori.add("\"" + CAMPO_DATA_CONCLUSIVA + "\" non può essere precedente a \"" + CAMPO_DATA + "\".");
+                break;
+
+            case CAMPO_DATA_CONCLUSIVA:
+                if (dataEvento != null && dataConclus != null && !isDataConclusivaValida(dataConclus, dataEvento))
+                    errori.add("\"" + CAMPO_DATA_CONCLUSIVA + "\" non può essere precedente a \"" + CAMPO_DATA + "\".");
+                break;
+
+            default:
+                break;
         }
 
         return errori;

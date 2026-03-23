@@ -1,9 +1,9 @@
-package it.unibs.ingsoft.v3.presentation.view.cli;
+package it.unibs.ingsoft.v3.presentation.view.validation;
 
 import it.unibs.ingsoft.v3.domain.TipoDato;
 
 /**
- * Functional interface for type-level validation of a raw string against a {@link TipoDato}.
+ * Validates a raw string against the expected {@link TipoDato}.
  *
  * @return an error message, or {@code null} if the value is valid for that type
  */

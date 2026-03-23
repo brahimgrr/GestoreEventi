@@ -138,7 +138,7 @@ class PropostaControllerTest {
         Categoria musica = new Categoria("Musica");
         Proposta musicaProposal = propostaService.creaProposta(musica, campiBase, List.of());
         musicaProposal.putAllValoriCampi(validValues("17/01/2025"));
-        musicaProposal.getValoriCampi().put("Titolo", "Music Night");
+        updateProposalValues(musicaProposal, "Titolo", "Music Night");
         assertTrue(propostaService.validaProposta(musicaProposal).isEmpty());
         propostaService.pubblicaProposta(musicaProposal);
 
@@ -159,6 +159,12 @@ class PropostaControllerTest {
         assertTrue(propostaService.validaProposta(proposta).isEmpty());
         propostaService.salvaProposta(proposta);
         return proposta;
+    }
+
+    private void updateProposalValues(Proposta proposta, String key, String value) {
+        Map<String, String> valori = new LinkedHashMap<>(proposta.getValoriCampi());
+        valori.put(key, value);
+        proposta.putAllValoriCampi(valori);
     }
 
     private Map<String, String> validValues(String dataEvento) {

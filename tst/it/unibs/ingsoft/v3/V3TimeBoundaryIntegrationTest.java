@@ -112,13 +112,15 @@ class V3TimeBoundaryIntegrationTest {
 
     private Proposta buildAndPublishProposta(int capacity, String termine, String dataEvento, String dataConclusiva) {
         Proposta proposta = propostaService.creaProposta(new Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-        proposta.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Partita");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_NUM_PARTECIPANTI, String.valueOf(capacity));
-        proposta.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, termine);
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA, dataEvento);
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, dataConclusiva);
-        proposta.getValoriCampi().put(PropostaService.CAMPO_ORA, "18:00");
-        proposta.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Campo");
+        proposta.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Partita",
+                PropostaService.CAMPO_NUM_PARTECIPANTI, String.valueOf(capacity),
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE, termine,
+                PropostaService.CAMPO_DATA, dataEvento,
+                PropostaService.CAMPO_DATA_CONCLUSIVA, dataConclusiva,
+                PropostaService.CAMPO_ORA, "18:00",
+                PropostaService.CAMPO_LUOGO, "Campo"
+        ));
 
         assertTrue(propostaService.validaProposta(proposta).isEmpty());
         propostaService.pubblicaProposta(proposta);

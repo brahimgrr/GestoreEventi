@@ -8,6 +8,7 @@ import it.unibs.ingsoft.v3.application.IscrizioneService;
 import it.unibs.ingsoft.v3.application.NotificationService;
 import it.unibs.ingsoft.v3.application.PropostaService;
 import it.unibs.ingsoft.v3.application.StateTransitionService;
+import it.unibs.ingsoft.v3.domain.AppConstants;
 import it.unibs.ingsoft.v3.persistence.api.IBachecaRepository;
 import it.unibs.ingsoft.v3.persistence.api.ICatalogoRepository;
 import it.unibs.ingsoft.v3.persistence.api.ICredenzialiRepository;
@@ -25,7 +26,13 @@ import it.unibs.ingsoft.v3.presentation.view.cli.ConsoleUI;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Composition root: wires all components and runs the application loop.
@@ -36,6 +43,7 @@ public final class Application
     private static final Path DATA_UTENTI     = Path.of("data", "v3_utenti.json");
     private static final Path DATA_PROPOSTE   = Path.of("data", "v3_proposte.json");
     private static final Path DATA_NOTIFICHE  = Path.of("data", "v3_notifiche.json");
+    private ScheduledExecutorService midnightScheduler;
 
     public void start()
     {
@@ -55,6 +63,7 @@ public final class Application
 
         // Esegui la conciliazione degli stati (mezzanotte)
         stateService.controllaScadenze();
+        startMidnightScheduler(stateService);
 
         // View & Controllers
         IAppView ui = new ConsoleUI(new Scanner(System.in));
@@ -74,6 +83,7 @@ public final class Application
             
             if (choice == 0) {
                 ui.stampa("Arrivederci!");
+                stopMidnightScheduler();
                 break;
             } else if (choice == 1) {
                 Configuratore configuratore = authCtrl.loginConfiguratore();
@@ -99,5 +109,43 @@ public final class Application
                 authCtrl.registraFruitore();
             }
         }
+    }
+
+    private void startMidnightScheduler(StateTransitionService stateService)
+    {
+        ThreadFactory threadFactory = runnable -> {
+            Thread thread = new Thread(runnable, "state-transition-midnight");
+            thread.setDaemon(true);
+            return thread;
+        };
+
+        midnightScheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        scheduleNextMidnightCheck(stateService);
+    }
+
+    private void stopMidnightScheduler()
+    {
+        if (midnightScheduler != null) {
+            midnightScheduler.shutdownNow();
+        }
+    }
+
+    private long millisUntilNextMidnight()
+    {
+        ZonedDateTime now = ZonedDateTime.now(AppConstants.clock);
+        ZonedDateTime nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.getZone());
+        return Duration.between(now, nextMidnight).toMillis();
+    }
+
+    private void scheduleNextMidnightCheck(StateTransitionService stateService)
+    {
+        if (midnightScheduler == null || midnightScheduler.isShutdown()) {
+            return;
+        }
+        long delay = millisUntilNextMidnight();
+        midnightScheduler.schedule(() -> {
+            stateService.controllaScadenze();
+            scheduleNextMidnightCheck(stateService);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 }

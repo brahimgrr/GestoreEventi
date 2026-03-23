@@ -10,6 +10,7 @@ import it.unibs.ingsoft.v3.persistence.api.IBachecaRepository;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Gestisce i cambi di stato automatici (mezzanotte) e immediati
@@ -19,6 +20,7 @@ public final class StateTransitionService {
 
     private final IBachecaRepository bachecaRepo;
     private final NotificationService notificationService;
+    private final ReentrantLock lock = new ReentrantLock();
 
     public StateTransitionService(IBachecaRepository bachecaRepo, NotificationService notificationService) {
         this.bachecaRepo = Objects.requireNonNull(bachecaRepo);
@@ -30,50 +32,60 @@ public final class StateTransitionService {
      * e valuta se devono cambiare stato perche' "e' passata la mezzanotte".
      */
     public void controllaScadenze() {
-        LocalDate oggi = LocalDate.now(AppConstants.clock);
-        boolean changed = false;
+        lock.lock();
+        try {
+            LocalDate oggi = LocalDate.now(AppConstants.clock);
+            boolean changed = false;
 
-        Bacheca bacheca = bachecaRepo.get();
-        for (Proposta p : bacheca.getProposte()) {
-            if (p.getStato() == StatoProposta.APERTA) {
-                if (p.getTermineIscrizione() != null && oggi.isAfter(p.getTermineIscrizione())) {
-                    if (p.getListaAderenti().size() == p.getNumeroPartecipanti()) {
-                        confermaProposta(p);
-                    } else {
-                        annullaProposta(p);
+            Bacheca bacheca = bachecaRepo.get();
+            for (Proposta p : bacheca.getProposte()) {
+                if (p.getStato() == StatoProposta.APERTA) {
+                    if (p.getTermineIscrizione() != null && oggi.isAfter(p.getTermineIscrizione())) {
+                        if (p.getListaAderenti().size() == p.getNumeroPartecipanti()) {
+                            confermaProposta(p);
+                        } else {
+                            annullaProposta(p);
+                        }
+                        changed = true;
                     }
-                    changed = true;
-                }
-            } else if (p.getStato() == StatoProposta.CONFERMATA) {
-                LocalDate dataConclusiva = getDataConclusiva(p);
-                if (dataConclusiva != null && oggi.isAfter(dataConclusiva)) {
-                    concludiProposta(p);
-                    changed = true;
+                } else if (p.getStato() == StatoProposta.CONFERMATA) {
+                    LocalDate dataConclusiva = getDataConclusiva(p);
+                    if (dataConclusiva != null && oggi.isAfter(dataConclusiva)) {
+                        concludiProposta(p);
+                        changed = true;
+                    }
                 }
             }
-        }
 
-        if (changed) {
-            bachecaRepo.save();
+            if (changed) {
+                bachecaRepo.save();
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     /** Transizione manuale o indotta dal raggiungimento della capienza. */
     public void confermaProposta(Proposta p) {
-        if (p.getStato() != StatoProposta.APERTA) return;
-        p.setStato(StatoProposta.CONFERMATA);
+        lock.lock();
+        try {
+            if (p.getStato() != StatoProposta.APERTA) return;
+            p.setStato(StatoProposta.CONFERMATA);
 
-        String quota = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_QUOTA, "").trim();
-        String info = "La proposta \"" + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "Senza titolo")
-                + "\" e' stata CONFERMATA.\n"
-                + "Data: " + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_DATA, "") + "\n"
-                + "Ora: " + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_ORA, "") + "\n"
-                + "Luogo: " + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_LUOGO, "") + "\n"
-                + (quota.isBlank() ? "" : "Quota: " + quota + "\n");
+            String quota = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_QUOTA, "").trim();
+            String info = "La proposta \"" + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "Senza titolo")
+                    + "\" e' stata CONFERMATA.\n"
+                    + "Data: " + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_DATA, "") + "\n"
+                    + "Ora: " + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_ORA, "") + "\n"
+                    + "Luogo: " + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_LUOGO, "") + "\n"
+                    + (quota.isBlank() ? "" : "Quota: " + quota + "\n");
 
-        Notifica n = new Notifica(info.trim());
-        for (String aderente : p.getListaAderenti()) {
-            notificationService.inviaNotifica(aderente, n);
+            String messaggio = info.trim();
+            for (String aderente : p.getListaAderenti()) {
+                notificationService.inviaNotifica(aderente, new Notifica(messaggio));
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -83,10 +95,9 @@ public final class StateTransitionService {
 
         String messaggio = "La proposta \"" + p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "Senza titolo")
                 + "\" e' stata ANNULLATA per mancato raggiungimento del numero di partecipanti.";
-        Notifica n = new Notifica(messaggio);
 
         for (String aderente : p.getListaAderenti()) {
-            notificationService.inviaNotifica(aderente, n);
+            notificationService.inviaNotifica(aderente, new Notifica(messaggio));
         }
     }
 

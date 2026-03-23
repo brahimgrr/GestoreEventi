@@ -51,7 +51,8 @@ public final class AuthenticationService
             PASSWORD_PREDEFINITA.equals(password))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
-        String stored = credenziali().getConfiguratori().get(username);
+        String key = username.trim().toLowerCase();
+        String stored = credenziali().getConfiguratori().get(key);
         if (stored != null && stored.equals(password))
             return Optional.of(new Configuratore(username));
 
@@ -65,25 +66,30 @@ public final class AuthenticationService
      */
     public Configuratore registraNuovoConfiguratore(String username, String password)
     {
+        validaNuovoAccount(username, password);
+
+        String normalized = username.trim();
+        credenziali().addConfiguratore(normalized, password);
+        repo.save();
+        return new Configuratore(normalized);
+    }
+
+    private void validaNuovoAccount(String username, String password) {
         validaCredenziali(username, password);
 
         if (USERNAME_PREDEFINITO.equalsIgnoreCase(username))
             throw new IllegalArgumentException("Lo username \"" + username + "\" è riservato.");
 
-        if (credenziali().getConfiguratori().containsKey(username))
-            throw new IllegalArgumentException("Esiste già un configuratore con username \"" + username + "\".");
-
-        credenziali().addConfiguratore(username, password);
-        repo.save();
-        return new Configuratore(username);
+        if (esisteUsername(username))
+            throw new IllegalArgumentException("Esiste già un utente (configuratore o fruitore) con username \"" + username + "\".");
     }
 
-
-    /** Returns true if a configurator with this username is already registered. */
+    /** Returns true if an account with this username is already registered (either role). */
     public boolean esisteUsername(String username)
     {
         if (username == null) return false;
-        return credenziali().getConfiguratori().containsKey(username.trim().toLowerCase());
+        String u = username.trim().toLowerCase();
+        return credenziali().getConfiguratori().containsKey(u);
     }
 
     private static void validaCredenziali(String username, String password)

@@ -11,8 +11,9 @@ import java.util.Optional;
 /**
  * Handles configurator authentication and registration.
  *
- * <p>First access uses default credentials (config/config).
- * After personal credentials are registered, the default account is disabled.</p>
+ * <p>First access uses shared default credentials (config/config).
+ * After login with those credentials, the controller forces the user to choose
+ * personal credentials before allowing any operation.</p>
  */
 public final class AuthenticationService
 {
@@ -46,12 +47,13 @@ public final class AuthenticationService
         if (username == null || password == null)
             return Optional.empty();
 
-        // Default credentials: valid only when no personal accounts exist yet
+        // Shared predefined credentials remain available for first access flows.
         if (USERNAME_PREDEFINITO.equals(username) &&
             PASSWORD_PREDEFINITA.equals(password))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
-        String stored = credenziali().getConfiguratori().get(username);
+        String key = username.trim().toLowerCase();
+        String stored = credenziali().getConfiguratori().get(key);
         if (stored != null && stored.equals(password))
             return Optional.of(new Configuratore(username));
 
@@ -63,7 +65,8 @@ public final class AuthenticationService
         if (username == null || password == null)
             return Optional.empty();
 
-        String stored = credenziali().getFruitori().get(username);
+        String key = username.trim().toLowerCase();
+        String stored = credenziali().getFruitori().get(key);
         if (stored != null && stored.equals(password))
             return Optional.of(new Fruitore(username));
 
@@ -79,18 +82,20 @@ public final class AuthenticationService
     {
         validaNuovoAccount(username, password);
 
-        credenziali().addConfiguratore(username, password);
+        String normalized = username.trim();
+        credenziali().addConfiguratore(normalized, password);
         repo.save();
-        return new Configuratore(username);
+        return new Configuratore(normalized);
     }
 
     public Fruitore registraNuovoFruitore(String username, String password)
     {
         validaNuovoAccount(username, password);
 
-        credenziali().addFruitore(username, password);
+        String normalized = username.trim();
+        credenziali().addFruitore(normalized, password);
         repo.save();
-        return new Fruitore(username);
+        return new Fruitore(normalized);
     }
 
     private void validaNuovoAccount(String username, String password) {
@@ -108,12 +113,8 @@ public final class AuthenticationService
     {
         if (username == null) return false;
         String u = username.trim().toLowerCase();
-        
-        // Use case-insensitive matching if the maps uses exact-case keys originally,
-        // but looking at get() we just do exact match. 
-        // We'll exact match for safety according to original logic:
-        return credenziali().getConfiguratori().containsKey(username) || 
-               credenziali().getFruitori().containsKey(username);
+        return credenziali().getConfiguratori().containsKey(u) ||
+               credenziali().getFruitori().containsKey(u);
     }
 
     private static void validaCredenziali(String username, String password)

@@ -1,9 +1,15 @@
 @startuml
+
+' ──────────────────────────────────────────────────────────────
+'  V2 – Class Diagram  (GestoreEventi)
+'  GREEN  header = NEW    |  ORANGE header = EDITED
+'  green text = new member|  orange text   = edited member
+' ──────────────────────────────────────────────────────────────
+
 ' =====================================================================
 '  DIAGRAMMA CLASSI V2 — GestoreEventi
 '  Verde  (#D5F5E3)  = classe NUOVA in V2
 '  Giallo (#FFF9C4)  = classe MODIFICATA in V2
-'  [V2] davanti = membro NUOVO aggiunto in V2
 '  Bianco  = classe INVARIATA da V1
 ' =====================================================================
 skinparam classAttributeIconSize 0
@@ -24,7 +30,7 @@ class Main {
 class Application #FFF9C4 {
   + DATA_CATALOGO : Path
   + DATA_UTENTI : Path
-  + **[V2]** DATA_PROPOSTE : Path
+  + <color:green>DATA_PROPOSTE</color> : Path
   __
   + start() : void
 }
@@ -41,7 +47,7 @@ class ConfiguratoreController #FFF9C4 {
   + MENU_CAMPI_SPECIFICI : String[]
   + MENU_PRINCIPALE : String[]
   - configuratore : Configuratore
-  - **[V2]** propostaController : PropostaController
+  - <color:green>propostaController</color> : PropostaController
   __
   + run() : void
   - mainMenu() : void
@@ -51,7 +57,7 @@ class ConfiguratoreController #FFF9C4 {
   - menuCampiSpecifici(Categoria) : void
   - menuCampiBaseExtra() : void
   - menuVisualizza() : void
-  - **[V2]** avviaCreazioneProposta() : void
+  - <color:green>avviaCreazioneProposta()</color> : void
 }
 
 class AuthController {
@@ -376,11 +382,11 @@ together {
     + stampaAvviso(String) : void
     + stampaInfo(String) : void
     + pausaConSpaziatura() : void
-    + **[V2]** mostraBacheca(Map<String, List<Proposta>>) : void
-    + **[V2]** mostraRiepilogoProposta(Proposta) : void
+    + <color:green>mostraBacheca(Map<String, List<Proposta>>)</color> : void
+    + <color:green>mostraRiepilogoProposta(Proposta)</color> : void
   }
 
-  interface IInputView {
+  interface IInputView #FFF9C4 {
     + acquisisciStringa(String) : String
     + acquisisciStringaConValidazione(String, Predicate, String) : String
     + acquisisciPassword(String) : String
@@ -390,18 +396,17 @@ together {
     + acquisisciListaNomi(String) : List
     + selezionaElemento(String, List) : Optional
     + selezionaElementoConInfo(String, List, Function) : Optional
+    + <color:green>selezionaCategoria(List<Categoria>)</color> : OptionalInt
+    + <color:green>acquisisciValoriProposta(Proposta, ProposalFieldValidator)</color> : Optional
+    + <color:green>correggiCampiProposta(Proposta, Set, ProposalFieldValidator)</color> : Optional
   }
 
-  interface IFormView #D5F5E3 {
-    + runForm(List) : Optional
-  }
-
-  interface ISelectionView #D5F5E3 {
-    + selezionaCategoria(List<Categoria>) : OptionalInt
+  interface ProposalFieldValidator #D5F5E3 {
+    + validate(Proposta, Map, String, String) : List
   }
 
   interface IAppView #FFF9C4 {
-    + **[V2]** HINT_ANNULLA : String
+    + <color:green>HINT_ANNULLA</color> : String
   }
 }
 
@@ -440,50 +445,11 @@ together {
     + acquisisciListaNomi(String) : List
     + selezionaElemento(String, List) : Optional
     + selezionaElementoConInfo(String, List, Function) : Optional
-    + **[V2]** mostraBacheca(Map<String, List<Proposta>>) : void
-    + **[V2]** mostraRiepilogoProposta(Proposta) : void
-    + **[V2]** runForm(List) : Optional
-    + **[V2]** selezionaCategoria(List<Categoria>) : OptionalInt
-  }
-
-  class FormField #D5F5E3 {
-    - name : String
-    - label : String
-    - tipo : TipoDato
-    - obbligatorio : boolean
-    - currentValue : String
-    - validators : List
-    __
-    + getName() : String
-    + getLabel() : String
-    + getTipo() : TipoDato
-    + isObbligatorio() : boolean
-    + getCurrentValue() : String
-    + getValidators() : List
-  }
-
-  class StepByStepFormRunner #D5F5E3 {
-    - CANCEL_KEYWORD : String
-    - BACK_KEYWORD : String
-    - input : IInputView
-    - output : IOutputView
-    - typeValidator : TypeValidator
-    - fields : List
-    __
-    + run() : Optional
-  }
-
-  class PropostaFormBuilder #D5F5E3 {
-    + {static} build(Proposta) : List
-    - {static} buildValidators(String) : List
-    - {static} termineIscrizioneValidator() : FieldValidator
-    - {static} dataEventoValidator() : FieldValidator
-    - {static} dataConclusivaValidator() : FieldValidator
-    - {static} parseQuietly(String) : LocalDate
-  }
-
-  interface FieldValidator #D5F5E3 {
-    + validate(String, Map) : String
+    + <color:green>selezionaCategoria(List<Categoria>)</color> : OptionalInt
+    + <color:green>acquisisciValoriProposta(Proposta, ProposalFieldValidator)</color> : Optional
+    + <color:green>correggiCampiProposta(Proposta, Set, ProposalFieldValidator)</color> : Optional
+    + <color:green>mostraBacheca(Map<String, List<Proposta>>)</color> : void
+    + <color:green>mostraRiepilogoProposta(Proposta)</color> : void
   }
 
   interface TypeValidator #D5F5E3 {
@@ -540,8 +506,6 @@ BackException --|> OperationCancelledException
 ' --- Interfacce view ---
 IAppView --|> IOutputView
 IAppView --|> IInputView
-IAppView --|> IFormView
-IAppView --|> ISelectionView
 ConsoleUI ..|> IAppView
 
 ' --- Persistence: implementazioni ---
@@ -599,22 +563,12 @@ Proposta "1" --> "*" Campo : campiComuni
 ' --- Domain: Bacheca ---
 Bacheca "1" *-- "*" Proposta : proposte
 
-' --- ConsoleUI -> Form system ---
-ConsoleUI ..> StepByStepFormRunner : creates
+' --- ConsoleUI -> View validation ---
 ConsoleUI ..> DefaultTypeValidator : uses
+ConsoleUI ..> ProposalFieldValidator : uses
 
-' --- Form system ---
-StepByStepFormRunner --> IInputView : input
-StepByStepFormRunner --> IOutputView : output
-StepByStepFormRunner "1" --> "1" TypeValidator : typeValidator
-StepByStepFormRunner "1" --> "*" FormField : fields
-FormField "1" --> "*" FieldValidator : validators
+' --- View validation ---
 DefaultTypeValidator ..|> TypeValidator
-
-' --- PropostaFormBuilder ---
-PropostaFormBuilder ..> Proposta : reads
-PropostaFormBuilder ..> FormField : creates
-PropostaFormBuilder ..> FieldValidator : creates
-PropostaController ..> PropostaFormBuilder : uses
+PropostaController ..> ProposalFieldValidator : passes callback
 
 @enduml

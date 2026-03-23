@@ -65,7 +65,7 @@ class StateTransitionServiceTest {
             p.setDataEvento(java.time.LocalDate.parse(dataConclusiva, AppConstants.DATE_FMT));
         }
         
-        p.getValoriCampi().putAll(valori);
+        p.putAllValoriCampi(valori);
         
         // Follow the state machine to reach the desired state
         if (stato != StatoProposta.BOZZA) {
@@ -128,8 +128,9 @@ class StateTransitionServiceTest {
 
     @Test
     void testControllaScadenze_ConfermataNonScaduta_NessunCambio() {
-        Proposta p = createProposta(StatoProposta.CONFERMATA, 10, null, "06/01/2025");
-        p.addAderente("mario"); // Add an adherent to receive notifications
+        Proposta p = createProposta(StatoProposta.APERTA, 10, null, "06/01/2025");
+        p.addAderente("mario");
+        p.setStato(StatoProposta.CONFERMATA);
         
         stateTransitionService.controllaScadenze();
         

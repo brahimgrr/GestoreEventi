@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -170,15 +171,17 @@ class V3PersistenceIntegrationTest {
 
         private Proposta buildAndPublishProposta(int capacity, String termine, String dataEvento, String dataConclusiva, String quota) {
             Proposta proposta = propostaService.creaProposta(new it.unibs.ingsoft.v3.domain.Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-            proposta.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Partita di calcio");
-            proposta.getValoriCampi().put(PropostaService.CAMPO_NUM_PARTECIPANTI, String.valueOf(capacity));
-            proposta.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, termine);
-            proposta.getValoriCampi().put(PropostaService.CAMPO_DATA, dataEvento);
-            proposta.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, dataConclusiva);
-            proposta.getValoriCampi().put(PropostaService.CAMPO_ORA, "15:00");
-            proposta.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Stadio");
+            proposta.putAllValoriCampi(Map.of(
+                    PropostaService.CAMPO_TITOLO, "Partita di calcio",
+                    PropostaService.CAMPO_NUM_PARTECIPANTI, String.valueOf(capacity),
+                    PropostaService.CAMPO_TERMINE_ISCRIZIONE, termine,
+                    PropostaService.CAMPO_DATA, dataEvento,
+                    PropostaService.CAMPO_DATA_CONCLUSIVA, dataConclusiva,
+                    PropostaService.CAMPO_ORA, "15:00",
+                    PropostaService.CAMPO_LUOGO, "Stadio"
+            ));
             if (quota != null) {
-                proposta.getValoriCampi().put(PropostaService.CAMPO_QUOTA, quota);
+                proposta.putAllValoriCampi(Map.of(PropostaService.CAMPO_QUOTA, quota));
             }
 
             assertTrue(propostaService.validaProposta(proposta).isEmpty());

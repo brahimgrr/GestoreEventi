@@ -74,13 +74,15 @@ class V3IntegrationTest {
     private Proposta buildAndPublishProposta(int capacity, String termine,
                                               String dataEvento, String dataConclusiva) {
         Proposta p = propostaService.creaProposta(new Categoria("Sport"), new ArrayList<>(), new ArrayList<>());
-        p.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Partita di calcio");
-        p.getValoriCampi().put(PropostaService.CAMPO_NUM_PARTECIPANTI, String.valueOf(capacity));
-        p.getValoriCampi().put(PropostaService.CAMPO_ORA, "15:00");
-        p.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Stadio");
-        p.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, termine);
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA, dataEvento);
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, dataConclusiva);
+        p.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Partita di calcio",
+                PropostaService.CAMPO_NUM_PARTECIPANTI, String.valueOf(capacity),
+                PropostaService.CAMPO_ORA, "15:00",
+                PropostaService.CAMPO_LUOGO, "Stadio",
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE, termine,
+                PropostaService.CAMPO_DATA, dataEvento,
+                PropostaService.CAMPO_DATA_CONCLUSIVA, dataConclusiva
+        ));
 
         List<String> errori = propostaService.validaProposta(p);
         assertTrue(errori.isEmpty(), "Proposta validation failed: " + errori);
@@ -227,13 +229,15 @@ class V3IntegrationTest {
 
         // Build a proposal with specific, verifiable field values
         Proposta p = propostaService.creaProposta(new Categoria("Musica"), new ArrayList<>(), new ArrayList<>());
-        p.getValoriCampi().put(PropostaService.CAMPO_TITOLO, "Concerto di Natale");
-        p.getValoriCampi().put(PropostaService.CAMPO_NUM_PARTECIPANTI, "1");
-        p.getValoriCampi().put(PropostaService.CAMPO_ORA, "20:30");
-        p.getValoriCampi().put(PropostaService.CAMPO_LUOGO, "Teatro Regio");
-        p.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025");
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA, "18/01/2025");
-        p.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025");
+        p.putAllValoriCampi(Map.of(
+                PropostaService.CAMPO_TITOLO, "Concerto di Natale",
+                PropostaService.CAMPO_NUM_PARTECIPANTI, "1",
+                PropostaService.CAMPO_ORA, "20:30",
+                PropostaService.CAMPO_LUOGO, "Teatro Regio",
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025",
+                PropostaService.CAMPO_DATA, "18/01/2025",
+                PropostaService.CAMPO_DATA_CONCLUSIVA, "18/01/2025"
+        ));
 
         propostaService.validaProposta(p);
         propostaService.pubblicaProposta(p);

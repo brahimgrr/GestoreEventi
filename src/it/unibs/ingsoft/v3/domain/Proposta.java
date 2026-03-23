@@ -4,18 +4,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.unibs.ingsoft.v3.application.PropostaService;
-
 import java.time.LocalDate;
 import java.util.*;
 
 /**
  * Represents an event proposal.
  *
- * <p>Lifecycle: BOZZA → VALIDA → APERTA (terminal).
- * Call {@link PropostaService#validaProposta}
- * to transition to VALIDA; call
- * to transition to APERTA and persist.</p>
+ * <p>Lifecycle: BOZZA → VALIDA → APERTA → CONFERMATA → CONCLUSA
+ *                                         → ANNULLATA</p>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class Proposta
@@ -115,7 +111,7 @@ public final class Proposta
     }
 
     public Map<String, String> getValoriCampi() {
-        return valoriCampi;
+        return Collections.unmodifiableMap(valoriCampi);
     }
 
     public List<String> getListaAderenti() {
@@ -123,8 +119,21 @@ public final class Proposta
     }
     
     public void addAderente(String username) {
+        if (stato != StatoProposta.APERTA)
+            throw new IllegalStateException("Impossibile aggiungere aderenti: la proposta non è APERTA.");
         if (!listaAderenti.contains(username)) {
             listaAderenti.add(username);
+        }
+    }
+
+    /**
+     * Resets state to BOZZA without recording the change in stateHistory.
+     * Used only during proposal validation to avoid polluting the history
+     * with pre-publication BOZZA/VALIDA cycles.
+     */
+    public void revertToBozzaSilent() {
+        if (this.stato == StatoProposta.VALIDA) {
+            this.stato = StatoProposta.BOZZA;
         }
     }
 
@@ -135,7 +144,7 @@ public final class Proposta
     @JsonIgnore
     public int getNumeroPartecipanti() {
         try {
-            return Integer.parseInt(valoriCampi.getOrDefault(PropostaService.CAMPO_NUM_PARTECIPANTI, "0"));
+            return Integer.parseInt(valoriCampi.getOrDefault(AppConstants.CAMPO_NUM_PARTECIPANTI, "0"));
         } catch (NumberFormatException e) {
             return 0;
         }

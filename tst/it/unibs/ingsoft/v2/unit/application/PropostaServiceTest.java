@@ -71,9 +71,11 @@ class PropostaServiceTest {
 
     @Test
     void shouldRejectProposalWithMissingRequiredFields() {
-        Proposta proposta = buildValidProposal();
-        proposta.getValoriCampi().remove("Descrizione");
-        proposta.getValoriCampi().remove("Attrezzatura");
+        Proposta proposta = service.creaProposta(categoriaSport, campiBase, campiComuni);
+        Map<String, String> valori = validValuesFor("Sport Day", "Pallone");
+        valori.remove("Descrizione");
+        valori.remove("Attrezzatura");
+        proposta.putAllValoriCampi(valori);
 
         List<String> errori = service.validaProposta(proposta);
 
@@ -85,7 +87,7 @@ class PropostaServiceTest {
     @Test
     void shouldRejectDeadlineEqualToToday() {
         Proposta proposta = buildValidProposal();
-        proposta.getValoriCampi().put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "10/01/2025");
+        updateProposalValues(proposta, PropostaService.CAMPO_TERMINE_ISCRIZIONE, "10/01/2025");
 
         List<String> errori = service.validaProposta(proposta);
 
@@ -96,7 +98,7 @@ class PropostaServiceTest {
     @Test
     void shouldRejectEventDateOneDayAfterDeadline() {
         Proposta proposta = buildValidProposal();
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA, "16/01/2025");
+        updateProposalValues(proposta, PropostaService.CAMPO_DATA, "16/01/2025");
 
         List<String> errori = service.validaProposta(proposta);
 
@@ -107,7 +109,7 @@ class PropostaServiceTest {
     @Test
     void shouldAcceptEventDateTwoDaysAfterDeadline() {
         Proposta proposta = buildValidProposal();
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA, "17/01/2025");
+        updateProposalValues(proposta, PropostaService.CAMPO_DATA, "17/01/2025");
 
         List<String> errori = service.validaProposta(proposta);
 
@@ -116,9 +118,43 @@ class PropostaServiceTest {
     }
 
     @Test
+    void shouldRejectInvalidEventDateImmediatelyWhenValidatingSingleField() {
+        Proposta proposta = buildValidProposal();
+        Map<String, String> valoriCorrenti = new LinkedHashMap<>(proposta.getValoriCampi());
+        valoriCorrenti.put(PropostaService.CAMPO_TERMINE_ISCRIZIONE, "15/01/2025");
+
+        List<String> errori = service.validaCampo(
+                proposta,
+                valoriCorrenti,
+                PropostaService.CAMPO_DATA,
+                "16/01/2025"
+        );
+
+        assertFalse(errori.isEmpty());
+        assertTrue(errori.stream().anyMatch(e -> e.contains("\"Data\"")));
+    }
+
+    @Test
+    void shouldRejectDeadlineImmediatelyWhenItMakesExistingEventDateInvalid() {
+        Proposta proposta = buildValidProposal();
+        Map<String, String> valoriCorrenti = new LinkedHashMap<>(proposta.getValoriCampi());
+        valoriCorrenti.put(PropostaService.CAMPO_DATA, "17/01/2025");
+
+        List<String> errori = service.validaCampo(
+                proposta,
+                valoriCorrenti,
+                PropostaService.CAMPO_TERMINE_ISCRIZIONE,
+                "16/01/2025"
+        );
+
+        assertFalse(errori.isEmpty());
+        assertTrue(errori.stream().anyMatch(e -> e.contains("\"Data\"")));
+    }
+
+    @Test
     void shouldRejectConcludingDateBeforeEventDate() {
         Proposta proposta = buildValidProposal();
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA_CONCLUSIVA, "16/01/2025");
+        updateProposalValues(proposta, PropostaService.CAMPO_DATA_CONCLUSIVA, "16/01/2025");
 
         List<String> errori = service.validaProposta(proposta);
 
@@ -131,7 +167,7 @@ class PropostaServiceTest {
         Proposta proposta = buildValidProposal();
         assertTrue(service.validaProposta(proposta).isEmpty());
 
-        proposta.getValoriCampi().put(PropostaService.CAMPO_DATA, "16/01/2025");
+        updateProposalValues(proposta, PropostaService.CAMPO_DATA, "16/01/2025");
         List<String> errori = service.validaProposta(proposta);
 
         assertFalse(errori.isEmpty());
@@ -230,6 +266,12 @@ class PropostaServiceTest {
         Proposta proposta = service.creaProposta(categoriaSport, campiBase, campiComuni);
         proposta.putAllValoriCampi(validValuesFor("Sport Day", "Pallone"));
         return proposta;
+    }
+
+    private void updateProposalValues(Proposta proposta, String key, String value) {
+        Map<String, String> valori = new LinkedHashMap<>(proposta.getValoriCampi());
+        valori.put(key, value);
+        proposta.putAllValoriCampi(valori);
     }
 
     private Map<String, String> validValuesFor(String titolo, String attrezzatura) {

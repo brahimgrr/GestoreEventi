@@ -1,9 +1,14 @@
 package it.unibs.ingsoft.v2.presentation.view.contract;
 
+import it.unibs.ingsoft.v2.domain.Categoria;
+import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.domain.TipoDato;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -46,4 +51,19 @@ public interface IInputView
      */
     <T> Optional<T> selezionaElementoConInfo(String prompt, List<T> elementi,
                                               Function<T, String> infoMapper);
+
+    /**
+     * Shows a numbered list of categories and returns the 0-based index of the
+     * selected one, or empty if the user cancels.
+     */
+    OptionalInt selezionaCategoria(List<Categoria> categorie);
+
+    /** Runs the full proposal form and returns the inserted values, or empty if the user cancels. */
+    Optional<Map<String, String>> acquisisciValoriProposta(Proposta proposta, ProposalFieldValidator validator);
+
+    /**
+     * Runs a correction form limited to the given field names and returns the edited values,
+     * or empty if the user cancels.
+     */
+    Optional<Map<String, String>> correggiCampiProposta(Proposta proposta, Set<String> nomiCampi, ProposalFieldValidator validator);
 }

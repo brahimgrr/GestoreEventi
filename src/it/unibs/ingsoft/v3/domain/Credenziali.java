@@ -39,7 +39,7 @@ public final class Credenziali {
 
     public void addConfiguratore(String username, String password)
     {
-        configuratori.put(username, password);
+        configuratori.put(username.trim().toLowerCase(), password);
     }
 
     public Map<String, String> getFruitori()
@@ -49,6 +49,6 @@ public final class Credenziali {
 
     public void addFruitore(String username, String password)
     {
-        fruitori.put(username, password);
+        fruitori.put(username.trim().toLowerCase(), password);
     }
 }

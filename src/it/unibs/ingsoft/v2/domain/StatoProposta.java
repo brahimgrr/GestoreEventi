@@ -5,8 +5,6 @@ package it.unibs.ingsoft.v2.domain;
  *
  * <pre>
  *   BOZZA ──→ VALIDA ──→ APERTA (terminal)
- *               ↑
- *             BOZZA ←── VALIDA (revert on re-validation)
  * </pre>
  */
 public enum StatoProposta

@@ -4,9 +4,9 @@ import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Categoria;
 import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.domain.TipoDato;
-import it.unibs.ingsoft.v2.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
+import it.unibs.ingsoft.v2.presentation.view.contract.ProposalFieldValidator;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -309,8 +310,13 @@ public final class ScriptedAppView implements IAppView {
     }
 
     @Override
-    public Optional<Map<String, String>> runForm(List<FormField> fields) {
-        return poll(formResults, "form result");
+    public Optional<Map<String, String>> acquisisciValoriProposta(Proposta proposta, ProposalFieldValidator validator) {
+        return poll(formResults, "proposal form result");
+    }
+
+    @Override
+    public Optional<Map<String, String>> correggiCampiProposta(Proposta proposta, Set<String> nomiCampi, ProposalFieldValidator validator) {
+        return poll(formResults, "proposal correction result");
     }
 
     @Override
