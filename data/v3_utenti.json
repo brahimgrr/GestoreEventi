@@ -1,7 +1,14 @@
 {
   "configuratori" : {
-    "brahim" : "config",
-    "brahim3" : "config3"
+    "bibi" : "config",
+    "vincere" : "config",
+    "brahim3" : "config3",
+    "brahim" : "config"
   },
-  "fruitori" : { }
+  "fruitori" : {
+    "bar" : "config",
+    "muu" : "config",
+    "user" : "user",
+    "foo" : "config"
+  }
 }

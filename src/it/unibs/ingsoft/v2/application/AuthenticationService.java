@@ -10,8 +10,9 @@ import java.util.Optional;
 /**
  * Handles configurator authentication and registration.
  *
- * <p>First access uses default credentials (config/config).
- * After personal credentials are registered, the default account is disabled.</p>
+ * <p>First access uses shared default credentials (config/config).
+ * After login with those credentials, the controller forces the user to choose
+ * personal credentials before allowing any operation.</p>
  */
 public final class AuthenticationService
 {
@@ -45,7 +46,7 @@ public final class AuthenticationService
         if (username == null || password == null)
             return Optional.empty();
 
-        // Default credentials: valid only when no personal accounts exist yet
+        // Shared predefined credentials remain available for first access flows.
         if (USERNAME_PREDEFINITO.equals(username) &&
             PASSWORD_PREDEFINITA.equals(password))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));

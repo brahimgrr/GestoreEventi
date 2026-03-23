@@ -25,12 +25,11 @@
     "dataPubblicazione" : "20/03/2026",
     "termineIscrizione" : "21/03/2026",
     "dataEvento" : "25/03/2026",
-    "dataConclus" : null,
-    "iscrizioni" : [ ],
-    "storiaStati" : {
-      "ANNULLATA" : "22/03/2026"
-    },
-    "numeroIscritti" : 0
+    "listaAderenti" : [ ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "23/03/2026"
+    } ]
   }, {
     "categoria" : {
       "nome" : "Sport",
@@ -46,11 +45,48 @@
     "dataPubblicazione" : null,
     "termineIscrizione" : null,
     "dataEvento" : null,
-    "dataConclus" : null,
-    "iscrizioni" : [ ],
-    "storiaStati" : {
-      "BOZZA" : "21/03/2026"
+    "listaAderenti" : [ ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "23/03/2026"
+    } ]
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
     },
-    "numeroIscritti" : 0
+    "valoriCampi" : {
+      "Titolo" : "Torneo Calcio",
+      "Numero di partecipanti" : "40",
+      "Termine ultimo di iscrizione" : "27/03/2026",
+      "Luogo" : "Brixia",
+      "Data" : "30/03/2026",
+      "Ora" : "43",
+      "Quota individuale" : "12",
+      "Data conclusiva" : "30/03/2026",
+      "CampoBaseExtraTest" : "abc",
+      "Campo Comune di Prova" : "1",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "23/03/2026",
+    "termineIscrizione" : "27/03/2026",
+    "dataEvento" : "30/03/2026",
+    "listaAderenti" : [ "user", "foo", "bar", "muu" ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "23/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "23/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "23/03/2026"
+    } ]
   } ]
 }

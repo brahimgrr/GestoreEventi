@@ -1,6 +1,7 @@
 package it.unibs.ingsoft.v3.application;
 
 import it.unibs.ingsoft.v3.domain.Configuratore;
+import it.unibs.ingsoft.v3.domain.Fruitore;
 import it.unibs.ingsoft.v3.domain.Credenziali;
 import it.unibs.ingsoft.v3.persistence.api.ICredenzialiRepository;
 
@@ -57,6 +58,18 @@ public final class AuthenticationService
         return Optional.empty();
     }
 
+    public Optional<Fruitore> loginFruitore(String username, String password)
+    {
+        if (username == null || password == null)
+            return Optional.empty();
+
+        String stored = credenziali().getFruitori().get(username);
+        if (stored != null && stored.equals(password))
+            return Optional.of(new Fruitore(username));
+
+        return Optional.empty();
+    }
+
     /**
      * Registers a new configurator with personal credentials.
      *
@@ -64,25 +77,43 @@ public final class AuthenticationService
      */
     public Configuratore registraNuovoConfiguratore(String username, String password)
     {
-        validaCredenziali(username, password);
-
-        if (USERNAME_PREDEFINITO.equalsIgnoreCase(username))
-            throw new IllegalArgumentException("Lo username \"" + username + "\" è riservato.");
-
-        if (credenziali().getConfiguratori().containsKey(username))
-            throw new IllegalArgumentException("Esiste già un configuratore con username \"" + username + "\".");
+        validaNuovoAccount(username, password);
 
         credenziali().addConfiguratore(username, password);
         repo.save();
         return new Configuratore(username);
     }
 
+    public Fruitore registraNuovoFruitore(String username, String password)
+    {
+        validaNuovoAccount(username, password);
 
-    /** Returns true if a configurator with this username is already registered. */
+        credenziali().addFruitore(username, password);
+        repo.save();
+        return new Fruitore(username);
+    }
+
+    private void validaNuovoAccount(String username, String password) {
+        validaCredenziali(username, password);
+
+        if (USERNAME_PREDEFINITO.equalsIgnoreCase(username))
+            throw new IllegalArgumentException("Lo username \"" + username + "\" è riservato.");
+
+        if (esisteUsername(username))
+            throw new IllegalArgumentException("Esiste già un utente (configuratore o fruitore) con username \"" + username + "\".");
+    }
+
+    /** Returns true if an account with this username is already registered (either role). */
     public boolean esisteUsername(String username)
     {
         if (username == null) return false;
-        return credenziali().getConfiguratori().containsKey(username.trim().toLowerCase());
+        String u = username.trim().toLowerCase();
+        
+        // Use case-insensitive matching if the maps uses exact-case keys originally,
+        // but looking at get() we just do exact match. 
+        // We'll exact match for safety according to original logic:
+        return credenziali().getConfiguratori().containsKey(username) || 
+               credenziali().getFruitori().containsKey(username);
     }
 
     private static void validaCredenziali(String username, String password)

@@ -1,18 +1,26 @@
 package it.unibs.ingsoft.v3.composition;
 
 import it.unibs.ingsoft.v3.domain.Configuratore;
+import it.unibs.ingsoft.v3.domain.Fruitore;
 import it.unibs.ingsoft.v3.application.AuthenticationService;
 import it.unibs.ingsoft.v3.application.CatalogoService;
+import it.unibs.ingsoft.v3.application.IscrizioneService;
+import it.unibs.ingsoft.v3.application.NotificationService;
 import it.unibs.ingsoft.v3.application.PropostaService;
+import it.unibs.ingsoft.v3.application.StateTransitionService;
 import it.unibs.ingsoft.v3.persistence.api.IBachecaRepository;
 import it.unibs.ingsoft.v3.persistence.api.ICatalogoRepository;
 import it.unibs.ingsoft.v3.persistence.api.ICredenzialiRepository;
+import it.unibs.ingsoft.v3.persistence.api.ISpazioPersonaleRepository;
 import it.unibs.ingsoft.v3.persistence.impl.FileBachecaRepository;
 import it.unibs.ingsoft.v3.persistence.impl.FileCatalogoRepository;
 import it.unibs.ingsoft.v3.persistence.impl.FileCredenzialiRepository;
+import it.unibs.ingsoft.v3.persistence.impl.FileSpazioPersonaleRepository;
 import it.unibs.ingsoft.v3.presentation.controller.AuthController;
 import it.unibs.ingsoft.v3.presentation.controller.ConfiguratoreController;
+import it.unibs.ingsoft.v3.presentation.controller.FruitoreController;
 import it.unibs.ingsoft.v3.presentation.controller.PropostaController;
+import it.unibs.ingsoft.v3.presentation.controller.SpazioPersonaleController;
 import it.unibs.ingsoft.v3.presentation.view.cli.ConsoleUI;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 
@@ -24,9 +32,10 @@ import java.util.Scanner;
  */
 public final class Application
 {
-    private static final Path DATA_CATALOGO = Path.of("data", "v2_catalogo.json");
-    private static final Path DATA_UTENTI   = Path.of("data", "v2_utenti.json");
-    private static final Path DATA_PROPOSTE = Path.of("data", "v2_proposte.json");
+    private static final Path DATA_CATALOGO   = Path.of("data", "v3_catalogo.json");
+    private static final Path DATA_UTENTI     = Path.of("data", "v3_utenti.json");
+    private static final Path DATA_PROPOSTE   = Path.of("data", "v3_proposte.json");
+    private static final Path DATA_NOTIFICHE  = Path.of("data", "v3_notifiche.json");
 
     public void start()
     {
@@ -34,34 +43,61 @@ public final class Application
         ICatalogoRepository catalogoRepo      = new FileCatalogoRepository(DATA_CATALOGO);
         ICredenzialiRepository credenzialiRepo   = new FileCredenzialiRepository(DATA_UTENTI);
         IBachecaRepository propostaRepo = new FileBachecaRepository(DATA_PROPOSTE);
+        ISpazioPersonaleRepository spazioRepo = new FileSpazioPersonaleRepository(DATA_NOTIFICHE);
 
         // Services
         AuthenticationService authService      = new AuthenticationService(credenzialiRepo);
         CatalogoService catalogoService     = new CatalogoService(catalogoRepo);
         PropostaService propostaService  = new PropostaService(propostaRepo);
+        NotificationService notifService = new NotificationService(spazioRepo);
+        StateTransitionService stateService = new StateTransitionService(propostaRepo, notifService);
+        IscrizioneService iscrizioneService = new IscrizioneService(propostaRepo, stateService);
+
+        // Esegui la conciliazione degli stati (mezzanotte)
+        stateService.controllaScadenze();
 
         // View & Controllers
         IAppView ui = new ConsoleUI(new Scanner(System.in));
         AuthController authCtrl = new AuthController(ui, authService);
         PropostaController propostaController = new PropostaController(ui, propostaService);
-        ConfiguratoreController configuratoreController;
 
-        ui.header("Iniziative – Versione 2 (solo configuratore)");
-        do {
-            Configuratore configuratore = authCtrl.loginConfiguratore();
-            ui.stampa("Benvenuto, " + configuratore.getUsername() + "!");
-            ui.newLine();
+        ui.header("Gestore Eventi – Versione 3");
 
-            configuratoreController = new ConfiguratoreController(configuratore, ui, catalogoService, propostaController);
-            configuratoreController.run();
-
-            // Discard unpublished valid proposals on logout
-            // (requirement: "una proposta valida non pubblicata non viene salvata")
-            propostaService.clearProposteValide();
-
-            ui.stampa("Logout effettuato.");
-            ui.newLine();
-
-        } while (ui.acquisisciSiNo("Vuoi accedere di nuovo?"));
+        while (true) {
+            ui.stampaMenu("MENU DI ACCESSO", new String[]{
+                "Accedi come Configuratore",
+                "Accedi come Fruitore",
+                "Registrati come Fruitore"
+            }, "Esci dall'applicazione");
+            
+            int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
+            
+            if (choice == 0) {
+                ui.stampa("Arrivederci!");
+                break;
+            } else if (choice == 1) {
+                Configuratore configuratore = authCtrl.loginConfiguratore();
+                if (configuratore != null) {
+                    ui.stampa("Benvenuto Configuratore, " + configuratore.getUsername() + "!");
+                    ui.newLine();
+                    new ConfiguratoreController(configuratore, ui, catalogoService, propostaController).run();
+                    
+                    // Discard unpublished valid proposals on logout
+                    propostaService.clearProposteValide();
+                    ui.stampa("Logout configuratore effettuato.");
+                    ui.newLine();
+                }
+            } else if (choice == 2) {
+                Fruitore fruitore = authCtrl.loginFruitore();
+                if (fruitore != null) {
+                    SpazioPersonaleController spc = new SpazioPersonaleController(fruitore, ui, notifService);
+                    new FruitoreController(fruitore, ui, propostaService, iscrizioneService, spc).run();
+                    ui.stampa("Logout fruitore effettuato.");
+                    ui.newLine();
+                }
+            } else if (choice == 3) {
+                authCtrl.registraFruitore();
+            }
+        }
     }
 }

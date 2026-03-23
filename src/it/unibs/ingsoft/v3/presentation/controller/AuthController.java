@@ -1,6 +1,7 @@
 package it.unibs.ingsoft.v3.presentation.controller;
 
 import it.unibs.ingsoft.v3.domain.Configuratore;
+import it.unibs.ingsoft.v3.domain.Fruitore;
 import it.unibs.ingsoft.v3.application.AuthenticationService;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v3.presentation.view.contract.OperationCancelledException;
@@ -70,6 +71,56 @@ public final class AuthController
 
             ui.newLine();
             return logged;
+        }
+    }
+
+    public Fruitore loginFruitore() {
+        while (true) {
+            ui.newLine();
+            ui.stampa("LOGIN FRUITORE");
+            String u = ui.acquisisciStringa("Username: ");
+            String p = ui.acquisisciStringa("Password: ");
+
+            var result = auth.loginFruitore(u, p);
+
+            if (result.isEmpty()) {
+                ui.stampaErrore("Credenziali non valide. Riprova.");
+                ui.newLine();
+                continue;
+            }
+
+            Fruitore logged = result.get();
+            ui.stampaSuccesso("Login riuscito. Benvenuto, " + logged.getUsername() + "!");
+            ui.newLine();
+            return logged;
+        }
+    }
+
+    public Fruitore registraFruitore() {
+        ui.newLine();
+        ui.stampa("REGISTRAZIONE FRUITORE");
+        ui.stampaInfo("Username: minimo 3 caratteri, unico in tutto il sistema.");
+        ui.stampaInfo("Password: minimo 4 caratteri.");
+        ui.stampaInfo(IAppView.HINT_ANNULLA);
+        ui.newLine();
+
+        while (true) {
+            String newU = raccogliUsername();
+            String newP = raccogliPassword();
+
+            try {
+                if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?"))
+                    throw new OperationCancelledException();
+                Fruitore registered = auth.registraNuovoFruitore(newU, newP);
+                ui.stampaSuccesso("Registrazione completata. Benvenuto, " + newU + "!");
+                return registered;
+            } catch (IllegalArgumentException e) {
+                ui.stampaErrore(e.getMessage());
+                ui.newLine();
+            } catch (OperationCancelledException e) {
+                ui.stampaInfo("Registrazione annullata.");
+                return null;
+            }
         }
     }
 

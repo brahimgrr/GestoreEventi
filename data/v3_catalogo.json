@@ -60,5 +60,18 @@
       "tipoDato" : "BOOLEANO",
       "obbligatorio" : true
     } ]
+  }, {
+    "nome" : "Teatro",
+    "campiSpecifici" : [ {
+      "nome" : "Autore",
+      "tipo" : "SPECIFICO",
+      "tipoDato" : "STRINGA",
+      "obbligatorio" : true
+    }, {
+      "nome" : "Genere",
+      "tipo" : "SPECIFICO",
+      "tipoDato" : "STRINGA",
+      "obbligatorio" : true
+    } ]
   } ]
 }

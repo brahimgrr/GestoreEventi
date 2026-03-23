@@ -23,6 +23,21 @@ public enum StatoProposta
     },
     APERTA {
         @Override public boolean canTransitionTo(StatoProposta next) {
+            return next == CONFERMATA || next == ANNULLATA;
+        }
+    },
+    CONFERMATA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return next == CONCLUSA;
+        }
+    },
+    ANNULLATA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return false;
+        }
+    },
+    CONCLUSA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
             return false;
         }
     };

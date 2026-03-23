@@ -1,5 +1,6 @@
 package it.unibs.ingsoft.v2.domain;
 
+import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 
 public final class AppConstants
@@ -8,5 +9,6 @@ public final class AppConstants
     public static final String            TIME_FORMAT_LABEL = "HH:mm";
     public static final DateTimeFormatter DATE_FMT          = DateTimeFormatter.ofPattern(DATE_FORMAT_LABEL);
     public static final DateTimeFormatter TIME_FMT          = DateTimeFormatter.ofPattern(TIME_FORMAT_LABEL);
+    public static Clock clock = Clock.systemDefaultZone();
     private AppConstants() {}
 }

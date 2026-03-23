@@ -28,6 +28,8 @@ public final class Proposta
     private LocalDate                   dataPubblicazione;
     private LocalDate                   termineIscrizione;
     private LocalDate                   dataEvento;
+    private final List<String>          listaAderenti;
+    private final List<PropostaStateChange> stateHistory;
 
     /**
      * Creates a new draft proposal.
@@ -46,7 +48,10 @@ public final class Proposta
                 ? new ArrayList<>()
                 : campiComuni.stream().map(Campo::new).toList();
         this.valoriCampi = new LinkedHashMap<>();
+        this.listaAderenti = new ArrayList<>();
+        this.stateHistory = new ArrayList<>();
         this.stato       = StatoProposta.BOZZA;
+        this.stateHistory.add(new PropostaStateChange(StatoProposta.BOZZA, LocalDate.now(AppConstants.clock)));
     }
 
     /** Jackson deserialisation factory — reconstructs a fully populated (published) proposal. */
@@ -59,7 +64,9 @@ public final class Proposta
             @JsonProperty("stato") StatoProposta stato,
             @JsonProperty("dataPubblicazione") LocalDate           dataPubblicazione,
             @JsonProperty("termineIscrizione") LocalDate           termineIscrizione,
-            @JsonProperty("dataEvento")        LocalDate           dataEvento)
+            @JsonProperty("dataEvento")        LocalDate           dataEvento,
+            @JsonProperty("listaAderenti")     List<String>        listaAderenti,
+            @JsonProperty("stateHistory")      List<PropostaStateChange> stateHistory)
     {
         Proposta p = new Proposta(categoria, campiBase, campiComuni);
         if (valoriCampi != null)      p.valoriCampi.putAll(valoriCampi);
@@ -67,6 +74,14 @@ public final class Proposta
         if (dataPubblicazione != null) p.dataPubblicazione = dataPubblicazione;
         if (termineIscrizione != null) p.termineIscrizione = termineIscrizione;
         if (dataEvento != null)        p.dataEvento        = dataEvento;
+        
+        p.listaAderenti.clear();
+        if (listaAderenti != null)     p.listaAderenti.addAll(listaAderenti);
+        
+        if (stateHistory != null && !stateHistory.isEmpty()) {
+            p.stateHistory.clear();
+            p.stateHistory.addAll(stateHistory);
+        }
         return p;
     }
 
@@ -101,6 +116,29 @@ public final class Proposta
 
     public Map<String, String> getValoriCampi() {
         return valoriCampi;
+    }
+
+    public List<String> getListaAderenti() {
+        return Collections.unmodifiableList(listaAderenti);
+    }
+    
+    public void addAderente(String username) {
+        if (!listaAderenti.contains(username)) {
+            listaAderenti.add(username);
+        }
+    }
+
+    public List<PropostaStateChange> getStateHistory() {
+        return Collections.unmodifiableList(stateHistory);
+    }
+
+    @JsonIgnore
+    public int getNumeroPartecipanti() {
+        try {
+            return Integer.parseInt(valoriCampi.getOrDefault(PropostaService.CAMPO_NUM_PARTECIPANTI, "0"));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
 
@@ -139,5 +177,6 @@ public final class Proposta
         if (!stato.canTransitionTo(next))
             throw new IllegalStateException("Transizione non valida: " + stato + " → " + next + ".");
         this.stato = next;
+        this.stateHistory.add(new PropostaStateChange(next, LocalDate.now(AppConstants.clock)));
     }
 }

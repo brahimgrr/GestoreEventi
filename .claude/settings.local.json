@@ -39,7 +39,8 @@
       "Bash(where python3:*)",
       "Bash(py reorg_v3.py)",
       "Bash(xargs basename:*)",
-      "Bash(find . -name *.jar)"
+      "Bash(find . -name *.jar)",
+      "Bash(find c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi -type f -name *.java -path *test* -o -type f -name *.java -path *tst*)"
     ]
   }
 }

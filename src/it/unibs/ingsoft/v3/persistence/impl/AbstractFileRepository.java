@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -32,6 +33,8 @@ import java.util.function.Supplier;
 abstract class AbstractFileRepository<T>
 {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_TIME_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new SimpleModule()
@@ -46,7 +49,20 @@ abstract class AbstractFileRepository<T>
                     public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
                         return LocalDate.parse(p.getValueAsString(), DATE_FMT);
                     }
-                }))
+                })
+                .addSerializer(LocalDateTime.class, new StdSerializer<LocalDateTime>(LocalDateTime.class) {
+                    @Override
+                    public void serialize(LocalDateTime value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+                        gen.writeString(value.format(DATE_TIME_FMT));
+                    }
+                })
+                .addDeserializer(LocalDateTime.class, new StdDeserializer<LocalDateTime>(LocalDateTime.class) {
+                    @Override
+                    public LocalDateTime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+                        return LocalDateTime.parse(p.getValueAsString(), DATE_TIME_FMT);
+                    }
+                })
+            )
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .enable(SerializationFeature.INDENT_OUTPUT);

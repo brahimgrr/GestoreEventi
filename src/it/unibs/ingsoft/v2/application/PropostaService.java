@@ -85,7 +85,7 @@ public final class PropostaService
      */
     public static boolean isTermineIscrizioneValido(LocalDate termine)
     {
-        return termine != null && termine.isAfter(LocalDate.now());
+        return termine != null && termine.isAfter(LocalDate.now(AppConstants.clock));
     }
 
     /**
@@ -145,7 +145,7 @@ public final class PropostaService
         controllaCampiObbligatori(p.getCampi(), valori, errori);
 
         // 2. Date constraints
-        LocalDate oggi        = LocalDate.now();
+        LocalDate oggi        = LocalDate.now(AppConstants.clock);
         LocalDate termineIscr = parseData(valori.get(CAMPO_TERMINE_ISCRIZIONE));
         LocalDate dataEvento  = parseData(valori.get(CAMPO_DATA));
         LocalDate dataConclus = parseData(valori.get(CAMPO_DATA_CONCLUSIVA));
@@ -206,7 +206,7 @@ public final class PropostaService
         if (p.getStato() != StatoProposta.VALIDA)
             throw new IllegalStateException("La proposta deve essere in stato VALIDA per essere pubblicata.");
 
-        LocalDate oggi = LocalDate.now();
+        LocalDate oggi = LocalDate.now(AppConstants.clock);
         if (p.getTermineIscrizione() != null && !p.getTermineIscrizione().isAfter(oggi))
             throw new IllegalStateException(
                     "Non è più possibile pubblicare: il termine di iscrizione ("
