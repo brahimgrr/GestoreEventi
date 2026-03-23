@@ -2,11 +2,10 @@ package it.unibs.ingsoft.v3.support;
 
 import it.unibs.ingsoft.v3.domain.Campo;
 import it.unibs.ingsoft.v3.domain.Categoria;
+import it.unibs.ingsoft.v3.domain.Proposta;
 import it.unibs.ingsoft.v3.domain.TipoDato;
 import it.unibs.ingsoft.v3.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.CategoriaVM;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.PropostaVM;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -181,13 +180,13 @@ public final class ScriptedAppView implements IAppView {
     }
 
     @Override
-    public void mostraBacheca(Map<String, List<PropostaVM>> bacheca) {
+    public void mostraBacheca(Map<String, List<Proposta>> bacheca) {
         outputs.add("BACHECA: " + bacheca.size());
     }
 
     @Override
-    public void mostraRiepilogoProposta(PropostaVM proposta) {
-        outputs.add("PROPOSTA: " + proposta.valoriCampi().getOrDefault("Titolo", ""));
+    public void mostraRiepilogoProposta(Proposta proposta) {
+        outputs.add("PROPOSTA: " + proposta.getValoriCampi().getOrDefault("Titolo", ""));
     }
 
     @Override
@@ -196,7 +195,7 @@ public final class ScriptedAppView implements IAppView {
     }
 
     @Override
-    public OptionalInt selezionaCategoria(List<CategoriaVM> categorie) {
+    public OptionalInt selezionaCategoria(List<Categoria> categorie) {
         throw new UnsupportedOperationException("selezionaCategoria non previsto in questo test.");
     }
 

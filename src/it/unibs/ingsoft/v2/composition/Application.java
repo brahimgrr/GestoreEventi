@@ -13,8 +13,8 @@ import it.unibs.ingsoft.v2.presentation.controller.ConfiguratoreController;
 import it.unibs.ingsoft.v2.presentation.controller.PropostaController;
 import it.unibs.ingsoft.v2.presentation.view.cli.ConsoleUI;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
 
-import javax.xml.catalog.Catalog;
 import java.nio.file.Path;
 import java.util.Scanner;
 
@@ -45,22 +45,38 @@ public final class Application
         PropostaController propostaController = new PropostaController(ui, propostaService);
         ConfiguratoreController configuratoreController;
 
-        ui.header("Iniziative – Versione 2 (solo configuratore)");
-        do {
-            Configuratore configuratore = authCtrl.loginConfiguratore();
-            ui.stampa("Benvenuto, " + configuratore.getUsername() + "!");
-            ui.newLine();
+        ui.header("Iniziative - Versione 2 (solo configuratore)");
+        while (true) {
+            try
+            {
+                Configuratore configuratore = authCtrl.loginConfiguratore();
+                ui.stampa("Benvenuto, " + configuratore.getUsername() + "!");
+                ui.newLine();
 
-            configuratoreController = new ConfiguratoreController(configuratore, ui, catalogoService, propostaController);
-            configuratoreController.run();
+                configuratoreController = new ConfiguratoreController(configuratore, ui, catalogoService, propostaController);
+                configuratoreController.run();
 
-            // Discard unpublished valid proposals on logout
-            // (requirement: "una proposta valida non pubblicata non viene salvata")
-            propostaService.clearProposteValide();
+                propostaService.clearProposteValide();
 
-            ui.stampa("Logout effettuato.");
-            ui.newLine();
+                ui.stampa("Logout effettuato.");
+                ui.newLine();
+            }
+            catch (OperationCancelledException e)
+            {
+                ui.stampaInfo("Operazione annullata. Uscita dall'applicazione.");
+                return;
+            }
 
-        } while (ui.acquisisciSiNo("Vuoi accedere di nuovo?"));
+            try
+            {
+                if (!ui.acquisisciSiNo("Vuoi accedere di nuovo?"))
+                    return;
+            }
+            catch (OperationCancelledException e)
+            {
+                ui.stampaInfo("Operazione annullata. Uscita dall'applicazione.");
+                return;
+            }
+        }
     }
 }

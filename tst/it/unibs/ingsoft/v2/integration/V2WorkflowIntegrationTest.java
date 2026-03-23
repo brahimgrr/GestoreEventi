@@ -5,10 +5,10 @@ import it.unibs.ingsoft.v2.application.PropostaService;
 import it.unibs.ingsoft.v2.domain.AppConstants;
 import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Categoria;
+import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.persistence.impl.FileBachecaRepository;
 import it.unibs.ingsoft.v2.persistence.impl.FileCatalogoRepository;
 import it.unibs.ingsoft.v2.presentation.controller.PropostaController;
-import it.unibs.ingsoft.v2.presentation.view.viewmodel.PropostaVM;
 import it.unibs.ingsoft.v2.support.ScriptedAppView;
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +57,7 @@ class V2WorkflowIntegrationTest {
         ScriptedAppView showView = new ScriptedAppView();
         new PropostaController(showView, propostaService).mostraBacheca();
 
-        Map<String, List<PropostaVM>> shown = showView.getShownBacheche().get(0);
+        Map<String, List<Proposta>> shown = showView.getShownBacheche().get(0);
         assertEquals(2, shown.size());
         assertEquals(1, shown.get("Sport").size());
         assertEquals(1, shown.get("Musica").size());

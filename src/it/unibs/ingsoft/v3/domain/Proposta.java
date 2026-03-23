@@ -22,9 +22,9 @@ public final class Proposta
 {
     private final List<Campo> campiBase;
     private final List<Campo> campiComuni;
-    private final Categoria categoria;
+    private final Categoria             categoria;
     private final Map<String, String>   valoriCampi;
-    private StatoProposta stato;
+    private StatoProposta               stato;
     private LocalDate                   dataPubblicazione;
     private LocalDate                   termineIscrizione;
     private LocalDate                   dataEvento;

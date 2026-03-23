@@ -7,7 +7,7 @@ import it.unibs.ingsoft.v3.domain.Proposta;
 import it.unibs.ingsoft.v3.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v3.presentation.view.cli.PropostaFormBuilder;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.ViewModelMapper;
+import it.unibs.ingsoft.v3.presentation.view.contract.OperationCancelledException;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public final class PropostaController
 {
-    private final IAppView ui;
+    private final IAppView        ui;
     private final PropostaService ps;
 
     public PropostaController(IAppView ui, PropostaService ps)
@@ -67,28 +67,37 @@ public final class PropostaController
         ui.stampa("(*) = obbligatorio | il tipo è indicato tra [  ]");
         ui.newLine();
 
-        Optional<Map<String, String>> formResult = ui.runForm(PropostaFormBuilder.build(proposta));
-        if (formResult.isEmpty())
+        try
+        {
+            Optional<Map<String, String>> formResult = ui.runForm(PropostaFormBuilder.build(proposta));
+            if (formResult.isEmpty())
+            {
+                ui.stampa("Operazione annullata.");
+                ui.newLine();
+                ui.pausa();
+                return;
+            }
+            proposta.putAllValoriCampi(formResult.get());
+
+            List<String> errori = ps.validaProposta(proposta);
+            boolean abortito = correggiFinchéValida(proposta, errori);
+            if (abortito) return;
+
+            mostraRiepilogoEPubblica(proposta);
+        }
+        catch (OperationCancelledException e)
         {
             ui.stampa("Operazione annullata.");
             ui.newLine();
             ui.pausa();
-            return;
         }
-        proposta.putAllValoriCampi(formResult.get());
-
-        List<String> errori = ps.validaProposta(proposta);
-        boolean abortito = correggiFinchéValida(proposta, errori);
-        if (abortito) return;
-
-        mostraRiepilogoEPubblica(proposta);
     }
 
     /** Displays the bulletin board (APERTA proposals grouped by category). */
     public void mostraBacheca()
     {
         ui.header("BACHECA");
-        ui.mostraBacheca(ViewModelMapper.toBachecaVM(ps.getBachecaPerCategoria()));
+        ui.mostraBacheca(ps.getBachecaPerCategoria());
         ui.newLine();
         ui.pausa();
     }
@@ -147,7 +156,7 @@ public final class PropostaController
     private void mostraRiepilogoEPubblica(Proposta proposta)
     {
         ui.newLine();
-        ui.mostraRiepilogoProposta(ViewModelMapper.toPropostaVM(proposta));
+        ui.mostraRiepilogoProposta(proposta);
 
         ps.salvaProposta(proposta);
         ui.stampaSuccesso("Proposta valida salvata. Puoi pubblicarla dal menu 'Pubblicare una proposta di iniziativa'.");
@@ -188,34 +197,43 @@ public final class PropostaController
         ui.stampa("  0. Torna");
         ui.newLine();
 
-        int scelta = ui.acquisisciIntero("Scelta: ", 0, valide.size());
-        if (scelta == 0)
-            return;
-
-        Proposta selezionata = valide.get(scelta - 1);
-
-        ui.newLine();
-        ui.mostraRiepilogoProposta(ViewModelMapper.toPropostaVM(selezionata));
-
-        if (ui.acquisisciSiNo("Vuoi pubblicare questa proposta in bacheca?"))
+        try
         {
-            try
-            {
-                ps.pubblicaProposta(selezionata);
-                ps.rimuoviPropostaValida(selezionata);
-                ui.stampaSuccesso("Proposta pubblicata in bacheca!");
-            }
-            catch (Exception e)
-            {
-                ui.stampaErrore(e.getMessage());
-            }
-        }
-        else
-        {
-            ui.stampa("Pubblicazione annullata. La proposta resta disponibile per la pubblicazione.");
-        }
+            int scelta = ui.acquisisciIntero("Scelta: ", 0, valide.size());
+            if (scelta == 0)
+                return;
 
-        ui.newLine();
-        ui.pausa();
+            Proposta selezionata = valide.get(scelta - 1);
+
+            ui.newLine();
+            ui.mostraRiepilogoProposta(selezionata);
+
+            if (ui.acquisisciSiNo("Vuoi pubblicare questa proposta in bacheca?"))
+            {
+                try
+                {
+                    ps.pubblicaProposta(selezionata);
+                    ps.rimuoviPropostaValida(selezionata);
+                    ui.stampaSuccesso("Proposta pubblicata in bacheca!");
+                }
+                catch (Exception e)
+                {
+                    ui.stampaErrore(e.getMessage());
+                }
+            }
+            else
+            {
+                ui.stampa("Pubblicazione annullata. La proposta resta disponibile per la pubblicazione.");
+            }
+
+            ui.newLine();
+            ui.pausa();
+        }
+        catch (OperationCancelledException e)
+        {
+            ui.stampa("Operazione annullata.");
+            ui.newLine();
+            ui.pausa();
+        }
     }
 }

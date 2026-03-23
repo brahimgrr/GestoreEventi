@@ -8,7 +8,6 @@ import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.TipoDato;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v3.presentation.view.contract.OperationCancelledException;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.ViewModelMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,7 +148,6 @@ public final class ConfiguratoreController {
 
         try
         {
-            //TODO ADD TIPI
             catalogoService.addCampiBaseConExtra(nomi, tipi);
             ui.stampaSuccesso("Campi base extra aggiunti e fissati.");
         }
@@ -406,7 +404,7 @@ public final class ConfiguratoreController {
         }
 
         ui.stampaSezione("Categorie disponibili");
-        OptionalInt idxOpt = ui.selezionaCategoria(ViewModelMapper.toCategoriaVMList(categorie));
+        OptionalInt idxOpt = ui.selezionaCategoria(categorie);
         if (idxOpt.isEmpty()) return;
 
         Categoria categoriaSelezionata = categorie.get(idxOpt.getAsInt());

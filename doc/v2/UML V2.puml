@@ -1,0 +1,620 @@
+@startuml
+' =====================================================================
+'  DIAGRAMMA CLASSI V2 — GestoreEventi
+'  Verde  (#D5F5E3)  = classe NUOVA in V2
+'  Giallo (#FFF9C4)  = classe MODIFICATA in V2
+'  [V2] davanti = membro NUOVO aggiunto in V2
+'  Bianco  = classe INVARIATA da V1
+' =====================================================================
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 35
+
+' ═══════════════════════════
+' COMPOSITION
+' ═══════════════════════════
+
+class Main {
+  + main(String[]) : void
+}
+
+class Application #FFF9C4 {
+  + DATA_CATALOGO : Path
+  + DATA_UTENTI : Path
+  + **[V2]** DATA_PROPOSTE : Path
+  __
+  + start() : void
+}
+
+Main --> Application : create
+
+' ═══════════════════════════
+' CONTROLLERS
+' ═══════════════════════════
+
+class ConfiguratoreController #FFF9C4 {
+  + MENU_CAMPI : String[]
+  + MENU_CATEGORIE : String[]
+  + MENU_CAMPI_SPECIFICI : String[]
+  + MENU_PRINCIPALE : String[]
+  - configuratore : Configuratore
+  - **[V2]** propostaController : PropostaController
+  __
+  + run() : void
+  - mainMenu() : void
+  - menuCategorie() : void
+  - menuCampiGenerico(String, GestioneCampi) : void
+  - menuCampiComuni() : void
+  - menuCampiSpecifici(Categoria) : void
+  - menuCampiBaseExtra() : void
+  - menuVisualizza() : void
+  - **[V2]** avviaCreazioneProposta() : void
+}
+
+class AuthController {
+  - auth : AuthenticationService
+  __
+  + loginConfiguratore() : Configuratore
+  - registrazioneInterattiva() : Configuratore
+  - raccogliUsername() : String
+  - raccogliPassword() : String
+}
+
+class PropostaController #D5F5E3 {
+  __
+  + avviaCreazione(Categoria, List, List) : void
+  + pubblicaPropostaSalvata() : void
+  + mostraBacheca() : void
+  - correggiFinchéValida(Proposta, List) : boolean
+  - mostraRiepilogoEPubblica(Proposta) : void
+}
+
+' ═══════════════════════════
+' APPLICATION SERVICES
+' ═══════════════════════════
+
+class CatalogoService {
+  - repo : ICatalogoRepository
+  __
+  + addCampoComune(String, TipoDato, boolean) : void
+  + addCampiBaseConExtra(List, List) : void
+  + addCampoSpecifico(String, String, TipoDato, boolean) : void
+  + initiateCampiBase() : void
+  + removeCampoComune(String) : boolean
+  + nomeEsistente(String) : boolean
+  + removeCampoSpecifico(String, String) : boolean
+  + setObbligatorietaCampoComune(String, boolean) : boolean
+  + setObbligatorietaCampoSpecifico(String, String, boolean) : boolean
+  + getCampiBase() : List
+  + getCampiComuni() : List
+  + createCategoria(String) : Categoria
+  + removeCategoria(String) : boolean
+  + getCategorie() : List
+  - catalogo() : Catalogo
+}
+
+class AuthenticationService {
+  + USERNAME_PREDEFINITO : String
+  + PASSWORD_PREDEFINITA : String
+  - MIN_USERNAME_LENGTH : int
+  - MIN_PASSWORD_LENGTH : int
+  - repo : ICredenzialiRepository
+  __
+  + login(String, String) : Optional
+  + registraNuovoConfiguratore(String, String) : Configuratore
+  + esisteUsername(String) : boolean
+  - credenziali() : Credenziali
+  - validaCredenziali(String, String) : void
+}
+
+class PropostaService #D5F5E3 {
+  + CAMPO_TITOLO : String
+  + CAMPO_TERMINE_ISCRIZIONE : String
+  + CAMPO_DATA : String
+  + CAMPO_DATA_CONCLUSIVA : String
+  + CAMPO_ORA : String
+  + CAMPO_LUOGO : String
+  + CAMPO_QUOTA : String
+  + CAMPO_NUM_PARTECIPANTI : String
+  - bachecaRepo : IBachecaRepository
+  - proposteValide : List
+  __
+  + creaProposta(Categoria, List, List) : Proposta
+  + validaProposta(Proposta) : List
+  + pubblicaProposta(Proposta) : void
+  + salvaProposta(Proposta) : void
+  + rimuoviPropostaValida(Proposta) : void
+  + clearProposteValide() : void
+  + getProposteValide() : List
+  + getBacheca() : List
+  + getBachecaPerCategoria() : Map
+  + getCampiConErrore(Proposta, List) : List
+  + {static} isTermineIscrizioneValido(LocalDate) : boolean
+  + {static} isDataEventoValida(LocalDate, LocalDate) : boolean
+  + {static} isDataConclusivaValida(LocalDate, LocalDate) : boolean
+  - bacheca() : Bacheca
+  - controllaCampiObbligatori(List, Map, List) : void
+  - parseData(String) : LocalDate
+  - rilevaDuplicato(Proposta) : void
+}
+
+' ═══════════════════════════
+' PERSISTENCE — INTERFACES
+' ═══════════════════════════
+
+interface ICatalogoRepository {
+  + get() : Catalogo
+  + save() : void
+}
+
+interface ICredenzialiRepository {
+  + get() : Credenziali
+  + save() : void
+}
+
+interface IBachecaRepository #D5F5E3 {
+  + get() : Bacheca
+  + save() : void
+}
+
+' ═══════════════════════════
+' PERSISTENCE — IMPL
+' ═══════════════════════════
+
+abstract class AbstractFileRepository {
+  - path : Path
+  - type : Class
+  - defaultValue : Supplier
+  __
+  # load() : T
+  # save(T) : void
+}
+
+class FileCatalogoRepository {
+  - cached : Catalogo
+  __
+  + get() : Catalogo
+  + save() : void
+}
+
+class FileCredenzialiRepository {
+  - cached : Credenziali
+  __
+  + get() : Credenziali
+  + save() : void
+}
+
+class FileBachecaRepository #D5F5E3 {
+  - cached : Bacheca
+  __
+  + get() : Bacheca
+  + save() : void
+}
+
+' ═══════════════════════════
+' DOMAIN — INVARIATE (V1)
+' ═══════════════════════════
+
+class Catalogo {
+  - campiBaseFissati : boolean
+  - campiComuni : List
+  - campiBase : List
+  - categorie : List
+  __
+  + fissareCampiBase(List, List) : void
+  + isCampiBaseFissati() : boolean
+  + addCampoComune(Campo) : void
+  + removeCampoComune(String) : boolean
+  + updateCampoComune(String, boolean) : boolean
+  + addCategoria(String) : Categoria
+  + removeCategoria(String) : boolean
+  + getCategoriaOrThrow(String) : Categoria
+  + addCampoSpecifico(String, Campo) : void
+  + removeCampoSpecifico(String, String) : boolean
+  + updateCampoSpecifico(String, String, boolean) : boolean
+  + getCampiBase() : List
+  + getCampiComuni() : List
+  + getCategorie() : List
+  + nomeEsistenteGlobale(String) : boolean
+  - addNomeUnico(Set, String) : void
+  - findCategoria(String) : Optional
+}
+
+class Categoria {
+  - nome : String
+  - campiSpecifici : List
+  __
+  + getNome() : String
+  + getCampiSpecifici() : List
+  + addCampoSpecifico(Campo) : void
+  + removeCampoSpecifico(String) : boolean
+  + setObbligatorietaCampoSpecifico(String, boolean) : boolean
+  - containsCampo(String) : boolean
+  + equals(Object) : boolean
+  + hashCode() : int
+}
+
+class Campo {
+  - nome : String
+  - tipo : TipoCampo
+  - tipoDato : TipoDato
+  - obbligatorio : boolean
+  __
+  + getNome() : String
+  + getTipo() : TipoCampo
+  + getTipoDato() : TipoDato
+  + isObbligatorio() : boolean
+  + withObbligatorio(boolean) : Campo
+  + equals(Object) : boolean
+  + hashCode() : int
+}
+
+enum CampoBaseDefinito {
+  + TITOLO
+  + NUMERO_PARTECIPANTI
+  + TERMINE_ISCRIZIONE
+  + LUOGO
+  + DATA
+  + ORA
+  + QUOTA_INDIVIDUALE
+  + DATA_CONCLUSIVA
+  __
+  + getNomeCampo() : String
+  + getTipoDato() : TipoDato
+  + toCampo() : Campo
+  + {static} fromNome(String) : CampoBaseDefinito
+  + {static} isNomeFisso(String) : boolean
+}
+
+abstract class Persona {
+  - username : String
+  __
+  # getUsername() : String
+  + equals(Object) : boolean
+  + hashCode() : int
+  + toString() : String
+}
+
+class Configuratore {
+}
+
+class Credenziali {
+  - configuratori : Map
+  __
+  + getConfiguratori() : Map
+  + addConfiguratore(String, String) : void
+}
+
+enum TipoCampo {
+  + BASE
+  + COMUNE
+  + SPECIFICO
+}
+
+enum TipoDato {
+  + STRINGA
+  + INTERO
+  + DECIMALE
+  + DATA
+  + ORA
+  + BOOLEANO
+}
+
+' ═══════════════════════════
+' DOMAIN — NUOVE V2
+' ═══════════════════════════
+
+class Proposta #D5F5E3 {
+  - campiBase : List
+  - campiComuni : List
+  - categoria : Categoria
+  - valoriCampi : Map
+  - stato : StatoProposta
+  - dataPubblicazione : LocalDate
+  - termineIscrizione : LocalDate
+  - dataEvento : LocalDate
+  __
+  + getCategoria() : Categoria
+  + getCampi() : List
+  + getStato() : StatoProposta
+  + getDataPubblicazione() : LocalDate
+  + getTermineIscrizione() : LocalDate
+  + getDataEvento() : LocalDate
+  + getValoriCampi() : Map
+  + putAllValoriCampi(Map) : void
+  + setStato(StatoProposta) : void
+  + setDataPubblicazione(LocalDate) : void
+  + setTermineIscrizione(LocalDate) : void
+  + setDataEvento(LocalDate) : void
+  + {static} fromJson(...) : Proposta
+}
+
+class Bacheca #D5F5E3 {
+  - proposte : List
+  __
+  + getProposte() : List
+  + addProposta(Proposta) : void
+  + {static} fromJson(List) : Bacheca
+}
+
+enum StatoProposta #D5F5E3 {
+  + BOZZA
+  + VALIDA
+  + APERTA
+  __
+  + canTransitionTo(StatoProposta) : boolean
+}
+
+class AppConstants #D5F5E3 {
+  + {static} DATE_FORMAT_LABEL : String
+  + {static} TIME_FORMAT_LABEL : String
+  + {static} DATE_FMT : DateTimeFormatter
+  + {static} TIME_FMT : DateTimeFormatter
+}
+
+' ═══════════════════════════
+' VIEW — CONTRACTS
+' ═══════════════════════════
+
+together {
+  interface IOutputView #FFF9C4 {
+    + stampa(String) : void
+    + newLine() : void
+    + header(String) : void
+    + stampaSezione(String) : void
+    + stampaCampi(List) : void
+    + stampaCategorie(List) : void
+    + stampaCategorieDettaglio(Map) : void
+    + stampaMenu(String, String[]) : void
+    + stampaMenu(String, String[], String) : void
+    + pausa() : void
+    + stampaSuccesso(String) : void
+    + stampaErrore(String) : void
+    + stampaAvviso(String) : void
+    + stampaInfo(String) : void
+    + pausaConSpaziatura() : void
+    + **[V2]** mostraBacheca(Map<String, List<Proposta>>) : void
+    + **[V2]** mostraRiepilogoProposta(Proposta) : void
+  }
+
+  interface IInputView {
+    + acquisisciStringa(String) : String
+    + acquisisciStringaConValidazione(String, Predicate, String) : String
+    + acquisisciPassword(String) : String
+    + acquisisciIntero(String, int, int) : int
+    + acquisisciSiNo(String) : boolean
+    + acquisisciTipoDato(String) : TipoDato
+    + acquisisciListaNomi(String) : List
+    + selezionaElemento(String, List) : Optional
+    + selezionaElementoConInfo(String, List, Function) : Optional
+  }
+
+  interface IFormView #D5F5E3 {
+    + runForm(List) : Optional
+  }
+
+  interface ISelectionView #D5F5E3 {
+    + selezionaCategoria(List<Categoria>) : OptionalInt
+  }
+
+  interface IAppView #FFF9C4 {
+    + **[V2]** HINT_ANNULLA : String
+  }
+}
+
+' ═══════════════════════════
+' VIEW — CLI + FORM SYSTEM
+' ═══════════════════════════
+
+together {
+  class ConsoleUI #FFF9C4 {
+    - scanner : Scanner
+    + CANCEL_KEYWORD : String
+    + BACK_KEYWORD : String
+    + HINT_ANNULLA : String
+    __
+    + stampa(String) : void
+    + newLine() : void
+    + header(String) : void
+    + stampaSezione(String) : void
+    + stampaCampi(List) : void
+    + stampaCategorie(List) : void
+    + stampaCategorieDettaglio(Map) : void
+    + stampaMenu(String, String[]) : void
+    + stampaMenu(String, String[], String) : void
+    + pausa() : void
+    + stampaSuccesso(String) : void
+    + stampaErrore(String) : void
+    + stampaAvviso(String) : void
+    + stampaInfo(String) : void
+    + pausaConSpaziatura() : void
+    + acquisisciStringa(String) : String
+    + acquisisciStringaConValidazione(String, Predicate, String) : String
+    + acquisisciPassword(String) : String
+    + acquisisciIntero(String, int, int) : int
+    + acquisisciSiNo(String) : boolean
+    + acquisisciTipoDato(String) : TipoDato
+    + acquisisciListaNomi(String) : List
+    + selezionaElemento(String, List) : Optional
+    + selezionaElementoConInfo(String, List, Function) : Optional
+    + **[V2]** mostraBacheca(Map<String, List<Proposta>>) : void
+    + **[V2]** mostraRiepilogoProposta(Proposta) : void
+    + **[V2]** runForm(List) : Optional
+    + **[V2]** selezionaCategoria(List<Categoria>) : OptionalInt
+  }
+
+  class FormField #D5F5E3 {
+    - name : String
+    - label : String
+    - tipo : TipoDato
+    - obbligatorio : boolean
+    - currentValue : String
+    - validators : List
+    __
+    + getName() : String
+    + getLabel() : String
+    + getTipo() : TipoDato
+    + isObbligatorio() : boolean
+    + getCurrentValue() : String
+    + getValidators() : List
+  }
+
+  class StepByStepFormRunner #D5F5E3 {
+    - CANCEL_KEYWORD : String
+    - BACK_KEYWORD : String
+    - input : IInputView
+    - output : IOutputView
+    - typeValidator : TypeValidator
+    - fields : List
+    __
+    + run() : Optional
+  }
+
+  class PropostaFormBuilder #D5F5E3 {
+    + {static} build(Proposta) : List
+    - {static} buildValidators(String) : List
+    - {static} termineIscrizioneValidator() : FieldValidator
+    - {static} dataEventoValidator() : FieldValidator
+    - {static} dataConclusivaValidator() : FieldValidator
+    - {static} parseQuietly(String) : LocalDate
+  }
+
+  interface FieldValidator #D5F5E3 {
+    + validate(String, Map) : String
+  }
+
+  interface TypeValidator #D5F5E3 {
+    + validate(String, TipoDato) : String
+  }
+
+  class DefaultTypeValidator #D5F5E3 {
+    + {static} INSTANCE : DefaultTypeValidator
+    __
+    + validate(String, TipoDato) : String
+    - validateIntero(String) : String
+    - validateDecimale(String) : String
+    - validateData(String) : String
+    - validateOra(String) : String
+    - validateBooleano(String) : String
+  }
+}
+
+' ═══════════════════════════
+' EXCEPTIONS
+' ═══════════════════════════
+
+together {
+  class OperationCancelledException {
+  }
+  class CancelException {
+  }
+  class BackException {
+  }
+}
+
+' ═══════════════════════════════════════
+'  RELAZIONI
+' ═══════════════════════════════════════
+
+' --- Composition root ---
+Application ..> AuthenticationService : create
+Application ..> CatalogoService : create
+Application ..> PropostaService : create
+Application ..> AuthController : create
+Application ..> ConfiguratoreController : create
+Application ..> PropostaController : create
+Application ..> ConsoleUI : create
+Application ..> FileCatalogoRepository : create
+Application ..> FileCredenzialiRepository : create
+Application ..> FileBachecaRepository : create
+
+' --- Ereditarietà ---
+Configuratore --|> Persona
+OperationCancelledException --|> RuntimeException
+CancelException --|> OperationCancelledException
+BackException --|> OperationCancelledException
+
+' --- Interfacce view ---
+IAppView --|> IOutputView
+IAppView --|> IInputView
+IAppView --|> IFormView
+IAppView --|> ISelectionView
+ConsoleUI ..|> IAppView
+
+' --- Persistence: implementazioni ---
+FileCatalogoRepository --|> AbstractFileRepository
+FileCredenzialiRepository --|> AbstractFileRepository
+FileBachecaRepository --|> AbstractFileRepository
+FileCatalogoRepository ..|> ICatalogoRepository
+FileCredenzialiRepository ..|> ICredenzialiRepository
+FileBachecaRepository ..|> IBachecaRepository
+
+' --- Repository stores Domain ---
+FileCatalogoRepository --> Catalogo : stores
+FileCredenzialiRepository --> Credenziali : stores
+FileBachecaRepository --> Bacheca : stores
+
+' --- Controller -> View ---
+ConfiguratoreController "1" --> "1" IAppView
+AuthController "1" --> "1" IAppView
+PropostaController "1" --> "1" IAppView
+
+' --- Controller -> Service ---
+ConfiguratoreController "1" --> "1" CatalogoService
+ConfiguratoreController "1" --> "1" PropostaController
+AuthController "1" --> "1" AuthenticationService
+PropostaController "1" --> "1" PropostaService
+
+' --- Controller -> Domain ---
+ConfiguratoreController --> Configuratore : configuratore
+
+' --- Service -> Repository ---
+CatalogoService "1" --> "1" ICatalogoRepository : repo
+AuthenticationService "1" --> "1" ICredenzialiRepository : repo
+PropostaService "1" --> "1" IBachecaRepository : bachecaRepo
+
+' --- Domain: Catalogo ---
+Catalogo "1" *-- "*" Campo : campiBase
+Catalogo "1" *-- "*" Campo : campiComuni
+Catalogo "1" *-- "*" Categoria : categorie
+
+' --- Domain: Categoria ---
+Categoria "1" *-- "*" Campo : campiSpecifici
+
+' --- Domain: Campo ---
+Campo --> TipoCampo : tipo
+Campo --> TipoDato : tipoDato
+CampoBaseDefinito --> TipoDato : tipoDato
+CampoBaseDefinito ..> Campo : create
+
+' --- Domain: Proposta ---
+Proposta "1" --> "1" Categoria : categoria
+Proposta "1" --> "1" StatoProposta : stato
+Proposta "1" --> "*" Campo : campiBase
+Proposta "1" --> "*" Campo : campiComuni
+
+' --- Domain: Bacheca ---
+Bacheca "1" *-- "*" Proposta : proposte
+
+' --- ConsoleUI -> Form system ---
+ConsoleUI ..> StepByStepFormRunner : creates
+ConsoleUI ..> DefaultTypeValidator : uses
+
+' --- Form system ---
+StepByStepFormRunner --> IInputView : input
+StepByStepFormRunner --> IOutputView : output
+StepByStepFormRunner "1" --> "1" TypeValidator : typeValidator
+StepByStepFormRunner "1" --> "*" FormField : fields
+FormField "1" --> "*" FieldValidator : validators
+DefaultTypeValidator ..|> TypeValidator
+
+' --- PropostaFormBuilder ---
+PropostaFormBuilder ..> Proposta : reads
+PropostaFormBuilder ..> FormField : creates
+PropostaFormBuilder ..> FieldValidator : creates
+PropostaController ..> PropostaFormBuilder : uses
+
+@enduml

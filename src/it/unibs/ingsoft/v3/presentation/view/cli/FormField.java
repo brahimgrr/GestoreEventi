@@ -13,7 +13,7 @@ public final class FormField
 {
     private final String               name;
     private final String               label;
-    private final TipoDato tipo;
+    private final TipoDato             tipo;
     private final boolean              obbligatorio;
     private final String               currentValue;
     private final List<FieldValidator> validators;
@@ -32,7 +32,7 @@ public final class FormField
 
     public String               getName()        { return name; }
     public String               getLabel()       { return label; }
-    public TipoDato getTipo()        { return tipo; }
+    public TipoDato             getTipo()        { return tipo; }
     public boolean              isObbligatorio() { return obbligatorio; }
     public String               getCurrentValue(){ return currentValue; }
     public List<FieldValidator> getValidators()  { return validators; }

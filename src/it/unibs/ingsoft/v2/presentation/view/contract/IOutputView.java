@@ -2,7 +2,7 @@ package it.unibs.ingsoft.v2.presentation.view.contract;
 
 import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Categoria;
-import it.unibs.ingsoft.v2.presentation.view.viewmodel.PropostaVM;
+import it.unibs.ingsoft.v2.domain.Proposta;
 
 import java.util.List;
 import java.util.Map;
@@ -12,8 +12,8 @@ import java.util.Map;
  * Implementations that only need to produce output (e.g., a logger, a test spy)
  * depend only on this narrow interface.
  *
- * <p>This interface is deliberately free of domain imports to support GUI migration (NFR-05).
- * Controllers must convert domain objects to primitives before calling display methods.</p>
+ * <p>This interface exposes the domain objects directly because the current
+ * CLI renders them without an additional presentation layer.</p>
  */
 public interface IOutputView
 {
@@ -41,10 +41,10 @@ public interface IOutputView
     void stampaInfo(String msg);
 
     /** Displays the bacheca (bulletin board) organised by category. */
-    void mostraBacheca(Map<String, List<PropostaVM>> bacheca);
+    void mostraBacheca(Map<String, List<Proposta>> bacheca);
 
     /** Displays a single-proposal summary box. */
-    void mostraRiepilogoProposta(PropostaVM proposta);
+    void mostraRiepilogoProposta(Proposta proposta);
 
     /** Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern. */
     default void pausaConSpaziatura() {

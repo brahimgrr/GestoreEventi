@@ -21,9 +21,9 @@ public final class StepByStepFormRunner
     private static final String CANCEL_KEYWORD = "annulla";
     private static final String BACK_KEYWORD   = "indietro";
 
-    private final IInputView input;
-    private final IOutputView output;
-    private final TypeValidator typeValidator;
+    private final IInputView          input;
+    private final IOutputView         output;
+    private final TypeValidator       typeValidator;
     private final List<FormField>     fields;
 
     public StepByStepFormRunner(IInputView input, IOutputView output,

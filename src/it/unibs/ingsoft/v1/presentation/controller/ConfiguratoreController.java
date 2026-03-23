@@ -108,57 +108,79 @@ public final class ConfiguratoreController {
     {
         try
         {
-            ui.header("PRIMA CONFIGURAZIONE – Campi base");
-            ui.newLine();
-            ui.stampa("I seguenti campi base sono già presenti (definiti dalla traccia):");
-            ui.stampaCampi(Arrays.stream(CampoBaseDefinito.values()).map(CampoBaseDefinito::toCampo).toList());
-            ui.newLine();
-            ui.stampa("Puoi aggiungere campi base EXTRA (obbligatori e immutabili).");
-            ui.stampa("Questi campi NON potranno essere modificati o rimossi in futuro.");
-            ui.newLine();
-
-            if (!ui.acquisisciSiNo("Vuoi aggiungere campi base extra?"))
+            while (true) // restart flow if user cancels confirmation
             {
-                catalogoService.initiateCampiBase();
-                ui.stampaInfo("Nessun campo base extra aggiunto.");
+                ui.header("PRIMA CONFIGURAZIONE – Campi base");
+                ui.newLine();
+
+                ui.stampa("I seguenti campi base sono già presenti (definiti dalla traccia):");
+                ui.stampaCampi(Arrays.stream(CampoBaseDefinito.values())
+                        .map(CampoBaseDefinito::toCampo)
+                        .toList());
+
+                ui.newLine();
+                ui.stampa("Puoi aggiungere campi base EXTRA (obbligatori e immutabili).");
+                ui.stampa("Questi campi NON potranno essere modificati o rimossi in futuro.");
+                ui.newLine();
+
+                // STEP 1: ask if user wants extra fields
+                if (!ui.acquisisciSiNo("Vuoi aggiungere campi base extra?"))
+                {
+                    catalogoService.initiateCampiBase();
+                    ui.stampaInfo("Nessun campo base extra aggiunto.");
+                    ui.newLine();
+                    ui.pausa();
+                    return true;
+                }
+
+                // STEP 2: collect fields
+                List<String> nomi = new ArrayList<>();
+                List<TipoDato> tipi = new ArrayList<>();
+
+                ui.stampa("Inserisci i campi (nome vuoto per terminare):");
+
+                while (true)
+                {
+                    String nome = ui.acquisisciStringa("Nome campo: ");
+
+                    if (nome.isBlank())
+                        break;
+
+                    if (catalogoService.nomeEsistente(nome))
+                    {
+                        ui.stampaErrore("Nome già esistente.");
+                        continue;
+                    }
+
+                    TipoDato tipo = ui.acquisisciTipoDato("Tipo di dato:");
+                    nomi.add(nome);
+                    tipi.add(tipo);
+                }
+
+                // STEP 3: confirm
+                if (!ui.acquisisciSiNo("Confermare l'inizializzazione dei campi base?"))
+                {
+                    ui.stampaInfo("Operazione annullata.");
+                    ui.newLine();
+                    continue; // 🔥 restart from beginning
+                }
+
+                // STEP 4: apply
+                try
+                {
+                    catalogoService.addCampiBaseConExtra(nomi, tipi);
+                    ui.stampaSuccesso("Campi base extra aggiunti e fissati.");
+                }
+                catch (IllegalArgumentException | IllegalStateException e)
+                {
+                    ui.stampaErrore(e.getMessage());
+                    catalogoService.initiateCampiBase();
+                }
+
                 ui.newLine();
                 ui.pausa();
                 return true;
             }
-
-            List<String>   nomi = new ArrayList<>();
-            List<TipoDato> tipi = new ArrayList<>();
-
-            ui.stampa("Inserisci i nomi dei campi extra (riga vuota per terminare):");
-            List<String> nomiInput = ui.acquisisciListaNomi("Campi base extra");
-
-            for (String nome : nomiInput)
-            {
-                TipoDato td = ui.acquisisciTipoDato("Tipo per \"" + nome + "\":");
-                nomi.add(nome);
-                tipi.add(td);
-            }
-
-            if (!ui.acquisisciSiNo("Confermare l'inizializzazione dei campi base?"))
-            {
-                ui.stampaInfo("Operazione annullata.");
-                return false;
-            }
-
-            try
-            {
-                catalogoService.addCampiBaseConExtra(nomi, tipi);
-                ui.stampaSuccesso("Campi base extra aggiunti e fissati.");
-            }
-            catch (IllegalArgumentException | IllegalStateException e)
-            {
-                ui.stampaErrore(e.getMessage());
-                catalogoService.initiateCampiBase();
-            }
-
-            ui.newLine();
-            ui.pausa();
-            return true;
         }
         catch (OperationCancelledException e)
         {

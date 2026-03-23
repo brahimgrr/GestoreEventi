@@ -2,12 +2,11 @@ package it.unibs.ingsoft.v2.support;
 
 import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Categoria;
+import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.domain.TipoDato;
 import it.unibs.ingsoft.v2.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
-import it.unibs.ingsoft.v2.presentation.view.viewmodel.CategoriaVM;
-import it.unibs.ingsoft.v2.presentation.view.viewmodel.PropostaVM;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -25,21 +24,22 @@ import java.util.stream.Collectors;
 public final class ScriptedAppView implements IAppView {
 
     private static final String CANCEL_KEYWORD = "annulla";
+    private static final Object CANCEL_INPUT = new Object();
 
     private final Deque<String> stringInputs = new ArrayDeque<>();
     private final Deque<String> passwordInputs = new ArrayDeque<>();
-    private final Deque<Integer> intInputs = new ArrayDeque<>();
-    private final Deque<Boolean> yesNoInputs = new ArrayDeque<>();
-    private final Deque<TipoDato> tipoDatoInputs = new ArrayDeque<>();
-    private final Deque<List<String>> listInputs = new ArrayDeque<>();
+    private final Deque<Object> intInputs = new ArrayDeque<>();
+    private final Deque<Object> yesNoInputs = new ArrayDeque<>();
+    private final Deque<Object> tipoDatoInputs = new ArrayDeque<>();
+    private final Deque<Object> listInputs = new ArrayDeque<>();
     private final Deque<Optional<Map<String, String>>> formResults = new ArrayDeque<>();
     private final Deque<Integer> categorySelections = new ArrayDeque<>();
 
     private final List<String> outputs = new ArrayList<>();
     private final List<List<Campo>> printedCampiBatches = new ArrayList<>();
     private final List<List<Categoria>> printedCategorieBatches = new ArrayList<>();
-    private final List<Map<String, List<PropostaVM>>> shownBacheche = new ArrayList<>();
-    private final List<PropostaVM> shownSummaries = new ArrayList<>();
+    private final List<Map<String, List<Proposta>>> shownBacheche = new ArrayList<>();
+    private final List<Proposta> shownSummaries = new ArrayList<>();
 
     public ScriptedAppView addStrings(String... values) {
         Collections.addAll(stringInputs, values);
@@ -56,8 +56,18 @@ public final class ScriptedAppView implements IAppView {
         return this;
     }
 
+    public ScriptedAppView addCancelledIntegers(int count) {
+        addCancellations(intInputs, count);
+        return this;
+    }
+
     public ScriptedAppView addYesNo(Boolean... values) {
         Collections.addAll(yesNoInputs, values);
+        return this;
+    }
+
+    public ScriptedAppView addCancelledYesNo(int count) {
+        addCancellations(yesNoInputs, count);
         return this;
     }
 
@@ -66,9 +76,19 @@ public final class ScriptedAppView implements IAppView {
         return this;
     }
 
+    public ScriptedAppView addCancelledTipoDati(int count) {
+        addCancellations(tipoDatoInputs, count);
+        return this;
+    }
+
     @SafeVarargs
     public final ScriptedAppView addNameLists(List<String>... values) {
         Collections.addAll(listInputs, values);
+        return this;
+    }
+
+    public ScriptedAppView addCancelledNameLists(int count) {
+        addCancellations(listInputs, count);
         return this;
     }
 
@@ -103,11 +123,11 @@ public final class ScriptedAppView implements IAppView {
         return Collections.unmodifiableList(printedCategorieBatches);
     }
 
-    public List<Map<String, List<PropostaVM>>> getShownBacheche() {
+    public List<Map<String, List<Proposta>>> getShownBacheche() {
         return Collections.unmodifiableList(shownBacheche);
     }
 
-    public List<PropostaVM> getShownSummaries() {
+    public List<Proposta> getShownSummaries() {
         return Collections.unmodifiableList(shownSummaries);
     }
 
@@ -142,7 +162,11 @@ public final class ScriptedAppView implements IAppView {
 
     @Override
     public int acquisisciIntero(String prompt, int min, int max) {
-        Integer value = poll(intInputs, "integer input for prompt: " + prompt);
+        Object raw = poll(intInputs, "integer input for prompt: " + prompt);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        Integer value = (Integer) raw;
         if (value < min || value > max) {
             throw new AssertionError("Input fuori range per prompt '" + prompt + "': " + value);
         }
@@ -151,17 +175,31 @@ public final class ScriptedAppView implements IAppView {
 
     @Override
     public boolean acquisisciSiNo(String prompt) {
-        return poll(yesNoInputs, "yes/no input for prompt: " + prompt);
+        Object raw = poll(yesNoInputs, "yes/no input for prompt: " + prompt);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        return (Boolean) raw;
     }
 
     @Override
     public TipoDato acquisisciTipoDato(String prompt) {
-        return poll(tipoDatoInputs, "tipo dato input for prompt: " + prompt);
+        Object raw = poll(tipoDatoInputs, "tipo dato input for prompt: " + prompt);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        return (TipoDato) raw;
     }
 
     @Override
     public List<String> acquisisciListaNomi(String titolo) {
-        return new ArrayList<>(poll(listInputs, "name list input for title: " + titolo));
+        Object raw = poll(listInputs, "name list input for title: " + titolo);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        @SuppressWarnings("unchecked")
+        List<String> values = (List<String>) raw;
+        return new ArrayList<>(values);
     }
 
     @Override
@@ -171,8 +209,12 @@ public final class ScriptedAppView implements IAppView {
             return Optional.empty();
         }
 
-        int choice = acquisisciIntero(prompt, 0, elementi.size());
-        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        try {
+            int choice = acquisisciIntero(prompt, 0, elementi.size());
+            return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        } catch (OperationCancelledException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -253,17 +295,17 @@ public final class ScriptedAppView implements IAppView {
     }
 
     @Override
-    public void mostraBacheca(Map<String, List<PropostaVM>> bacheca) {
-        Map<String, List<PropostaVM>> copy = new LinkedHashMap<>();
+    public void mostraBacheca(Map<String, List<Proposta>> bacheca) {
+        Map<String, List<Proposta>> copy = new LinkedHashMap<>();
         bacheca.forEach((categoria, proposte) -> copy.put(categoria, List.copyOf(proposte)));
         shownBacheche.add(copy);
         outputs.add("BACHECA: " + bacheca.size());
     }
 
     @Override
-    public void mostraRiepilogoProposta(PropostaVM proposta) {
+    public void mostraRiepilogoProposta(Proposta proposta) {
         shownSummaries.add(proposta);
-        outputs.add("PROPOSTA: " + proposta.valoriCampi().getOrDefault("Titolo", ""));
+        outputs.add("PROPOSTA: " + proposta.getValoriCampi().getOrDefault("Titolo", ""));
     }
 
     @Override
@@ -272,7 +314,7 @@ public final class ScriptedAppView implements IAppView {
     }
 
     @Override
-    public OptionalInt selezionaCategoria(List<CategoriaVM> categorie) {
+    public OptionalInt selezionaCategoria(List<Categoria> categorie) {
         Integer selection = poll(categorySelections, "category selection");
         if (selection < 0) {
             return OptionalInt.empty();
@@ -289,5 +331,11 @@ public final class ScriptedAppView implements IAppView {
             throw new AssertionError("Nessun input disponibile per " + description);
         }
         return value;
+    }
+
+    private static void addCancellations(Deque<Object> queue, int count) {
+        for (int i = 0; i < count; i++) {
+            queue.addLast(CANCEL_INPUT);
+        }
     }
 }

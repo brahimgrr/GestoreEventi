@@ -54,7 +54,7 @@ class PropostaControllerTest {
 
         assertEquals(1, propostaService.getProposteValide().size());
         assertTrue(view.containsOutput("Proposta valida salvata."));
-        assertEquals("Sport Day", view.getShownSummaries().get(0).valoriCampi().get("Titolo"));
+        assertEquals("Sport Day", view.getShownSummaries().get(0).getValoriCampi().get("Titolo"));
     }
 
     @Test
@@ -86,6 +86,19 @@ class PropostaControllerTest {
     }
 
     @Test
+    void shouldAbortProposalCreationWhenCorrectionPromptIsCancelled() {
+        ScriptedAppView view = new ScriptedAppView()
+                .addFormResult(validValues("16/01/2025"))
+                .addCancelledYesNo(1);
+
+        PropostaController controller = new PropostaController(view, propostaService);
+        controller.avviaCreazione(categoriaSport, campiBase, campiComuni);
+
+        assertTrue(propostaService.getProposteValide().isEmpty());
+        assertTrue(view.containsOutput("Operazione annullata."));
+    }
+
+    @Test
     void shouldPublishSavedProposalAndRemoveItFromSessionBuffer() {
         Proposta proposta = buildSavedValidProposal();
         ScriptedAppView view = new ScriptedAppView()
@@ -99,6 +112,21 @@ class PropostaControllerTest {
         assertEquals(1, propostaService.getBacheca().size());
         assertEquals(proposta, propostaService.getBacheca().get(0));
         assertTrue(view.containsOutput("Proposta pubblicata in bacheca!"));
+    }
+
+    @Test
+    void shouldAbortPublicationWhenConfirmationPromptIsCancelled() {
+        buildSavedValidProposal();
+        ScriptedAppView view = new ScriptedAppView()
+                .addIntegers(1)
+                .addCancelledYesNo(1);
+
+        PropostaController controller = new PropostaController(view, propostaService);
+        controller.pubblicaPropostaSalvata();
+
+        assertEquals(1, propostaService.getProposteValide().size());
+        assertTrue(propostaService.getBacheca().isEmpty());
+        assertTrue(view.containsOutput("Operazione annullata."));
     }
 
     @Test
@@ -118,7 +146,7 @@ class PropostaControllerTest {
         PropostaController controller = new PropostaController(view, propostaService);
         controller.mostraBacheca();
 
-        Map<String, List<it.unibs.ingsoft.v2.presentation.view.viewmodel.PropostaVM>> bacheca =
+        Map<String, List<Proposta>> bacheca =
                 view.getShownBacheche().get(0);
         assertEquals(2, bacheca.size());
         assertEquals(1, bacheca.get("Sport").size());

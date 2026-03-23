@@ -33,7 +33,6 @@ public final class AuthController
         {
             ui.newLine();
             ui.stampa("LOGIN CONFIGURATORE");
-            ui.stampaInfo(IAppView.HINT_ANNULLA);
             String u = ui.acquisisciStringa("Username: ");
             String p = ui.acquisisciStringa("Password: ");
 

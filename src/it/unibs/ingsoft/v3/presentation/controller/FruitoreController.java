@@ -2,7 +2,6 @@ package it.unibs.ingsoft.v3.presentation.controller;
 
 import it.unibs.ingsoft.v3.application.IscrizioneService;
 import it.unibs.ingsoft.v3.application.PropostaService;
-import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Fruitore;
 import it.unibs.ingsoft.v3.domain.Proposta;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
@@ -92,7 +91,7 @@ public final class FruitoreController {
 
     private void dettagliEIscrizione(Proposta p) {
         ui.header("DETTAGLI PROPOSTA");
-        ui.mostraRiepilogoProposta(it.unibs.ingsoft.v3.presentation.view.viewmodel.ViewModelMapper.toPropostaVM(p));
+        ui.mostraRiepilogoProposta(p);
 
         ui.newLine();
         

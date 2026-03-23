@@ -2,12 +2,12 @@ package it.unibs.ingsoft.v2.presentation.view.cli;
 
 import it.unibs.ingsoft.v2.domain.Campo;
 import it.unibs.ingsoft.v2.domain.Categoria;
+import it.unibs.ingsoft.v2.domain.Proposta;
 import it.unibs.ingsoft.v2.domain.TipoDato;
 import it.unibs.ingsoft.v2.presentation.view.contract.BackException;
-import it.unibs.ingsoft.v2.presentation.view.viewmodel.CategoriaVM;
-import it.unibs.ingsoft.v2.presentation.view.viewmodel.PropostaVM;
 import it.unibs.ingsoft.v2.presentation.view.contract.CancelException;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
 
 import java.io.Console;
 import java.util.ArrayList;
@@ -172,7 +172,7 @@ public final class ConsoleUI implements IAppView {
 
 
     @Override
-    public void mostraBacheca(Map<String, List<PropostaVM>> bacheca)
+    public void mostraBacheca(Map<String, List<Proposta>> bacheca)
     {
         if (bacheca.isEmpty())
         {
@@ -182,13 +182,13 @@ public final class ConsoleUI implements IAppView {
         bacheca.forEach((categoria, proposte) ->
         {
             stampaSezione("Categoria: " + categoria);
-            for (PropostaVM p : proposte) {
+            for (Proposta p : proposte) {
                 //System.out.println("  [" + (i + 1) + "] Proposta — Pubblicata il: "
                 //        + (p.dataPubblicazione() != null ? p.dataPubblicazione() : "N/A"));
                 //System.out.println("      Termine iscrizioni:   "
                 //        + (p.termineIscrizione() != null ? p.termineIscrizione() : "N/A"));
-                for (String campo : p.valoriCampi().keySet()) {
-                    String valore = p.valoriCampi().getOrDefault(campo, "");
+                for (String campo : p.getValoriCampi().keySet()) {
+                    String valore = p.getValoriCampi().getOrDefault(campo, "");
                     if (!valore.isBlank())
                         System.out.println("      " + campo + ": " + valore);
                 }
@@ -198,16 +198,16 @@ public final class ConsoleUI implements IAppView {
     }
 
     @Override
-    public void mostraRiepilogoProposta(PropostaVM p)
+    public void mostraRiepilogoProposta(Proposta p)
     {
         newLine();
         System.out.println(SEPARATORE);
-        System.out.println("  RIEPILOGO PROPOSTA — Categoria: " + p.categoriaNome()
-                + " | Stato: " + p.stato());
+        System.out.println("  RIEPILOGO PROPOSTA — Categoria: " + p.getCategoria().getNome()
+                + " | Stato: " + p.getStato());
         System.out.println(SEPARATORE);
-        for (String campo : p.valoriCampi().keySet())
+        for (String campo : p.getValoriCampi().keySet())
         {
-            String valore = p.valoriCampi().getOrDefault(campo, "");
+            String valore = p.getValoriCampi().getOrDefault(campo, "");
             System.out.println("  " + campo + ": " + (valore.isBlank() ? "(non compilato)" : valore));
         }
         System.out.println(SEPARATORE);
@@ -264,7 +264,13 @@ public final class ConsoleUI implements IAppView {
         if (console != null)
         {
             char[] pwd = console.readPassword(prompt);
-            return pwd != null ? new String(pwd) : "";
+            String value = pwd != null ? new String(pwd) : "";
+            String trimmed = value.trim();
+
+            if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
+            if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+
+            return value;
         }
 
         return acquisisciStringa(prompt);
@@ -407,8 +413,15 @@ public final class ConsoleUI implements IAppView {
         stampa("  0) Annulla");
         newLine();
 
-        int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
-        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        try
+        {
+            int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
+            return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        }
+        catch (OperationCancelledException e)
+        {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -428,8 +441,15 @@ public final class ConsoleUI implements IAppView {
         stampa("  0) Annulla");
         newLine();
 
-        int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
-        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        try
+        {
+            int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
+            return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        }
+        catch (OperationCancelledException e)
+        {
+            return Optional.empty();
+        }
     }
 
     // ----------------------------------------------------------------
@@ -447,19 +467,26 @@ public final class ConsoleUI implements IAppView {
     // ----------------------------------------------------------------
 
     @Override
-    public OptionalInt selezionaCategoria(List<CategoriaVM> categorie)
+    public OptionalInt selezionaCategoria(List<Categoria> categorie)
     {
         if (categorie.isEmpty())
         {
             stampaAvviso("Nessuna categoria disponibile.");
             return OptionalInt.empty();
         }
-        for (CategoriaVM c : categorie)
-            System.out.println("  " + c.indice() + ". " + c.nome());
+        for (int i = 0; i < categorie.size(); i++)
+            System.out.println("  " + (i + 1) + ". " + categorie.get(i).getNome());
         System.out.println("  0. Annulla");
 
-        int scelta = acquisisciIntero("Scelta: ", 0, categorie.size());
-        if (scelta == 0) return OptionalInt.empty();
-        return OptionalInt.of(scelta - 1);
+        try
+        {
+            int scelta = acquisisciIntero("Scelta: ", 0, categorie.size());
+            if (scelta == 0) return OptionalInt.empty();
+            return OptionalInt.of(scelta - 1);
+        }
+        catch (OperationCancelledException e)
+        {
+            return OptionalInt.empty();
+        }
     }
 }

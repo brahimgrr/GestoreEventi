@@ -12,7 +12,7 @@ import java.util.*;
  * Represents an event proposal.
  *
  * <p>Lifecycle: BOZZA → VALIDA → APERTA (terminal).
- * Call {@link it.unibs.ingsoft.v2.application.PropostaService#validaProposta}
+ * Call {@link PropostaService#validaProposta}
  * to transition to VALIDA; call
  * to transition to APERTA and persist.</p>
  */
