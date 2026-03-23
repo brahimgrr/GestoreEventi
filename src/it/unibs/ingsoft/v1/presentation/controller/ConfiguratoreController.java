@@ -59,7 +59,8 @@ public final class ConfiguratoreController {
             ui.header("PRIMA CONFIGURAZIONE");
             ui.stampaInfo("Non sono ancora stati definiti i campi base.");
             ui.stampaInfo("Il primo configuratore deve inserirli prima di procedere.");
-            menuCampiBaseExtra();
+            if (!menuCampiBaseExtra())
+                return;
         }
 
         mainMenu();
@@ -74,7 +75,16 @@ public final class ConfiguratoreController {
         while (true)
         {
             ui.stampaMenu("MENU PRINCIPALE", MENU_PRINCIPALE, "Logout");
-            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_PRINCIPALE.length);
+            int choice;
+            try
+            {
+                choice = ui.acquisisciIntero("Scelta: ", 0, MENU_PRINCIPALE.length);
+            }
+            catch (OperationCancelledException e)
+            {
+                ui.stampaInfo("Operazione annullata.");
+                return;
+            }
             ui.newLine();
 
             switch (choice)
@@ -94,53 +104,67 @@ public final class ConfiguratoreController {
         }
     }
 
-    private void menuCampiBaseExtra()
+    private boolean menuCampiBaseExtra()
     {
-        ui.header("PRIMA CONFIGURAZIONE – Campi base");
-        ui.newLine();
-        ui.stampa("I seguenti campi base sono già presenti (definiti dalla traccia):");
-        ui.stampaCampi(Arrays.stream(CampoBaseDefinito.values()).map(CampoBaseDefinito::toCampo).toList());
-        ui.newLine();
-        ui.stampa("Puoi aggiungere campi base EXTRA (obbligatori e immutabili).");
-        ui.stampa("Questi campi NON potranno essere modificati o rimossi in futuro.");
-        ui.newLine();
-
-        if (!ui.acquisisciSiNo("Vuoi aggiungere campi base extra?"))
-        {
-            catalogoService.initiateCampiBase();
-            ui.stampaInfo("Nessun campo base extra aggiunto.");
-            ui.newLine();
-            ui.pausa();
-            return;
-        }
-
-        List<String>   nomi = new ArrayList<>();
-        List<TipoDato> tipi = new ArrayList<>();
-
-        ui.stampa("Inserisci i nomi dei campi extra (riga vuota per terminare):");
-        List<String> nomiInput = ui.acquisisciListaNomi("Campi base extra");
-
-        for (String nome : nomiInput)
-        {
-            TipoDato td = ui.acquisisciTipoDato("Tipo per \"" + nome + "\":");
-            nomi.add(nome);
-            tipi.add(td);
-        }
-
         try
         {
-            //TODO ADD TIPI
-            catalogoService.addCampiBaseConExtra(nomi, tipi);
-            ui.stampaSuccesso("Campi base extra aggiunti e fissati.");
-        }
-        catch (IllegalArgumentException | IllegalStateException e)
-        {
-            ui.stampaErrore(e.getMessage());
-            catalogoService.initiateCampiBase();
-        }
+            ui.header("PRIMA CONFIGURAZIONE – Campi base");
+            ui.newLine();
+            ui.stampa("I seguenti campi base sono già presenti (definiti dalla traccia):");
+            ui.stampaCampi(Arrays.stream(CampoBaseDefinito.values()).map(CampoBaseDefinito::toCampo).toList());
+            ui.newLine();
+            ui.stampa("Puoi aggiungere campi base EXTRA (obbligatori e immutabili).");
+            ui.stampa("Questi campi NON potranno essere modificati o rimossi in futuro.");
+            ui.newLine();
 
-        ui.newLine();
-        ui.pausa();
+            if (!ui.acquisisciSiNo("Vuoi aggiungere campi base extra?"))
+            {
+                catalogoService.initiateCampiBase();
+                ui.stampaInfo("Nessun campo base extra aggiunto.");
+                ui.newLine();
+                ui.pausa();
+                return true;
+            }
+
+            List<String>   nomi = new ArrayList<>();
+            List<TipoDato> tipi = new ArrayList<>();
+
+            ui.stampa("Inserisci i nomi dei campi extra (riga vuota per terminare):");
+            List<String> nomiInput = ui.acquisisciListaNomi("Campi base extra");
+
+            for (String nome : nomiInput)
+            {
+                TipoDato td = ui.acquisisciTipoDato("Tipo per \"" + nome + "\":");
+                nomi.add(nome);
+                tipi.add(td);
+            }
+
+            if (!ui.acquisisciSiNo("Confermare l'inizializzazione dei campi base?"))
+            {
+                ui.stampaInfo("Operazione annullata.");
+                return false;
+            }
+
+            try
+            {
+                catalogoService.addCampiBaseConExtra(nomi, tipi);
+                ui.stampaSuccesso("Campi base extra aggiunti e fissati.");
+            }
+            catch (IllegalArgumentException | IllegalStateException e)
+            {
+                ui.stampaErrore(e.getMessage());
+                catalogoService.initiateCampiBase();
+            }
+
+            ui.newLine();
+            ui.pausa();
+            return true;
+        }
+        catch (OperationCancelledException e)
+        {
+            ui.stampaInfo("Configurazione iniziale annullata.");
+            return false;
+        }
     }
 
     // ---------------------------------------------------------------
@@ -155,7 +179,16 @@ public final class ConfiguratoreController {
             ui.stampaCategorie(catalogoService.getCategorie());
             ui.newLine();
             ui.stampaMenu("", MENU_CATEGORIE, "Torna");
-            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CATEGORIE.length);
+            int choice;
+            try
+            {
+                choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CATEGORIE.length);
+            }
+            catch (OperationCancelledException e)
+            {
+                ui.stampaInfo("Operazione annullata.");
+                return;
+            }
             ui.newLine();
 
             switch (choice)
@@ -179,26 +212,40 @@ public final class ConfiguratoreController {
                     break;
 
                 case 2:
-                    ui.selezionaElemento("Seleziona categoria da rimuovere:", catalogoService.getCategorie())
-                      .ifPresentOrElse(c -> {
-                          if (!ui.acquisisciSiNo("Rimuovere '" + c.getNome() + "' e tutti i suoi campi specifici?")) {
-                              ui.stampaInfo("Operazione annullata.");
-                              return;
-                          }
-                          if (catalogoService.removeCategoria(c.getNome()))
-                              ui.stampaSuccesso("Categoria rimossa.");
-                          else
-                              ui.stampaErrore("Categoria non trovata.");
-                      }, () -> ui.stampaInfo("Operazione annullata."));
+                    try
+                    {
+                        ui.selezionaElemento("Seleziona categoria da rimuovere:", catalogoService.getCategorie())
+                          .ifPresentOrElse(c -> {
+                              if (!ui.acquisisciSiNo("Rimuovere '" + c.getNome() + "' e tutti i suoi campi specifici?")) {
+                                  ui.stampaInfo("Operazione annullata.");
+                                  return;
+                              }
+                              if (catalogoService.removeCategoria(c.getNome()))
+                                  ui.stampaSuccesso("Categoria rimossa.");
+                              else
+                                  ui.stampaErrore("Categoria non trovata.");
+                          }, () -> ui.stampaInfo("Operazione annullata."));
+                    }
+                    catch (OperationCancelledException e)
+                    {
+                        ui.stampaInfo("Operazione annullata.");
+                    }
                     //ui.pausaConSpaziatura();
                     break;
 
                 case 3:
-                    ui.selezionaElemento("Seleziona categoria:", catalogoService.getCategorie())
-                      .ifPresentOrElse(
-                          c -> menuCampiSpecifici(c),
-                          () -> ui.stampaInfo("Operazione annullata.")
-                      );
+                    try
+                    {
+                        ui.selezionaElemento("Seleziona categoria:", catalogoService.getCategorie())
+                          .ifPresentOrElse(
+                              this::menuCampiSpecifici,
+                              () -> ui.stampaInfo("Operazione annullata.")
+                          );
+                    }
+                    catch (OperationCancelledException e)
+                    {
+                        ui.stampaInfo("Operazione annullata.");
+                    }
                     //ui.pausaConSpaziatura();
                     break;
 
@@ -237,7 +284,16 @@ public final class ConfiguratoreController {
             ui.stampaCampi(ops.getCampi());
             ui.newLine();
             ui.stampaMenu("", MENU_CAMPI, "Torna"); // same menu
-            int choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI.length);
+            int choice;
+            try
+            {
+                choice = ui.acquisisciIntero("Scelta: ", 0, MENU_CAMPI.length);
+            }
+            catch (OperationCancelledException e)
+            {
+                ui.stampaInfo("Operazione annullata.");
+                return;
+            }
             ui.newLine();
 
             switch (choice)
@@ -275,39 +331,53 @@ public final class ConfiguratoreController {
                     break;
 
                 case 2: // REMOVE
-                    ui.selezionaElemento("Seleziona campo da rimuovere:", ops.getCampi())
-                            .ifPresentOrElse(c -> {
-                                if (!ui.acquisisciSiNo("Rimuovere '" + c.getNome() + "'?"))
-                                {
-                                    ui.stampaInfo("Operazione annullata.");
-                                    return;
-                                }
-                                if (ops.remove(c.getNome()))
-                                    ui.stampaSuccesso("Campo rimosso.");
-                                else
-                                    ui.stampaErrore("Campo non trovato.");
-                            }, () -> ui.stampaInfo("Operazione annullata."));
+                    try
+                    {
+                        ui.selezionaElemento("Seleziona campo da rimuovere:", ops.getCampi())
+                                .ifPresentOrElse(c -> {
+                                    if (!ui.acquisisciSiNo("Rimuovere '" + c.getNome() + "'?"))
+                                    {
+                                        ui.stampaInfo("Operazione annullata.");
+                                        return;
+                                    }
+                                    if (ops.remove(c.getNome()))
+                                        ui.stampaSuccesso("Campo rimosso.");
+                                    else
+                                        ui.stampaErrore("Campo non trovato.");
+                                }, () -> ui.stampaInfo("Operazione annullata."));
+                    }
+                    catch (OperationCancelledException e)
+                    {
+                        ui.stampaInfo("Operazione annullata.");
+                    }
                     ui.pausaConSpaziatura();
                     break;
 
                 case 3: // TOGGLE
-                    ui.selezionaElementoConInfo(
-                            "Seleziona campo:",
-                            ops.getCampi(),
-                            c -> c.isObbligatorio() ? "obbligatorio" : "facoltativo"
-                    ).ifPresentOrElse(c -> {
-                        boolean nuovo = ui.acquisisciSiNo("Impostare come obbligatorio?");
-                        if (nuovo == c.isObbligatorio())
-                        {
-                            ui.stampaAvviso("Nessuna modifica.");
-                            return;
-                        }
+                    try
+                    {
+                        ui.selezionaElementoConInfo(
+                                "Seleziona campo:",
+                                ops.getCampi(),
+                                c -> c.isObbligatorio() ? "obbligatorio" : "facoltativo"
+                        ).ifPresentOrElse(c -> {
+                            boolean nuovo = ui.acquisisciSiNo("Impostare come obbligatorio?");
+                            if (nuovo == c.isObbligatorio())
+                            {
+                                ui.stampaAvviso("Nessuna modifica.");
+                                return;
+                            }
 
-                        if (ops.setObbl(c.getNome(), nuovo))
-                            ui.stampaSuccesso("Aggiornato.");
-                        else
-                            ui.stampaErrore("Campo non trovato.");
-                    }, () -> ui.stampaInfo("Operazione annullata."));
+                            if (ops.setObbl(c.getNome(), nuovo))
+                                ui.stampaSuccesso("Aggiornato.");
+                            else
+                                ui.stampaErrore("Campo non trovato.");
+                        }, () -> ui.stampaInfo("Operazione annullata."));
+                    }
+                    catch (OperationCancelledException e)
+                    {
+                        ui.stampaInfo("Operazione annullata.");
+                    }
                     ui.pausaConSpaziatura();
                     break;
 

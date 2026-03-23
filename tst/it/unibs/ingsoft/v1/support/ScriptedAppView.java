@@ -20,13 +20,14 @@ import java.util.stream.Collectors;
 public final class ScriptedAppView implements IAppView {
 
     private static final String CANCEL_KEYWORD = "annulla";
+    private static final Object CANCEL_INPUT = new Object();
 
     private final Deque<String> stringInputs = new ArrayDeque<>();
     private final Deque<String> passwordInputs = new ArrayDeque<>();
-    private final Deque<Integer> intInputs = new ArrayDeque<>();
-    private final Deque<Boolean> yesNoInputs = new ArrayDeque<>();
-    private final Deque<TipoDato> tipoDatoInputs = new ArrayDeque<>();
-    private final Deque<List<String>> listInputs = new ArrayDeque<>();
+    private final Deque<Object> intInputs = new ArrayDeque<>();
+    private final Deque<Object> yesNoInputs = new ArrayDeque<>();
+    private final Deque<Object> tipoDatoInputs = new ArrayDeque<>();
+    private final Deque<Object> listInputs = new ArrayDeque<>();
 
     private final List<String> outputs = new ArrayList<>();
     private final List<List<Campo>> printedCampiBatches = new ArrayList<>();
@@ -48,8 +49,18 @@ public final class ScriptedAppView implements IAppView {
         return this;
     }
 
+    public ScriptedAppView addCancelledIntegers(int count) {
+        addCancellations(intInputs, count);
+        return this;
+    }
+
     public ScriptedAppView addYesNo(Boolean... values) {
         Collections.addAll(yesNoInputs, values);
+        return this;
+    }
+
+    public ScriptedAppView addCancelledYesNo(int count) {
+        addCancellations(yesNoInputs, count);
         return this;
     }
 
@@ -58,9 +69,19 @@ public final class ScriptedAppView implements IAppView {
         return this;
     }
 
+    public ScriptedAppView addCancelledTipoDati(int count) {
+        addCancellations(tipoDatoInputs, count);
+        return this;
+    }
+
     @SafeVarargs
     public final ScriptedAppView addNameLists(List<String>... values) {
         Collections.addAll(listInputs, values);
+        return this;
+    }
+
+    public ScriptedAppView addCancelledNameLists(int count) {
+        addCancellations(listInputs, count);
         return this;
     }
 
@@ -115,7 +136,11 @@ public final class ScriptedAppView implements IAppView {
 
     @Override
     public int acquisisciIntero(String prompt, int min, int max) {
-        Integer value = poll(intInputs, "integer input for prompt: " + prompt);
+        Object raw = poll(intInputs, "integer input for prompt: " + prompt);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        Integer value = (Integer) raw;
         if (value < min || value > max) {
             throw new AssertionError("Input fuori range per prompt '" + prompt + "': " + value);
         }
@@ -124,17 +149,31 @@ public final class ScriptedAppView implements IAppView {
 
     @Override
     public boolean acquisisciSiNo(String prompt) {
-        return poll(yesNoInputs, "yes/no input for prompt: " + prompt);
+        Object raw = poll(yesNoInputs, "yes/no input for prompt: " + prompt);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        return (Boolean) raw;
     }
 
     @Override
     public TipoDato acquisisciTipoDato(String prompt) {
-        return poll(tipoDatoInputs, "tipo dato input for prompt: " + prompt);
+        Object raw = poll(tipoDatoInputs, "tipo dato input for prompt: " + prompt);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        return (TipoDato) raw;
     }
 
     @Override
     public List<String> acquisisciListaNomi(String titolo) {
-        return new ArrayList<>(poll(listInputs, "name list input for title: " + titolo));
+        Object raw = poll(listInputs, "name list input for title: " + titolo);
+        if (raw == CANCEL_INPUT) {
+            throw new OperationCancelledException();
+        }
+        @SuppressWarnings("unchecked")
+        List<String> values = (List<String>) raw;
+        return new ArrayList<>(values);
     }
 
     @Override
@@ -144,8 +183,12 @@ public final class ScriptedAppView implements IAppView {
             return Optional.empty();
         }
 
-        int choice = acquisisciIntero(prompt, 0, elementi.size());
-        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        try {
+            int choice = acquisisciIntero(prompt, 0, elementi.size());
+            return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        } catch (OperationCancelledException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -232,5 +275,11 @@ public final class ScriptedAppView implements IAppView {
             throw new AssertionError("Nessun input disponibile per " + description);
         }
         return value;
+    }
+
+    private static void addCancellations(Deque<Object> queue, int count) {
+        for (int i = 0; i < count; i++) {
+            queue.addLast(CANCEL_INPUT);
+        }
     }
 }

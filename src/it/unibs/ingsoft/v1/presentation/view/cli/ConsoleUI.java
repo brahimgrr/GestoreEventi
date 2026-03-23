@@ -6,6 +6,7 @@ import it.unibs.ingsoft.v1.domain.TipoDato;
 import it.unibs.ingsoft.v1.presentation.view.contract.BackException;
 import it.unibs.ingsoft.v1.presentation.view.contract.CancelException;
 import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 
 import java.io.Console;
 import java.util.ArrayList;
@@ -218,7 +219,13 @@ public final class ConsoleUI implements IAppView {
         if (console != null)
         {
             char[] pwd = console.readPassword(prompt);
-            return pwd != null ? new String(pwd) : "";
+            String value = pwd != null ? new String(pwd) : "";
+            String trimmed = value.trim();
+
+            if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
+            if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+
+            return value;
         }
 
         return acquisisciStringa(prompt);
@@ -362,8 +369,15 @@ public final class ConsoleUI implements IAppView {
         stampa("  0) Annulla");
         newLine();
 
-        int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
-        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        try
+        {
+            int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
+            return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        }
+        catch (OperationCancelledException e)
+        {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -383,7 +397,14 @@ public final class ConsoleUI implements IAppView {
         stampa("  0) Annulla");
         newLine();
 
-        int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
-        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        try
+        {
+            int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
+            return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+        }
+        catch (OperationCancelledException e)
+        {
+            return Optional.empty();
+        }
     }
 }

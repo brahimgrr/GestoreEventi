@@ -3,6 +3,7 @@ package it.unibs.ingsoft.v1.unit.presentation;
 import it.unibs.ingsoft.v1.application.AuthenticationService;
 import it.unibs.ingsoft.v1.domain.Configuratore;
 import it.unibs.ingsoft.v1.presentation.controller.AuthController;
+import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 import it.unibs.ingsoft.v1.support.InMemoryCredenzialiRepository;
 import it.unibs.ingsoft.v1.support.ScriptedAppView;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,5 +76,30 @@ class AuthControllerTest {
 
         assertEquals("marco", configuratore.getUsername());
         assertTrue(view.containsOutput("Credenziali non valide. Riprova."));
+    }
+
+    @Test
+    void shouldRepeatRegistrationWhenFinalConfirmationIsDeclined() {
+        ScriptedAppView view = new ScriptedAppView()
+                .addStrings("config", "config", "mario", "luigi")
+                .addPasswords("pass1", "pass2")
+                .addYesNo(false, true);
+
+        AuthController controller = new AuthController(view, authenticationService);
+        Configuratore configuratore = controller.loginConfiguratore();
+
+        assertEquals("luigi", configuratore.getUsername());
+        assertTrue(view.containsOutput("Registrazione non confermata. Inserisci nuovamente i dati."));
+        assertFalse(view.containsOutput("Registrazione annullata. Effettua nuovamente il login."));
+    }
+
+    @Test
+    void shouldPropagateCancellationWhenLoginIsCancelled() {
+        ScriptedAppView view = new ScriptedAppView()
+                .addStrings("annulla");
+
+        AuthController controller = new AuthController(view, authenticationService);
+
+        assertThrows(OperationCancelledException.class, controller::loginConfiguratore);
     }
 }

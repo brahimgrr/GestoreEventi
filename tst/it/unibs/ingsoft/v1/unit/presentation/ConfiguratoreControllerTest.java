@@ -43,6 +43,19 @@ class ConfiguratoreControllerTest {
     }
 
     @Test
+    void shouldAbortFirstConfigurationWhenCancelled() {
+        ScriptedAppView view = new ScriptedAppView()
+                .addCancelledYesNo(1);
+
+        ConfiguratoreController controller = new ConfiguratoreController(configuratore, view, catalogoService);
+        controller.run();
+
+        assertTrue(catalogoService.getCampiBase().isEmpty());
+        assertTrue(view.containsOutput("Configurazione iniziale annullata."));
+        assertEquals(0, repo.getSaveCount());
+    }
+
+    @Test
     void shouldDisplayBaseCommonAndSpecificFieldsInVisualization() {
         catalogoService.initiateCampiBase();
         catalogoService.addCampoComune("Sponsor", TipoDato.STRINGA, false);
@@ -95,5 +108,52 @@ class ConfiguratoreControllerTest {
         Campo updated = catalogoService.getCampiComuni().get(0);
         assertTrue(updated.isObbligatorio());
         assertTrue(view.containsOutput("Aggiornato."));
+    }
+
+    @Test
+    void shouldReturnToMainMenuWhenCategoryMenuChoiceIsCancelled() {
+        catalogoService.initiateCampiBase();
+
+        ScriptedAppView view = new ScriptedAppView()
+                .addIntegers(2)
+                .addCancelledIntegers(1)
+                .addIntegers(0);
+
+        ConfiguratoreController controller = new ConfiguratoreController(configuratore, view, catalogoService);
+        controller.run();
+
+        assertTrue(view.containsOutput("Operazione annullata."));
+    }
+
+    @Test
+    void shouldCancelCategoryRemovalWhenConfirmationPromptIsCancelled() {
+        catalogoService.initiateCampiBase();
+        catalogoService.createCategoria("Sport");
+
+        ScriptedAppView view = new ScriptedAppView()
+                .addIntegers(2, 2, 1, 0, 0)
+                .addCancelledYesNo(1);
+
+        ConfiguratoreController controller = new ConfiguratoreController(configuratore, view, catalogoService);
+        controller.run();
+
+        assertEquals(1, catalogoService.getCategorie().size());
+        assertTrue(view.containsOutput("Operazione annullata."));
+    }
+
+    @Test
+    void shouldCancelCommonFieldCreationWhenTypeSelectionIsCancelled() {
+        catalogoService.initiateCampiBase();
+
+        ScriptedAppView view = new ScriptedAppView()
+                .addIntegers(1, 1, 0, 0)
+                .addStrings("Descrizione")
+                .addCancelledTipoDati(1);
+
+        ConfiguratoreController controller = new ConfiguratoreController(configuratore, view, catalogoService);
+        controller.run();
+
+        assertTrue(catalogoService.getCampiComuni().isEmpty());
+        assertTrue(view.containsOutput("Operazione annullata."));
     }
 }

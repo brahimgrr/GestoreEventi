@@ -33,6 +33,7 @@ public final class AuthController
         {
             ui.newLine();
             ui.stampa("LOGIN CONFIGURATORE");
+            ui.stampaInfo(IAppView.HINT_ANNULLA);
             String u = ui.acquisisciStringa("Username: ");
             String p = ui.acquisisciStringa("Password: ");
 
@@ -83,7 +84,7 @@ public final class AuthController
         ui.stampaInfo("Username: minimo 3 caratteri, non può essere '" +
                       AuthenticationService.USERNAME_PREDEFINITO + "'.");
         ui.stampaInfo("Password: minimo 4 caratteri.");
-        ui.stampaInfo(IAppView.HINT_ANNULLA); // TODO IMPLEMENT
+        ui.stampaInfo(IAppView.HINT_ANNULLA);
         ui.newLine();
 
         while (true)
@@ -94,7 +95,11 @@ public final class AuthController
             try
             {
                 if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?"))
-                    throw new OperationCancelledException();
+                {
+                    ui.stampaInfo("Registrazione non confermata. Inserisci nuovamente i dati.");
+                    ui.newLine();
+                    continue;
+                }
                 Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
                 ui.stampaSuccesso("Registrazione completata. Benvenuto, " + newU + "!");
                 return registered;
