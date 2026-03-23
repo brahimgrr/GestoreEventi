@@ -42,11 +42,6 @@ public final class PropostaService
     {
         this.bachecaRepo = Objects.requireNonNull(bachecaRepo);
     }
-
-    // ----------------------------------------------------------------
-    // PROPOSTE VALIDE IN MEMORIA (session-scoped)
-    // ----------------------------------------------------------------
-
     /**
      * Saves a valid proposal in memory for later publication.
      *

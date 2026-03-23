@@ -1,168 +1,435 @@
 package it.unibs.ingsoft.v3.presentation.view.cli;
 
-import it.unibs.ingsoft.v3.domain.AppConstants;
-import it.unibs.ingsoft.v3.domain.StatoProposta;
+import it.unibs.ingsoft.v3.domain.Campo;
+import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.TipoDato;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.CategoriaVM;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.NotificaVM;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.PropostaSelezionabileVM;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.PropostaVM;
+import it.unibs.ingsoft.v3.presentation.view.contract.BackException;
+import it.unibs.ingsoft.v3.presentation.view.contract.CancelException;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v3.presentation.view.viewmodel.CategoriaVM;
+import it.unibs.ingsoft.v3.presentation.view.viewmodel.PropostaVM;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Scanner;
+import java.io.Console;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 /**
- * Console implementation of {@link IAppView}.
- * Renders view-models to stdout and reads raw input from stdin.
- * Contains no domain-model imports (Proposta, Campo, Categoria, Notifica).
- * Contains no CancelException or BackException — cancellation is signalled
- * via {@link Optional#empty()} returned from {@link #runForm}.
+ * Console (stdin/stdout) implementation of {@link IAppView}.
+ *
+ * UX design rules enforced here:
+ *  - Every string read checks for CANCEL_KEYWORD / BACK_KEYWORD and throws accordingly.
+ *  - Validation is inline (field-by-field), never deferred to post-submission.
+ *  - Batch input (acquisisciListaNomi) shows a running count, detects duplicates inline,
+ *    and requires an explicit review/confirm step before returning.
+ *  - Password input uses System.console().readPassword() when available.
  */
-public final class ConsoleUI implements IAppView
-{
-    /** Re-exported for backward compatibility; defined in AppConstants. */
-    public static final java.time.format.DateTimeFormatter DATE_FMT = AppConstants.DATE_FMT;
+public final class ConsoleUI implements IAppView {
+    public static final String CANCEL_KEYWORD = "annulla";
+    public static final String BACK_KEYWORD   = "indietro";
+
+    /** Context hint shown at the start of every form that accepts free-text input. */
+    public static final String HINT_ANNULLA =
+            "Digita '" + CANCEL_KEYWORD + "' per annullare.";
+
+    private static final String SEPARATORE       = "-".repeat(60);
+    private static final String SEPARATORE_DOPPIO = "═".repeat(60);
 
     private final Scanner scanner;
 
-    public ConsoleUI(Scanner scanner)
-    {
+    public ConsoleUI(Scanner scanner) {
         this.scanner = scanner;
     }
 
-    // ================================================================
-    // IOutputView
-    // ================================================================
+    // ----------------------------------------------------------------
+    // IOutputView — basic output
+    // ----------------------------------------------------------------
 
     @Override
-    public void stampa(String msg) { System.out.println(msg); }
-
-    @Override
-    public void newLine() { System.out.println(); }
-
-    @Override
-    public void header(String title)
-    {
-        System.out.println("==================================================");
-        System.out.println(title);
-        System.out.println("==================================================");
+    public void stampa(String testo) {
+        System.out.println(testo);
     }
 
     @Override
-    public void stampaSezione(String titolo) { stampa("----- " + titolo + " -----"); }
+    public void newLine() {
+        System.out.println();
+    }
 
     @Override
-    public void stampaCampi(List<?> campi) { stampaLista(campi, " (nessuno)"); }
+    public void header(String titolo) {
+        newLine();
+        System.out.println(SEPARATORE_DOPPIO);
+        System.out.println("  " + titolo.toUpperCase());
+        System.out.println(SEPARATORE_DOPPIO);
+    }
 
     @Override
-    public void stampaCategorie(List<?> cat) { stampaLista(cat, " (nessuna)"); }
+    public void stampaSezione(String titolo) {
+        newLine();
+        System.out.println("-- " + titolo + " " + "-".repeat(Math.max(0, 56 - titolo.length())));
+    }
 
     @Override
-    public void stampaMenu(String titolo, String[] lista)
+    public void stampaCampi(List<Campo> campi)
     {
-        if (titolo != null && !titolo.isBlank()) header(titolo);
-        if (lista == null || lista.length == 0) return;
-        IntStream.range(0, lista.length).forEach(i -> stampa((i + 1) + ") " + lista[i]));
-        stampa("0) Esci");
+        if (campi.isEmpty()) {
+            stampa("    (nessuno campo)");
+            return;
+        }
+        for (Campo c : campi)
+            stampa("  - " + c);
+    }
+
+    @Override
+    public void stampaCategorie(List<Categoria> categorie)
+    {
+        if (categorie.isEmpty()) {
+            stampa("  (nessuna categoria)");
+            return;
+        }
+        for (Categoria cat : categorie)
+        {
+           stampa("  - " + cat.getNome());
+            for (Campo c : cat.getCampiSpecifici())
+                stampa("      - " + c);
+        }
+    }
+
+    @Override
+    public void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi)
+    {
+        if (categorieConCampi.isEmpty())
+        {
+            stampa("    (nessuna categoria)");
+            return;
+        }
+        for (Map.Entry<String, List<String>> entry : categorieConCampi.entrySet())
+        {
+            stampa("    - " + entry.getKey());
+            if (entry.getValue().isEmpty())
+                stampa("          (nessun campo specifico)");
+            else
+                entry.getValue().forEach(c -> stampa("          - " + c));
+        }
+    }
+
+    @Override
+    public void pausa() {
+        System.out.print("Premere INVIO per continuare...");
+        scanner.nextLine();
+    }
+
+    @Override
+    public void stampaSuccesso(String msg) {
+        stampa("  ✅ " + msg);
+    }
+
+    @Override
+    public void stampaErrore(String msg) {
+        stampa("  ❌ " + msg);
+    }
+
+    @Override
+    public void stampaAvviso(String msg) {
+        stampa("  ⚠️  " + msg);
+    }
+
+    @Override
+    public void stampaInfo(String msg) {
+        stampa("  ℹ️  " + msg);
+    }
+
+    @Override
+    public void pausaConSpaziatura() {
+        IAppView.super.pausaConSpaziatura();
+    }
+
+    @Override
+    public void stampaMenu(String titolo, String[] lista, String uscitaLabel) {
+        if (!titolo.isBlank())
+            header(titolo);
+
+        if (lista.length == 0)
+            return;
+
+        IntStream.range(0, lista.length)
+                .forEach(i -> stampa((i + 1) + ") " + lista[i]));
+
+        stampa("0) " + uscitaLabel);
         newLine();
     }
 
-    @Override public void pausa() { acquisisciStringa("Premi INVIO per continuare..."); }
+    @Override
+    public void stampaMenu(String titolo, String[] lista) {
+        stampaMenu(titolo, lista, "Torna");
+    }
 
-    @Override public void stampaSuccesso(String msg) { stampa("  ✅ " + msg); }
-    @Override public void stampaErrore(String msg)   { stampa("  ❌ " + msg); }
-    @Override public void stampaAvviso(String msg)   { stampa("  ⚠️  " + msg); }
-    @Override public void stampaInfo(String msg)     { stampa("  ℹ️  " + msg); }
 
-    // ================================================================
-    // IInputView
-    // ================================================================
+    @Override
+    public void mostraBacheca(Map<String, List<PropostaVM>> bacheca)
+    {
+        if (bacheca.isEmpty())
+        {
+            System.out.println("  La bacheca è vuota.");
+            return;
+        }
+        bacheca.forEach((categoria, proposte) ->
+        {
+            stampaSezione("Categoria: " + categoria);
+            for (PropostaVM p : proposte) {
+                //System.out.println("  [" + (i + 1) + "] Proposta — Pubblicata il: "
+                //        + (p.dataPubblicazione() != null ? p.dataPubblicazione() : "N/A"));
+                //System.out.println("      Termine iscrizioni:   "
+                //        + (p.termineIscrizione() != null ? p.termineIscrizione() : "N/A"));
+                for (String campo : p.valoriCampi().keySet()) {
+                    String valore = p.valoriCampi().getOrDefault(campo, "");
+                    if (!valore.isBlank())
+                        System.out.println("      " + campo + ": " + valore);
+                }
+                newLine();
+            }
+        });
+    }
 
+    @Override
+    public void mostraRiepilogoProposta(PropostaVM p)
+    {
+        newLine();
+        System.out.println(SEPARATORE);
+        System.out.println("  RIEPILOGO PROPOSTA — Categoria: " + p.categoriaNome()
+                + " | Stato: " + p.stato());
+        System.out.println(SEPARATORE);
+        for (String campo : p.valoriCampi().keySet())
+        {
+            String valore = p.valoriCampi().getOrDefault(campo, "");
+            System.out.println("  " + campo + ": " + (valore.isBlank() ? "(non compilato)" : valore));
+        }
+        System.out.println(SEPARATORE);
+    }
+
+    // ----------------------------------------------------------------
+    // IInputView — core string input with keyword detection
+    // ----------------------------------------------------------------
+
+    /**
+     * Reads one line from stdin, trims it, then checks for cancel/back keywords.
+     *
+     * @throws CancelException if the trimmed input equals {@link #CANCEL_KEYWORD} (case-insensitive)
+     * @throws BackException   if the trimmed input equals {@link #BACK_KEYWORD}   (case-insensitive)
+     */
     @Override
     public String acquisisciStringa(String prompt)
     {
         System.out.print(prompt);
-        String line = scanner.nextLine();
-        return (line == null) ? "" : line.trim();
+        String line    = scanner.nextLine();
+        String trimmed = (line == null) ? "" : line.trim();
+
+        if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
+        if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+
+        return trimmed;
     }
+
+    // ---------------------------------------------------------------
+    // Inline-validated string input
+    // ---------------------------------------------------------------
+
+    @Override
+    public String acquisisciStringaConValidazione(String prompt,
+                                                   Predicate<String> validatore,
+                                                   String messaggioErrore)
+    {
+        while (true)
+        {
+            String val = acquisisciStringa(prompt);
+            if (validatore.test(val)) return val;
+            stampaErrore(messaggioErrore);
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Password input (masked when System.console() is available)
+    // ---------------------------------------------------------------
 
     @Override
     public String acquisisciPassword(String prompt)
     {
-        java.io.Console console = System.console();
+        Console console = System.console();
         if (console != null)
         {
-            char[] chars = console.readPassword("%s", prompt);
-            return chars == null ? "" : new String(chars).trim();
+            char[] pwd = console.readPassword(prompt);
+            return pwd != null ? new String(pwd) : "";
         }
-        // Fallback when running inside an IDE (no real console)
+
         return acquisisciStringa(prompt);
     }
 
+    // ---------------------------------------------------------------
+    // Integer and boolean input
+    // ---------------------------------------------------------------
     @Override
     public int acquisisciIntero(String prompt, int min, int max)
     {
-        while (true)
-        {
+        while (true) {
             String s = acquisisciStringa(prompt);
             try
             {
-                int v = Integer.parseInt(s.trim());
-                if (v < min || v > max) { stampa("Valore fuori range [" + min + ", " + max + "]."); continue; }
+                int v = Integer.parseInt(s);
+
+                if (v < min || v > max)
+                {
+                    stampa("Inserisci un numero tra " + min + " e " + max + ".");
+                    continue;
+                }
+
                 return v;
             }
-            catch (NumberFormatException e) { stampa("Inserisci un intero valido."); }
+            catch (NumberFormatException e)
+            {
+                stampa("Inserisci un intero valido.");
+            }
         }
     }
 
     @Override
     public boolean acquisisciSiNo(String prompt)
     {
-        while (true)
-        {
-            String s = acquisisciStringa(prompt + " (s/n): ").trim().toLowerCase();
-            if (s.equals("s") || s.equals("si") || s.equals("sì")) return true;
-            if (s.equals("n") || s.equals("no")) return false;
+        while (true) {
+            String s = acquisisciStringa(prompt + " (s/n): ").toLowerCase();
+            if (s.equals("s") || s.equals("si") || s.equals("sì"))
+                return true;
+            if (s.equals("n") || s.equals("no"))
+                return false;
+
             stampa("Rispondi con s/n.");
         }
     }
 
-    private static final TipoDato[] TIPI = TipoDato.values();
-
     @Override
     public TipoDato acquisisciTipoDato(String prompt)
     {
+        TipoDato[] valori = TipoDato.values();
         stampa(prompt);
-        for (int i = 0; i < TIPI.length; i++) stampa("  " + (i + 1) + ") " + TIPI[i]);
-        int scelta = acquisisciIntero("Tipo: ", 1, TIPI.length);
-        return TIPI[scelta - 1];
+        for (int i = 0; i < valori.length; i++)
+            stampa("  " + (i + 1) + ") " + valori[i]);
+        newLine();
+
+        int choice = acquisisciIntero("Scelta: ", 1, valori.length);
+        return valori[choice - 1];
     }
 
+    // ---------------------------------------------------------------
+    // Batch name list with inline duplicate detection and review step
+    // ---------------------------------------------------------------
+
+    /**
+     * Interactively collects a list of names:
+     * <ul>
+     *   <li>Running count shown in the prompt ({@code [N] > }).</li>
+     *   <li>Case-insensitive duplicate detection — duplicates are warned and ignored.</li>
+     *   <li>Blank line terminates entry.</li>
+     *   <li>Review/confirm step before returning.</li>
+     *   <li>If the user types the cancel keyword, {@link CancelException} is thrown.</li>
+     * </ul>
+     */
     @Override
     public List<String> acquisisciListaNomi(String titolo)
     {
-        stampa(titolo);
-        stampa("Inserisci un nome per riga. Riga vuota per terminare.");
-        newLine();
-        List<String> list = new ArrayList<>();
-        while (true)
-        {
-            String s = acquisisciStringa("> ");
-            if (s == null || s.isBlank()) break;
-            list.add(s.trim());
+        while (true) {
+            stampa(titolo);
+            stampaInfo("Riga vuota per terminare. " + HINT_ANNULLA);
+            newLine();
+
+            List<String> list = new ArrayList<>();
+
+            while (true)
+            {
+                System.out.print("[" + list.size() + "] > ");
+                String line    = scanner.nextLine();
+                String trimmed = (line == null) ? "" : line.trim();
+
+                if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
+                if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+
+                if (trimmed.isEmpty()) break;
+
+                boolean duplicato = list.stream().anyMatch(n -> n.equalsIgnoreCase(trimmed));
+                if (duplicato) {
+                    stampaAvviso("'" + trimmed + "' già presente nella lista, ignorato.");
+                    continue;
+                }
+
+                list.add(trimmed);
+            }
+
+            if (list.isEmpty())
+            {
+                stampaAvviso("Nessun nome inserito.");
+                if (!acquisisciSiNo("Vuoi riprovare?")) return list;
+                newLine();
+                continue;
+            }
+
+            // Review step
+            String riepilogo = String.join(", ", list);
+            stampaInfo(list.size() + " element" + (list.size() == 1 ? "o" : "i") +
+                       " inserit" + (list.size() == 1 ? "o" : "i") + ": " + riepilogo);
+
+            if (acquisisciSiNo("Confermare?")) return list;
+
+            // User said no -> restart
+            newLine();
         }
-        return list;
     }
 
-    // ================================================================
+    // ----------------------------------------------------------------
+    // IInputView — element selection
+    // ----------------------------------------------------------------
+
+    @Override
+    public <T> Optional<T> selezionaElemento(String prompt, List<T> elementi)
+    {
+        if (elementi.isEmpty())
+        {
+            stampa("  (nessun elemento disponibile)");
+            return Optional.empty();
+        }
+
+        stampa(prompt);
+        for (int i = 0; i < elementi.size(); i++)
+            stampa("  " + (i + 1) + ") " + elementi.get(i));
+        stampa("  0) Annulla");
+        newLine();
+
+        int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
+        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+    }
+
+    @Override
+    public <T> Optional<T> selezionaElementoConInfo(String prompt, List<T> elementi,
+                                                     Function<T, String> infoMapper)
+    {
+        if (elementi.isEmpty())
+        {
+            stampa("  (nessun elemento disponibile)");
+            return Optional.empty();
+        }
+
+        stampa(prompt);
+        for (int i = 0; i < elementi.size(); i++)
+            stampa("  " + (i + 1) + ") " + elementi.get(i) +
+                   "  [" + infoMapper.apply(elementi.get(i)) + "]");
+        stampa("  0) Annulla");
+        newLine();
+
+        int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
+        return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
+    }
+
+    // ----------------------------------------------------------------
     // IFormView
-    // ================================================================
+    // ----------------------------------------------------------------
 
     @Override
     public Optional<Map<String, String>> runForm(List<FormField> fields)
@@ -170,147 +437,24 @@ public final class ConsoleUI implements IAppView
         return new StepByStepFormRunner(this, this, DefaultTypeValidator.INSTANCE, fields).run();
     }
 
-    // ================================================================
-    // IDisplayView
-    // ================================================================
-
-    @Override
-    public void mostraBacheca(Map<String, List<PropostaVM>> bachecaPerCategoria)
-    {
-        if (bachecaPerCategoria.isEmpty())
-        {
-            stampa("La bacheca è vuota: nessuna proposta aperta.");
-            return;
-        }
-
-        for (Map.Entry<String, List<PropostaVM>> entry : bachecaPerCategoria.entrySet())
-        {
-            stampaSezione("Categoria: " + entry.getKey());
-            List<PropostaVM> proposte = entry.getValue();
-            for (int i = 0; i < proposte.size(); i++)
-            {
-                PropostaVM p = proposte.get(i);
-                stampa("  [Proposta #" + (i + 1) + "]  Pubblicata il: " + p.dataPubblicazione()
-                        + "  |  Termine iscrizione: " + p.termineIscrizione()
-                        + "  |  Iscritti: " + p.numeroIscritti());
-                for (String nome : p.campiOrdinati())
-                {
-                    String valore = p.valoriCampi().get(nome);
-                    if (valore != null && !valore.isBlank()) stampa("    " + nome + ": " + valore);
-                }
-                newLine();
-            }
-        }
-    }
-
-    @Override
-    public void mostraArchivio(List<PropostaVM> archivio)
-    {
-        if (archivio.isEmpty()) { stampa("L'archivio è vuoto."); return; }
-
-        for (int i = 0; i < archivio.size(); i++)
-        {
-            PropostaVM p = archivio.get(i);
-            stampa("  [" + (i + 1) + "] Categoria: " + p.categoriaNome()
-                    + "  |  Stato attuale: " + p.stato());
-
-            // State transition history (chronological — LinkedHashMap insertion order)
-            if (p.storiaStati() != null && !p.storiaStati().isEmpty())
-            {
-                StringBuilder storia = new StringBuilder("    Storia: ");
-                boolean primo = true;
-                for (Map.Entry<StatoProposta, java.time.LocalDate> entry : p.storiaStati().entrySet())
-                {
-                    if (!primo) storia.append(" → ");
-                    storia.append(entry.getKey())
-                          .append(": ")
-                          .append(entry.getValue().format(DATE_FMT));
-                    primo = false;
-                }
-                stampa(storia.toString());
-            }
-
-            for (String nome : p.campiOrdinati())
-            {
-                String valore = p.valoriCampi().get(nome);
-                if (valore != null && !valore.isBlank()) stampa("    " + nome + ": " + valore);
-            }
-            newLine();
-        }
-    }
-
-    @Override
-    public void mostraNotifiche(List<NotificaVM> notifiche)
-    {
-        if (notifiche.isEmpty()) { stampa("Nessuna notifica."); return; }
-        for (NotificaVM n : notifiche)
-            stampa("  [" + n.index() + "] " + n.messaggio() + "  (ricevuta il: " + n.data() + ")");
-    }
-
-    @Override
-    public void mostraRiepilogoProposta(PropostaVM proposta)
-    {
-        stampa("══════════════════════════════════════════════════");
-        stampa("  RIEPILOGO PROPOSTA");
-        stampa("══════════════════════════════════════════════════");
-        stampa(String.format("  %-22s: %s", "Categoria", proposta.categoriaNome()));
-        for (String nome : proposta.campiOrdinati())
-        {
-            String val = proposta.valoriCampi().getOrDefault(nome, "");
-            if (!val.isBlank()) stampa(String.format("  %-22s: %s", nome, val));
-        }
-        stampa("══════════════════════════════════════════════════");
-        newLine();
-    }
-
-    // ================================================================
+    // ----------------------------------------------------------------
     // ISelectionView
-    // ================================================================
+    // ----------------------------------------------------------------
 
     @Override
     public OptionalInt selezionaCategoria(List<CategoriaVM> categorie)
     {
-        for (CategoriaVM c : categorie) stampa("  " + c.index() + ") " + c.nome());
-        newLine();
-        int scelta = acquisisciIntero("Scegli categoria (0 per annullare): ", 0, categorie.size());
-        return scelta == 0 ? OptionalInt.empty() : OptionalInt.of(scelta - 1);
-    }
-
-    @Override
-    public OptionalInt selezionaPropostaPerIscrizione(List<PropostaSelezionabileVM> proposte)
-    {
-        for (PropostaSelezionabileVM p : proposte)
+        if (categorie.isEmpty())
         {
-            stampa("  " + p.index() + ") [" + p.categoriaNome() + "] " + p.titolo());
-            stampa("     Data: " + p.data() + " | Luogo: " + p.luogo());
-            stampa("     Termine: " + p.termineScritto()
-                    + " | Iscritti: " + (p.maxPartecipanti() > 0
-                        ? p.numeroIscritti() + "/" + p.maxPartecipanti()
-                        : String.valueOf(p.numeroIscritti()))
-                    + (!p.quota().isBlank() ? " | Quota: €" + p.quota() : ""));
-            newLine();
+            stampaAvviso("Nessuna categoria disponibile.");
+            return OptionalInt.empty();
         }
-        int scelta = acquisisciIntero("Scegli proposta (0 per annullare): ", 0, proposte.size());
-        return scelta == 0 ? OptionalInt.empty() : OptionalInt.of(scelta - 1);
-    }
+        for (CategoriaVM c : categorie)
+            System.out.println("  " + c.indice() + ". " + c.nome());
+        System.out.println("  0. Annulla");
 
-    @Override
-    public OptionalInt selezionaNotificaDaEliminare(List<NotificaVM> notifiche)
-    {
-        if (notifiche.isEmpty()) { stampa("Nessuna notifica da eliminare."); return OptionalInt.empty(); }
-        mostraNotifiche(notifiche);
-        newLine();
-        int scelta = acquisisciIntero("Numero notifica da eliminare (0 per annullare): ", 0, notifiche.size());
-        return scelta == 0 ? OptionalInt.empty() : OptionalInt.of(scelta - 1);
-    }
-
-    // ================================================================
-    // Private helpers
-    // ================================================================
-
-    private void stampaLista(List<?> elementi, String emptyMessage)
-    {
-        if (elementi == null || elementi.isEmpty()) { stampa(emptyMessage); return; }
-        for (Object e : elementi) stampa(" - " + e);
+        int scelta = acquisisciIntero("Scelta: ", 0, categorie.size());
+        if (scelta == 0) return OptionalInt.empty();
+        return OptionalInt.of(scelta - 1);
     }
 }

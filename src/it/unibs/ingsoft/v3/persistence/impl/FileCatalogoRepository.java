@@ -18,7 +18,7 @@ public final class FileCatalogoRepository
     @Override
     public Catalogo get() {
         if (cached == null) {
-            cached = this.get();
+            cached = load();
         }
         return cached;
     }

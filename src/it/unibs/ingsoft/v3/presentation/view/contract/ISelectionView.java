@@ -1,22 +1,15 @@
 package it.unibs.ingsoft.v3.presentation.view.contract;
 
 import it.unibs.ingsoft.v3.presentation.view.viewmodel.CategoriaVM;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.NotificaVM;
-import it.unibs.ingsoft.v3.presentation.view.viewmodel.PropostaSelezionabileVM;
 
 import java.util.List;
 import java.util.OptionalInt;
 
-/**
- * Combined display + selection operations.
- * Returns a 0-based index into the supplied list, or {@link OptionalInt#empty()} if
- * the user cancelled (chose 0).
- * Console: prints numbered list then calls {@code acquisisciIntero}.
- * GUI: opens a modal JList dialog.
- */
 public interface ISelectionView
 {
+    /**
+     * Shows a numbered list of categories and returns the 0-based index of the
+     * selected one, or empty if the user cancels.
+     */
     OptionalInt selezionaCategoria(List<CategoriaVM> categorie);
-    OptionalInt selezionaPropostaPerIscrizione(List<PropostaSelezionabileVM> proposte);
-    OptionalInt selezionaNotificaDaEliminare(List<NotificaVM> notifiche);
 }

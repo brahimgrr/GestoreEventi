@@ -102,6 +102,7 @@ public final class Proposta
         return valoriCampi;
     }
 
+
     public void putAllValoriCampi(Map<String, String> valori)
     {
         valoriCampi.putAll(valori);

@@ -37,7 +37,9 @@
       "Bash(where py:*)",
       "Bash(where python:*)",
       "Bash(where python3:*)",
-      "Bash(py reorg_v3.py)"
+      "Bash(py reorg_v3.py)",
+      "Bash(xargs basename:*)",
+      "Bash(find . -name *.jar)"
     ]
   }
 }

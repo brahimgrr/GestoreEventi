@@ -3,32 +3,28 @@ package it.unibs.ingsoft.v3.presentation.view.cli;
 import it.unibs.ingsoft.v3.presentation.view.contract.IInputView;
 import it.unibs.ingsoft.v3.presentation.view.contract.IOutputView;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
- * Orchestrates a multi-field interactive form in the view layer.
+ * Orchestrates multi-field form entry one field at a time.
  *
- * Features:
- * - Field-by-field entry with progress counter [N/M]
- * - INVIO (blank) = keep existing value for both mandatory and optional fields
- * - 'annulla' keyword → returns {@link Optional#empty()} (no exception thrown)
- * - 'indietro' keyword → steps back to the previous field
- * - Type validation via the injected {@link TypeValidator} before business validators
- * - Ordered business-rule validators ({@link FieldValidator}) with cross-field context
- * - ✅/❌ feedback after each accepted/rejected value
+ * <ul>
+ *   <li>Shows progress as {@code [N/M] FieldLabel [tipo] (*)}</li>
+ *   <li>Pre-fills fields with existing values shown as {@code [attuale: value]}</li>
+ *   <li>{@code annulla} — cancels the entire form, returns {@code Optional.empty()}</li>
+ *   <li>{@code indietro} — goes back to the previous field</li>
+ *   <li>Blank input — keeps the existing value (or re-prompts if mandatory and not set)</li>
+ * </ul>
  */
 public final class StepByStepFormRunner
 {
-    public static final String CANCEL_KEYWORD = "annulla";
-    public static final String BACK_KEYWORD   = "indietro";
+    private static final String CANCEL_KEYWORD = "annulla";
+    private static final String BACK_KEYWORD   = "indietro";
 
-    private final IInputView      input;
-    private final IOutputView     output;
-    private final TypeValidator   typeValidator;
-    private final List<FormField> fields;
+    private final IInputView input;
+    private final IOutputView output;
+    private final TypeValidator typeValidator;
+    private final List<FormField>     fields;
 
     public StepByStepFormRunner(IInputView input, IOutputView output,
                                 TypeValidator typeValidator, List<FormField> fields)
@@ -42,99 +38,87 @@ public final class StepByStepFormRunner
     /**
      * Runs the form interactively.
      *
-     * @return the collected field values, or {@link Optional#empty()} if the user
-     *         typed 'annulla' at any field
+     * @return a map of field name → value on completion, or empty on cancellation
      */
     public Optional<Map<String, String>> run()
     {
-        Map<String, String> context = new LinkedHashMap<>();
+        Map<String, String> ctx = new LinkedHashMap<>();
 
-        // Seed with existing values so [attuale:] display works from the start
+        // Seed context with pre-existing values
         for (FormField f : fields)
             if (f.getCurrentValue() != null && !f.getCurrentValue().isBlank())
-                context.put(f.getName(), f.getCurrentValue());
+                ctx.put(f.getName(), f.getCurrentValue());
 
+        int i = 0;
         int total = fields.size();
-        int i     = 0;
 
         while (i < total)
         {
-            FormField f        = fields.get(i);
-            String    esistente = context.get(f.getName());
-            String    etichetta = buildEtichetta(f, esistente, i + 1, total);
+            FormField f = fields.get(i);
+            String current = ctx.get(f.getName());
 
-            String raw = input.acquisisciStringa(etichetta + ": ");
+            String obbLabel = f.isObbligatorio() ? "(*) " : "";
+            String attualeLabel = (current != null && !current.isBlank())
+                    ? " [attuale: " + current + "]"
+                    : "";
+            String prompt = "[" + (i + 1) + "/" + total + "] " + obbLabel
+                    + f.getLabel() + " [" + f.getTipo() + "]" + attualeLabel + ": ";
 
-            // ── Cancel ──────────────────────────────────────────────────────────
-            if (raw.equalsIgnoreCase(CANCEL_KEYWORD))
-                return Optional.empty();
+            String raw = input.acquisisciStringa(prompt).trim();
 
-            // ── Back ─────────────────────────────────────────────────────────────
+            if (raw.equalsIgnoreCase(CANCEL_KEYWORD)) return Optional.empty();
+
             if (raw.equalsIgnoreCase(BACK_KEYWORD))
             {
                 if (i > 0) i--;
-                else output.stampaInfo("Sei già al primo campo.");
                 continue;
             }
 
-            // ── Enter = keep current value ────────────────────────────────────────
+            // Blank input → keep existing value
             if (raw.isBlank())
             {
-                if (f.isMandatory() && (esistente == null || esistente.isBlank()))
+                if (current != null && !current.isBlank())
                 {
-                    output.stampaErrore("Campo obbligatorio. Inserisci un valore.");
-                    continue;
+                    output.stampaSuccesso("  Campo invariato: " + current);
+                    i++;
                 }
-                if (esistente != null && !esistente.isBlank())
+                else if (!f.isObbligatorio())
                 {
-                    output.stampaSuccesso("Mantenuto: " + esistente);
-                    context.put(f.getName(), esistente);
+                    i++;
                 }
-                i++;
+                else
+                {
+                    output.stampaErrore("  Campo obbligatorio. Inserire un valore.");
+                }
                 continue;
             }
 
-            // ── Type validation ──────────────────────────────────────────────────
+            // Type validation
             String typeError = typeValidator.validate(raw, f.getTipo());
             if (typeError != null)
             {
-                output.stampaErrore(typeError);
+                output.stampaErrore("  " + typeError);
                 continue;
             }
 
-            // ── Business-rule validators ──────────────────────────────────────────
-            boolean valid = true;
+            // Business-rule validators (cross-field)
+            String businessError = null;
             for (FieldValidator v : f.getValidators())
             {
-                String err = v.validate(raw, context);
-                if (err != null)
-                {
-                    output.stampaErrore(err);
-                    valid = false;
-                    break;
-                }
+                businessError = v.validate(raw, Collections.unmodifiableMap(ctx));
+                if (businessError != null) break;
             }
-            if (!valid) continue;
+            if (businessError != null)
+            {
+                output.stampaErrore("  " + businessError);
+                continue;
+            }
 
-            output.stampaSuccesso("Valido");
-            context.put(f.getName(), raw);
+            ctx.put(f.getName(), raw);
+            output.stampaSuccesso("  ✓");
             i++;
         }
 
-        return Optional.of(context);
-    }
-
-    // ── private helpers ────────────────────────────────────────────────────────
-
-    private String buildEtichetta(FormField f, String esistente, int idx, int total)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.append("  [").append(idx).append("/").append(total).append("] ");
-        sb.append(f.getLabel());
-        sb.append(f.isMandatory() ? " (*)" : " (facoltativo)");
-        sb.append(" [").append(f.getTipo()).append("]");
-        if (esistente != null && !esistente.isBlank())
-            sb.append(" [attuale: ").append(esistente).append("]");
-        return sb.toString();
+        return Optional.of(ctx);
     }
 }

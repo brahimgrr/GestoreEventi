@@ -1,16 +1,17 @@
 package it.unibs.ingsoft.v3.presentation.controller;
 
 import it.unibs.ingsoft.v3.domain.Configuratore;
-import it.unibs.ingsoft.v3.domain.Fruitore;
 import it.unibs.ingsoft.v3.application.AuthenticationService;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
+import it.unibs.ingsoft.v3.presentation.view.contract.OperationCancelledException;
 
 /**
- * Handles login and registration for both configuratori and fruitori.
+ * Handles configuratore login and first-time credential setup.
+ * Contains no business logic — only UI interaction for authentication.
  */
 public final class AuthController
 {
-    private final IAppView              ui;
+    private final IAppView ui;
     private final AuthenticationService auth;
 
     public AuthController(IAppView ui, AuthenticationService auth)
@@ -20,106 +21,133 @@ public final class AuthController
     }
 
     /**
-     * Loops until a successful configuratore login.
-     * Forces personal credential registration on first access.
+     * Loops until a successful login is performed.
+     * If default credentials are used, forces the user to register personal ones
+     * with field-level inline validation and re-prompt (only the failed field is re-asked).
+     *
+     * @return the authenticated Configuratore
      */
     public Configuratore loginConfiguratore()
     {
         while (true)
         {
+            ui.newLine();
             ui.stampa("LOGIN CONFIGURATORE");
-            String u = ui.acquisisciStringa("Username: ").trim();
-            String p = ui.acquisisciPassword("Password: ").trim();
-            Configuratore opt = auth.loginConfiguratore(u, p);
+            String u = ui.acquisisciStringa("Username: ");
+            String p = ui.acquisisciStringa("Password: ");
 
-            if (opt == null)
+            var result = auth.login(u, p);
+
+            if (result.isEmpty())
             {
-                ui.stampa("Credenziali non valide.");
+                ui.stampaErrore("Credenziali non valide. Riprova.");
                 ui.newLine();
                 continue;
             }
 
-            ui.stampa("Login riuscito.");
+            Configuratore logged = result.get();
+            ui.stampaSuccesso("Login riuscito.");
 
-            if (AuthenticationService.USERNAME_PREDEFINITO.equals(opt.getUsername()))
+            // First login with default credentials — force personal registration
+            if (AuthenticationService.USERNAME_PREDEFINITO.equals(logged.getUsername()))
             {
                 ui.newLine();
                 ui.stampa("Primo accesso con credenziali predefinite.");
-                ui.stampa("Devi scegliere credenziali personali.");
-
-                while (true)
+                ui.stampa("Scegli le tue credenziali personali.");
+                try
                 {
-                    String newU = ui.acquisisciStringa("Nuovo username: ").trim();
-                    String newP = ui.acquisisciPassword("Nuova password: ").trim();
-                    try
-                    {
-                        Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
-                        ui.stampa("Registrazione completata.");
-                        ui.newLine();
-                        return registered;
-                    }
-                    catch (IllegalArgumentException e)
-                    {
-                        ui.stampa("Errore: " + e.getMessage());
-                    }
+                    Configuratore registered = registrazioneInterattiva();
+                    ui.newLine();
+                    return registered;
+                }
+                catch (OperationCancelledException e)
+                {
+                    ui.stampaInfo("Registrazione annullata. Effettua nuovamente il login.");
+                    ui.newLine();
+                    continue;
                 }
             }
 
             ui.newLine();
-            return opt;
+            return logged;
         }
     }
 
     /**
-     * Shows login/registration for fruitori.
-     *
-     * @return the authenticated Fruitore, or null if the user chose to go back
+     * Guides the user through first-time credential registration with field-level re-prompts.
+     * Throws {@link OperationCancelledException} if the user aborts.
      */
-    public Fruitore loginFruitore()
+    private Configuratore registrazioneInterattiva()
+    {
+        // Show all constraints upfront before starting the form
+        ui.stampaInfo("Username: minimo 3 caratteri, non può essere '" +
+                      AuthenticationService.USERNAME_PREDEFINITO + "'.");
+        ui.stampaInfo("Password: minimo 4 caratteri.");
+        ui.stampaInfo(IAppView.HINT_ANNULLA); // TODO IMPLEMENT
+        ui.newLine();
+
+        while (true)
+        {
+            String newU = raccogliUsername();
+            String newP = raccogliPassword();
+
+            try
+            {
+                if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?"))
+                    throw new OperationCancelledException();
+                Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
+                ui.stampaSuccesso("Registrazione completata. Benvenuto, " + newU + "!");
+                return registered;
+            }
+            catch (IllegalArgumentException e)
+            {
+                ui.stampaErrore(e.getMessage());
+                ui.newLine();
+            }
+        }
+    }
+
+    /** Inline-validated username acquisition — only re-asks this field on error. */
+    private String raccogliUsername()
     {
         while (true)
         {
-            ui.stampa("LOGIN / REGISTRAZIONE FRUITORE");
-            ui.stampa("1) Login");
-            ui.stampa("2) Registrati");
-            ui.stampa("0) Torna indietro");
-            int scelta = ui.acquisisciIntero("Scelta: ", 0, 2);
+            String newU = ui.acquisisciStringaConValidazione(
+                    "Nuovo username: ",
+                    u -> !u.isBlank() && u.trim().length() >= 3,
+                    "Username troppo corto (minimo 3 caratteri)."
+            ).trim();
 
-            if (scelta == 0)
-                return null;
-
-            String u = ui.acquisisciStringa("Username: ").trim();
-            String p = ui.acquisisciPassword("Password: ").trim();
-
-            if (scelta == 1)
+            if (newU.equalsIgnoreCase(AuthenticationService.USERNAME_PREDEFINITO))
             {
-                Fruitore f = auth.loginFruitore(u, p);
-
-                if (f != null)
-                {
-                    ui.stampa("Login riuscito.");
-                    ui.newLine();
-                    return f;
-                }
-
-                ui.stampa("Credenziali non valide.");
-                ui.newLine();
+                ui.stampaErrore("Username riservato. Scegli un nome diverso.");
+                continue;
             }
-            else
+
+            if (auth.esisteUsername(newU))
             {
-                try
-                {
-                    Fruitore f = auth.registraFruitore(u, p);
-                    ui.stampa("Registrazione completata. Benvenuto!");
-                    ui.newLine();
-                    return f;
-                }
-                catch (IllegalArgumentException e)
-                {
-                    ui.stampa("Errore: " + e.getMessage());
-                    ui.newLine();
-                }
+                ui.stampaErrore("Username già in uso. Scegli un nome diverso.");
+                continue;
             }
+
+            return newU;
+        }
+    }
+
+    /** Inline-validated password acquisition — only re-asks this field on error. */
+    private String raccogliPassword()
+    {
+        while (true)
+        {
+            String newP = ui.acquisisciPassword("Nuova password: ");
+
+            if (newP == null || newP.isBlank() || newP.trim().length() < 4)
+            {
+                ui.stampaErrore("Password troppo corta (minimo 4 caratteri).");
+                continue;
+            }
+
+            return newP;
         }
     }
 }

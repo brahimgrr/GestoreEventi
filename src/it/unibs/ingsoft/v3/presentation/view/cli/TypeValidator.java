@@ -3,11 +3,12 @@ package it.unibs.ingsoft.v3.presentation.view.cli;
 import it.unibs.ingsoft.v3.domain.TipoDato;
 
 /**
- * Strategy for validating a raw string value against a {@link TipoDato}.
- * Returns {@code null} if the value is valid, or an Italian error message otherwise.
+ * Functional interface for type-level validation of a raw string against a {@link TipoDato}.
+ *
+ * @return an error message, or {@code null} if the value is valid for that type
  */
 @FunctionalInterface
 public interface TypeValidator
 {
-    String validate(String value, TipoDato tipo);
+    String validate(String input, TipoDato tipo);
 }

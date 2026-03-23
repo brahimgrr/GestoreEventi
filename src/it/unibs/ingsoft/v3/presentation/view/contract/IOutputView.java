@@ -1,27 +1,54 @@
 package it.unibs.ingsoft.v3.presentation.view.contract;
 
+import it.unibs.ingsoft.v3.domain.Campo;
+import it.unibs.ingsoft.v3.domain.Categoria;
+import it.unibs.ingsoft.v3.presentation.view.viewmodel.PropostaVM;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * ISP sub-interface: pure output / display operations.
+ * Implementations that only need to produce output (e.g., a logger, a test spy)
+ * depend only on this narrow interface.
+ *
+ * <p>This interface is deliberately free of domain imports to support GUI migration (NFR-05).
+ * Controllers must convert domain objects to primitives before calling display methods.</p>
  */
 public interface IOutputView
 {
-    void stampa(String msg);
+    void stampa(String testo);
     void newLine();
-    void header(String title);
+    void header(String titolo);
     void stampaSezione(String titolo);
-    void stampaCampi(List<?> campi);
-    void stampaCategorie(List<?> cat);
-    void stampaMenu(String titolo, String[] lista);
+    void stampaCampi(List<Campo> campi);
+    void stampaCategorie(List<Categoria> categorie);
+
+    /** Displays categories with their specific fields listed below each. */
+    void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi);
+
+    /** Displays a numbered menu; {@code 0} exits/goes back with the label "Esci". */
+    void stampaMenu(String titolo, String[] voci);
+
+    /** Displays a numbered menu; {@code 0} exits/goes back with the custom {@code uscitaLabel}. */
+    void stampaMenu(String titolo, String[] voci, String uscitaLabel);
+
     void pausa();
 
-    /** Messaggio di successo: "  ✅ msg" */
     void stampaSuccesso(String msg);
-    /** Messaggio di errore:   "  ❌ msg" */
     void stampaErrore(String msg);
-    /** Messaggio di avviso:   "  ⚠️  msg" */
     void stampaAvviso(String msg);
-    /** Messaggio informativo: "  ℹ️  msg" */
     void stampaInfo(String msg);
+
+    /** Displays the bacheca (bulletin board) organised by category. */
+    void mostraBacheca(Map<String, List<PropostaVM>> bacheca);
+
+    /** Displays a single-proposal summary box. */
+    void mostraRiepilogoProposta(PropostaVM proposta);
+
+    /** Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern. */
+    default void pausaConSpaziatura() {
+        newLine();
+        pausa();
+    }
 }

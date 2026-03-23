@@ -19,7 +19,7 @@ public final class FileCredenzialiRepository
     @Override
     public Credenziali get() {
         if (cached == null) {
-            cached = this.get();
+            cached = load();
         }
         return cached;
     }

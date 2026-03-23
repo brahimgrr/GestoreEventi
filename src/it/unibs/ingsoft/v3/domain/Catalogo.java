@@ -35,7 +35,7 @@ public final class Catalogo {
     }
     // ---------------- CAMPI BASE ----------------
 
-    public void fissareCampiBase(List<Campo> base, List<String> extra) {
+    public void fissareCampiBase(List<Campo> base, List<Campo> extra) {
         if (campiBaseFissati)
             throw new IllegalStateException("Campi base già fissati.");
 
@@ -49,16 +49,15 @@ public final class Catalogo {
         }
 
         if (extra != null) {
-            for (String nome : extra) {
-                if (nome == null || nome.isBlank()) continue;
+            for (Campo c : extra) {
+                if (c == null || c.getNome().isBlank()) continue;
 
-                nome = nome.trim();
-                addNomeUnico(nomi, nome);
+                addNomeUnico(nomi, c.getNome());
 
-                if (nomeEsistenteGlobale(nome))
-                    throw new IllegalArgumentException("Campo già esistente: " + nome);
+                if (nomeEsistenteGlobale(c.getNome()))
+                    throw new IllegalArgumentException("Campo già esistente: " + c.getNome());
 
-                campiBase.add(new Campo(nome, TipoCampo.BASE, TipoDato.STRINGA, true));
+                campiBase.add(c);
             }
         }
 

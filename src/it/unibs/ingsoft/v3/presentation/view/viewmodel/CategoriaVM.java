@@ -1,4 +1,4 @@
 package it.unibs.ingsoft.v3.presentation.view.viewmodel;
 
-/** View-model for a single Categoria entry in a selection list. */
-public record CategoriaVM(int index, String nome) {}
+/** View model for displaying a numbered category in selection lists. */
+public record CategoriaVM(int indice, String nome) {}

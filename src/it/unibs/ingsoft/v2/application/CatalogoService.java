@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /** Manages base fields, common fields, categories and category-specific fields. */
 public final class CatalogoService {
@@ -37,8 +38,15 @@ public final class CatalogoService {
         repo.save();
     }
 
-    public void addCampiBaseConExtra(List<String> extra, List<TipoDato> tipi) {
-        //TODO ADD TIPI
+    public void addCampiBaseConExtra(List<String> nomi, List<TipoDato> tipi) {
+        List<Campo> extra = IntStream.range(0, nomi.size())
+                .mapToObj(i -> new Campo(
+                        nomi.get(i).trim(),
+                        TipoCampo.BASE,
+                        tipi.get(i),
+                        true))
+                .collect(Collectors.toList());
+
         catalogo().fissareCampiBase(
                 Arrays.stream(CampoBaseDefinito.values())
                         .map(CampoBaseDefinito::toCampo)

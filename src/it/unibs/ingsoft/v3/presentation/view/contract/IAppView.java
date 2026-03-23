@@ -2,9 +2,11 @@ package it.unibs.ingsoft.v3.presentation.view.contract;
 
 /**
  * Composed view interface used by controllers.
- * Extends the fine-grained sub-interfaces in accordance with the Interface Segregation Principle (ISP).
+ * Components needing only output depend on {@link IOutputView};
+ * components needing only input depend on {@link IInputView}.
  */
-public interface IAppView extends IOutputView, IInputView, IFormView, IDisplayView, ISelectionView
+public interface IAppView extends IOutputView, IInputView, IFormView, ISelectionView
 {
-    // All methods are inherited from the sub-interfaces.
+    /** Context hint shown at the start of every form that accepts free-text input. */
+    String HINT_ANNULLA = "Digita 'annulla' per annullare.";
 }

@@ -4,7 +4,6 @@ import it.unibs.ingsoft.v3.application.PropostaService;
 import it.unibs.ingsoft.v3.domain.Campo;
 import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Proposta;
-import it.unibs.ingsoft.v3.presentation.controller.ConfiguratoreController;
 import it.unibs.ingsoft.v3.presentation.view.cli.FormField;
 import it.unibs.ingsoft.v3.presentation.view.cli.PropostaFormBuilder;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public final class PropostaController
 {
-    private final IAppView       ui;
+    private final IAppView ui;
     private final PropostaService ps;
 
     public PropostaController(IAppView ui, PropostaService ps)

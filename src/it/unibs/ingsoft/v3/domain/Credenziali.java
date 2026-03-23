@@ -13,24 +13,19 @@ import java.util.Map;
  */
 public final class Credenziali {
     private final Map<String, String> configuratori;
-    private final Map<String, String> fruitori;
 
     public Credenziali() {
         this.configuratori = new HashMap<>();
-        this.fruitori = new HashMap<>();
     }
 
     /** Jackson deserialisation factory. */
     @JsonCreator
     public static Credenziali fromJson(
-            @JsonProperty("configuratori") Map<String, String> configuratori,
-            @JsonProperty("fruitori")      Map<String, String> fruitori)
+            @JsonProperty("configuratori") Map<String, String> configuratori)
     {
         Credenziali d = new Credenziali();
         if (configuratori != null)
             d.configuratori.putAll(configuratori);
-        if (fruitori != null)
-            d.fruitori.putAll(fruitori);
         return d;
     }
 
@@ -42,15 +37,5 @@ public final class Credenziali {
     public void addConfiguratore(String username, String password)
     {
         configuratori.put(username, password);
-    }
-
-    public Map<String, String> getFruitori()
-    {
-        return Collections.unmodifiableMap(fruitori);
-    }
-
-    public void addFruitore(String username, String password)
-    {
-        fruitori.put(username, password);
     }
 }

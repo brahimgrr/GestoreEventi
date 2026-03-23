@@ -2,11 +2,7 @@ package it.unibs.ingsoft.v3.persistence.impl;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -18,33 +14,36 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
  * Generic base class for file-backed JSON repositories.
- * Follows the same pattern as V2's AbstractFileRepository:
- * - Human-readable JSON output
- * - Forward-compatible (unknown fields ignored)
- * - Atomic save via .tmp file + rename
- * - Custom LocalDate serialization as "dd/MM/yyyy"
+ * Encapsulates all I/O logic (load + atomic save) so concrete sub-classes
+ * need only declare their type parameter and supply a default-value factory.
+ *
+ * <p>JSON is used instead of Java serialization because:
+ * <ul>
+ *   <li>Human-readable and debuggable</li>
+ *   <li>Schema evolution is safe: unknown fields are ignored by default</li>
+ *   <li>No {@code serialVersionUID} fragility</li>
+ * </ul>
  */
-class AbstractFileRepository<T>
+abstract class AbstractFileRepository<T>
 {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    static final ObjectMapper MAPPER = new ObjectMapper()
+    private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new SimpleModule()
                 .addSerializer(LocalDate.class, new StdSerializer<LocalDate>(LocalDate.class) {
                     @Override
-                    public void serialize(LocalDate value, JsonGenerator gen, SerializerProvider provider)
-                            throws IOException {
+                    public void serialize(LocalDate value, JsonGenerator gen, SerializerProvider provider) throws IOException {
                         gen.writeString(value.format(DATE_FMT));
                     }
                 })
                 .addDeserializer(LocalDate.class, new StdDeserializer<LocalDate>(LocalDate.class) {
                     @Override
-                    public LocalDate deserialize(JsonParser p, DeserializationContext ctxt)
-                            throws IOException {
+                    public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
                         return LocalDate.parse(p.getValueAsString(), DATE_FMT);
                     }
                 }))
@@ -58,12 +57,12 @@ class AbstractFileRepository<T>
 
     protected AbstractFileRepository(Path path, Class<T> type, Supplier<T> defaultValue)
     {
-        this.path         = path;
-        this.type         = type;
-        this.defaultValue = defaultValue;
+        this.path         = Objects.requireNonNull(path);
+        this.type         = Objects.requireNonNull(type);
+        this.defaultValue = Objects.requireNonNull(defaultValue);
     }
 
-    public T get()
+    public T load()
     {
         if (!Files.exists(path))
             return defaultValue.get();
@@ -82,6 +81,8 @@ class AbstractFileRepository<T>
 
     public void save(T data)
     {
+        Objects.requireNonNull(data);
+
         try
         {
             if (path.getParent() != null)

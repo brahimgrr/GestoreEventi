@@ -77,6 +77,7 @@ public final class AuthenticationService
         return new Configuratore(username);
     }
 
+
     /** Returns true if a configurator with this username is already registered. */
     public boolean esisteUsername(String username)
     {

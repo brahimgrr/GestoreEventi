@@ -18,10 +18,6 @@ public abstract class Persona
         if (username == null || username.isBlank())
             throw new IllegalArgumentException("Lo username non può essere vuoto.");
         this.username = username.trim();
-
-        // Class invariant: username must never be blank after construction
-        if (this.username.isBlank())
-            throw new IllegalStateException("Invariant violated: username must not be blank after construction.");
     }
 
     public String getUsername() {

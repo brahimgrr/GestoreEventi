@@ -19,7 +19,7 @@ public final class FileBachecaRepository
     @Override
     public Bacheca get() {
         if (cached == null) {
-            cached = this.get();
+            cached = load();
         }
         return cached;
     }

@@ -3,18 +3,14 @@ package it.unibs.ingsoft.v3.presentation.view.cli;
 import java.util.Map;
 
 /**
- * Strategy interface for validating a single field value within a form context.
- * Implementations can perform cross-field checks using the accumulated context map.
+ * Functional interface for business-rule validation of a single field value.
+ *
+ * @param input the raw string value entered by the user
+ * @param ctx   read-only snapshot of all values collected so far (for cross-field checks)
+ * @return an error message, or {@code null} if the value is valid
  */
 @FunctionalInterface
 public interface FieldValidator
 {
-    /**
-     * Validates the given input string.
-     *
-     * @param input   the raw string entered by the user
-     * @param context the map of already-collected field values (field name → string value)
-     * @return null if the value is valid, or an Italian error message string if invalid
-     */
-    String validate(String input, Map<String, String> context);
+    String validate(String input, Map<String, String> ctx);
 }

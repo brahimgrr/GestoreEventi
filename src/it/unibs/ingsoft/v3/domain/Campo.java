@@ -10,7 +10,7 @@ public final class Campo
 {
     private final String    nome;
     private final TipoCampo tipo;
-    private final TipoDato  tipoDato;
+    private final TipoDato tipoDato;
     private final boolean   obbligatorio;
 
     /**
@@ -24,8 +24,8 @@ public final class Campo
      */
     @JsonCreator
     public Campo(@JsonProperty("nome")         String    nome,
-                 @JsonProperty("tipo")         TipoCampo tipo,
-                 @JsonProperty("tipoDato")     TipoDato  tipoDato,
+                 @JsonProperty("tipo") TipoCampo tipo,
+                 @JsonProperty("tipoDato") TipoDato tipoDato,
                  @JsonProperty("obbligatorio") boolean   obbligatorio)
     {
         if (nome == null || nome.isBlank())

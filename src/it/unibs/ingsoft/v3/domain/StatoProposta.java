@@ -1,5 +1,14 @@
 package it.unibs.ingsoft.v3.domain;
 
+/**
+ * State machine for proposals.
+ *
+ * <pre>
+ *   BOZZA ──→ VALIDA ──→ APERTA (terminal)
+ *               ↑
+ *             BOZZA ←── VALIDA (revert on re-validation)
+ * </pre>
+ */
 public enum StatoProposta
 {
     BOZZA {
@@ -13,21 +22,6 @@ public enum StatoProposta
         }
     },
     APERTA {
-        @Override public boolean canTransitionTo(StatoProposta next) {
-            return next == CONFERMATA || next == ANNULLATA;
-        }
-    },
-    CONFERMATA {
-        @Override public boolean canTransitionTo(StatoProposta next) {
-            return next == CONCLUSA;
-        }
-    },
-    ANNULLATA {
-        @Override public boolean canTransitionTo(StatoProposta next) {
-            return false;
-        }
-    },
-    CONCLUSA {
         @Override public boolean canTransitionTo(StatoProposta next) {
             return false;
         }
