@@ -1,6 +1,8 @@
 package it.unibs.ingsoft.v4.presentation.controller;
 
 import it.unibs.ingsoft.v4.application.CatalogoService;
+import it.unibs.ingsoft.v4.application.PropostaService;
+import it.unibs.ingsoft.v4.application.StateTransitionService;
 import it.unibs.ingsoft.v4.domain.*;
 import it.unibs.ingsoft.v4.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v4.presentation.view.contract.OperationCancelledException;
@@ -20,7 +22,8 @@ public final class ConfiguratoreController {
         "Visualizzare categorie e campi",
         "Creare una proposta di iniziativa",
         "Pubblicare una proposta di iniziativa",
-        "Visualizzare la bacheca"
+        "Visualizzare la bacheca",
+        "Ritirare una proposta"
     };
 
     private static final String[] MENU_CAMPI = {
@@ -45,12 +48,18 @@ public final class ConfiguratoreController {
     private final IAppView ui;
     private final CatalogoService catalogoService;
     private final PropostaController propostaController;
+    private final PropostaService propostaService;
+    private final StateTransitionService stateTransitionService;
 
-    public ConfiguratoreController(Configuratore configuratore, IAppView ui, CatalogoService catalogoService, PropostaController propostaController) {
+    public ConfiguratoreController(Configuratore configuratore, IAppView ui, CatalogoService catalogoService,
+                                   PropostaController propostaController, PropostaService propostaService,
+                                   StateTransitionService stateTransitionService) {
         this.configuratore = configuratore;
         this.ui  = ui;
         this.catalogoService = catalogoService;
         this.propostaController = propostaController;
+        this.propostaService = propostaService;
+        this.stateTransitionService = stateTransitionService;
     }
 
     /**
@@ -102,6 +111,9 @@ public final class ConfiguratoreController {
                     break;
                 case 6:
                     propostaController.mostraBacheca();
+                    break;
+                case 7:
+                    ritiraProposta();
                     break;
                 case 0:
                     return;
@@ -378,6 +390,59 @@ public final class ConfiguratoreController {
         void add(String nome, TipoDato tipo, boolean obbl);
         boolean remove(String nome);
         boolean setObbl(String nome, boolean obbl);
+    }
+
+    // ---------------------------------------------------------------
+    // RITIRO PROPOSTA
+    // ---------------------------------------------------------------
+
+    private void ritiraProposta()
+    {
+        List<Proposta> ritirabili = new ArrayList<>();
+        for (Proposta p : propostaService.getBacheca()) {
+            ritirabili.add(p);
+        }
+        // Aggiungi anche le proposte CONFERMATE (non visibili in bacheca ma ritirabili)
+        for (Proposta p : propostaService.getTutteLeProposte()) {
+            if (p.getStato() == StatoProposta.CONFERMATA && !ritirabili.contains(p)) {
+                ritirabili.add(p);
+            }
+        }
+
+        if (ritirabili.isEmpty()) {
+            ui.stampa("Nessuna proposta aperta o confermata disponibile per il ritiro.");
+            ui.pausaConSpaziatura();
+            return;
+        }
+
+        ui.header("RITIRO PROPOSTA");
+        int indice = 1;
+        for (Proposta p : ritirabili) {
+            String titolo = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "Senza Titolo");
+            String stato = p.getStato().name();
+            ui.stampa(String.format(" %d) %s [%s] (Data evento: %s)", indice++, titolo, stato, p.getDataEvento()));
+        }
+        ui.newLine();
+
+        ui.stampa("Seleziona la proposta da ritirare (0 per tornare indietro).");
+        int subChoice = ui.acquisisciIntero("Scelta: ", 0, ritirabili.size());
+
+        if (subChoice == 0) return;
+
+        Proposta selezionata = ritirabili.get(subChoice - 1);
+        ui.mostraRiepilogoProposta(selezionata);
+        ui.newLine();
+
+        ui.stampaAvviso("Il ritiro è una misura eccezionale, da adottare solo per cause di forza maggiore.");
+        if (ui.acquisisciSiNo("Vuoi davvero ritirare questa proposta?")) {
+            try {
+                stateTransitionService.ritiraProposta(selezionata);
+                ui.stampaSuccesso("Proposta ritirata. Tutti gli aderenti sono stati notificati.");
+            } catch (IllegalStateException e) {
+                ui.stampaErrore("Errore durante il ritiro: " + e.getMessage());
+            }
+        }
+        ui.pausaConSpaziatura();
     }
 
     // ---------------------------------------------------------------

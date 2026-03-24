@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 /**
- * Gestisce l'iscrizione a una proposta.
+ * Gestisce l'iscrizione e la disiscrizione a una proposta.
  */
 public final class IscrizioneService {
     
@@ -56,6 +56,32 @@ public final class IscrizioneService {
             stateTransitionService.confermaProposta(p);
         }
         
+        bachecaRepo.save();
+    }
+
+    /**
+     * Disdice l'iscrizione del fruitore alla proposta specificata.
+     *
+     * @param p la proposta da cui disdire l'iscrizione
+     * @param f il fruitore che richiede la disiscrizione
+     * @throws IllegalStateException se la proposta non è APERTA, il termine è scaduto,
+     *                               o l'utente non è iscritto.
+     */
+    public void disiscrivi(Proposta p, Fruitore f) {
+        if (p.getStato() != StatoProposta.APERTA) {
+            throw new IllegalStateException("Impossibile disdire: la proposta non è APERTA.");
+        }
+
+        LocalDate oggi = LocalDate.now(AppConstants.clock);
+        if (p.getTermineIscrizione() != null && oggi.isAfter(p.getTermineIscrizione())) {
+            throw new IllegalStateException("Impossibile disdire: il termine di iscrizione è scaduto (" + p.getTermineIscrizione() + ").");
+        }
+
+        if (!p.getListaAderenti().contains(f.getUsername())) {
+            throw new IllegalStateException("Non sei iscritto a questa proposta.");
+        }
+
+        p.removeAderente(f.getUsername());
         bachecaRepo.save();
     }
 }

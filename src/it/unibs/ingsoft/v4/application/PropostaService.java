@@ -296,6 +296,12 @@ public final class PropostaService
     // BACHECA
     // ----------------------------------------------------------------
 
+    /** Returns all proposals (any state) as a flat list. */
+    public List<Proposta> getTutteLeProposte()
+    {
+        return Collections.unmodifiableList(bacheca().getProposte());
+    }
+
     /** Returns all open (APERTA) proposals as a flat list. */
     public List<Proposta> getBacheca()
     {

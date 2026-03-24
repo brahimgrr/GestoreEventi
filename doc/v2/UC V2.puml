@@ -5,7 +5,6 @@ actor Configuratore as C
 
 rectangle "GestoreEventi - Back-End V1 + V2" {
 
-
 ' === ACCESSO ===
 usecase "UC1: Login" as Login
 usecase "UC2: Registrazione" as Reg
@@ -14,22 +13,22 @@ usecase "UC3: Primo Accesso:\nFissare Campi Base" as Primo
 ' === VISUALIZZAZIONE ===
 usecase "UC4: Visualizzare\nCampi e Categorie" as Vis
 
-' === AGGIUNTA CAMPI ===
+' --- AGGIUNTA CAMPI ---
 usecase "UC5: Aggiungi\nCampo Comune" as ACC
 usecase "UC10: Aggiungi\nCampo Specifico" as ACS
 usecase "Aggiungi Campo" as AC
 
-' === RIMOZIONE CAMPI ===
+' --- RIMOZIONE CAMPI ---
 usecase "UC6: Rimuovi\nCampo Comune" as RCC
 usecase "UC11: Rimuovi\nCampo Specifico" as RCS
 usecase "Rimuovi Campo" as RC
 
-' === MODIFICA OBBLIGATORIETÀ ===
+' --- MODIFICA OBBLIGATORIETÀ ---
 usecase "UC7: Modifica Obbligatorietà\nCampo Comune" as MOCC
 usecase "UC12: Modifica Obbligatorietà\nCampo Specifico" as MOCS
 usecase "Modifica Obbligatorietà\nCampo" as MO
 
-' === CATEGORIE ===
+' --- CATEGORIE ---
 usecase "UC8: Crea\nCategoria" as CreaCat
 usecase "UC9: Rimuovi\nCategoria" as RimCat
 
@@ -50,7 +49,6 @@ RCS ..> RC : <<include>>
 
 MOCC ..> MO : <<include>>
 MOCS ..> MO : <<include>>
-
 
 }
 

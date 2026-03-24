@@ -1,0 +1,105 @@
+@startuml
+left to right direction
+
+actor Configuratore as C
+actor Fruitore as F
+actor Sistema as S
+
+rectangle "GestoreEventi - Back-End V1 + V2 + V3 + V4" {
+
+' ================= LEFT SIDE (Configuratore) =================
+together {
+  usecase "UC1: Login" as Login
+  usecase "UC2: Registrazione" as Reg
+  usecase "UC3: Primo Accesso:\nFissare Campi Base" as Primo
+
+  usecase "UC4: Visualizzare\nCampi e Categorie" as Vis
+
+  usecase "UC5: Aggiungi\nCampo Comune" as ACC
+  usecase "UC10: Aggiungi\nCampo Specifico" as ACS
+  usecase "Aggiungi Campo" as AC
+
+  usecase "UC6: Rimuovi\nCampo Comune" as RCC
+  usecase "UC11: Rimuovi\nCampo Specifico" as RCS
+  usecase "Rimuovi Campo" as RC
+
+  usecase "UC7: Modifica Obbligatorietà\nCampo Comune" as MOCC
+  usecase "UC12: Modifica Obbligatorietà\nCampo Specifico" as MOCS
+  usecase "Modifica Obbligatorietà\nCampo" as MO
+
+  usecase "UC8: Crea\nCategoria" as CreaCat
+  usecase "UC9: Rimuovi\nCategoria" as RimCat
+
+  usecase "UC13: Creare una\nProposta di Iniziativa" as CreaProp
+  usecase "UC14: Pubblicare una\nProposta in Bacheca" as PubProp
+  usecase "UC15: Visualizzare\nla Bacheca" as VisBach
+
+  usecase "UC23: Ritirare\nuna Proposta" as RitProp #PaleGreen
+}
+
+' ================= RIGHT SIDE (Fruitore + Sistema) =================
+together {
+  usecase "UC16: Login\nFruitore" as LoginF
+  usecase "UC17: Registrazione\nFruitore" as RegF
+
+  usecase "UC18: Visualizzare\nla Bacheca" as VisBachF
+  usecase "UC19: Iscriversi a\nuna Proposta" as Iscrivi
+
+  usecase "UC20: Visualizzare\nSpazio Personale" as VisSP
+  usecase "UC21: Eliminare\nuna Notifica" as DelNot
+
+  usecase "UC22: Transizione\nAutomatica di Stato" as TransAuto
+
+  usecase "UC24: Disdire Iscrizione\na una Proposta" as DisdIscrivi #PaleGreen
+}
+
+' ===== FORCE LEFT/RIGHT SEPARATION =====
+Login -[hidden]right-> LoginF
+
+' ================= RELATIONSHIPS =================
+Login <.. Reg : <<extend>>
+Login <.. Primo : <<extend>>
+
+ACC ..> AC : <<include>>
+ACS ..> AC : <<include>>
+
+RCC ..> RC : <<include>>
+RCS ..> RC : <<include>>
+
+MOCC ..> MO : <<include>>
+MOCS ..> MO : <<include>>
+
+VisBachF <.. Iscrivi : <<extend>>
+VisSP <.. DelNot : <<extend>>
+
+}
+
+' ================= ACTOR LINKS =================
+C --> Login
+C --> Vis
+C --> ACC
+C --> RCC
+C --> MOCC
+C --> CreaCat
+C --> RimCat
+C --> ACS
+C --> RCS
+C --> MOCS
+C --> CreaProp
+C --> PubProp
+C --> VisBach
+C --> RitProp
+
+F --> LoginF
+F --> RegF
+F --> VisBachF
+F --> VisSP
+F --> DisdIscrivi
+
+S --> TransAuto
+
+' ===== FORCE ACTORS TO THE RIGHT =====
+C -[hidden]right-> F
+F -[hidden]right-> S
+
+@enduml

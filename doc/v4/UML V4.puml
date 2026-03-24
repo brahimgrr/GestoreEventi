@@ -1,0 +1,634 @@
+@startuml
+' =====================================================================
+'  DIAGRAMMA CLASSI V4 — GestoreEventi
+'  Verde  (#D5F5E3)  = classe NUOVA in V4
+'  Giallo (#FFF9C4)  = classe MODIFICATA in V4
+'  Grigio (#EEEEEE)  = classe INVARIATA da V3
+'  green text = membro NUOVO in V4
+'  orange text = membro MODIFICATO in V4
+' =====================================================================
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 10
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 35
+
+' ===========================================================
+' COMPOSITION
+' ===========================================================
+
+class Main #EEEEEE {
+  + main(String[]) : void
+}
+
+class Application #FFF9C4 {
+  - DATA_CATALOGO : Path
+  - DATA_UTENTI : Path
+  - DATA_PROPOSTE : Path
+  - DATA_NOTIFICHE : Path
+  - <color:green>midnightScheduler</color> : ScheduledExecutorService
+  __
+  + <color:DarkOrange>start()</color> : void
+  - <color:green>startMidnightScheduler(StateTransitionService)</color> : void
+  - <color:green>stopMidnightScheduler()</color> : void
+  - <color:green>millisUntilNextMidnight()</color> : long
+  - <color:green>scheduleNextMidnightCheck(StateTransitionService)</color> : void
+}
+
+Main --> Application : create
+
+' ===========================================================
+' CONTROLLERS
+' ===========================================================
+
+class ConfiguratoreController #FFF9C4 {
+  - <color:DarkOrange>MENU_PRINCIPALE</color> : String[]
+  - MENU_CAMPI : String[]
+  - MENU_CATEGORIE : String[]
+  - MENU_CAMPI_SPECIFICI : String[]
+  - configuratore : Configuratore
+  - <color:green>propostaService</color> : PropostaService
+  - <color:green>stateTransitionService</color> : StateTransitionService
+  __
+  + run() : void
+  - mainMenu() : void
+  - menuCampiGenerico(String, GestioneCampi) : void
+  - menuCampiComuni() : void
+  - menuCampiSpecifici(Categoria) : void
+  - menuCategorie() : void
+  - menuCampiBaseExtra() : void
+  - menuVisualizza() : void
+  - avviaCreazioneProposta() : void
+  - <color:green>ritiraProposta()</color> : void
+}
+
+class AuthController #EEEEEE {
+  - auth : AuthenticationService
+  __
+  + loginConfiguratore() : Configuratore
+  + loginFruitore() : Fruitore
+  + registraFruitore() : Fruitore
+  - registrazioneInterattiva() : Configuratore
+  - raccogliUsername() : String
+  - raccogliPassword() : String
+}
+
+class PropostaController #EEEEEE {
+  + avviaCreazione(Categoria, List, List) : void
+  + pubblicaPropostaSalvata() : void
+  + mostraBacheca() : void
+}
+
+class FruitoreController #FFF9C4 {
+  - <color:DarkOrange>MENU_PRINCIPALE</color> : String[]
+  - fruitore : Fruitore
+  __
+  + run() : void
+  - mostraBachecaEiscrizione() : void
+  - dettagliEIscrizione(Proposta) : void
+  - <color:green>disdiciIscrizione()</color> : void
+}
+
+class SpazioPersonaleController #EEEEEE {
+  + run() : void
+}
+
+' ===========================================================
+' APPLICATION SERVICES
+' ===========================================================
+
+class CatalogoService #EEEEEE {
+  - repo : ICatalogoRepository
+  __
+  + addCampoComune(String, TipoDato, boolean) : void
+  + addCampiBaseConExtra(List, List) : void
+  + addCampoSpecifico(String, String, TipoDato, boolean) : void
+  + initiateCampiBase() : void
+  + removeCampoComune(String) : boolean
+  + nomeEsistente(String) : boolean
+  + removeCampoSpecifico(String, String) : boolean
+  + setObbligatorietaCampoComune(String, boolean) : boolean
+  + setObbligatorietaCampoSpecifico(String, String, boolean) : boolean
+  + getCampiBase() : List
+  + getCampiComuni() : List
+  + createCategoria(String) : Categoria
+  + removeCategoria(String) : boolean
+  + getCategorie() : List
+  - catalogo() : Catalogo
+}
+
+class AuthenticationService #EEEEEE {
+  + USERNAME_PREDEFINITO : String
+  + PASSWORD_PREDEFINITA : String
+  - MIN_USERNAME_LENGTH : int
+  - MIN_PASSWORD_LENGTH : int
+  - repo : ICredenzialiRepository
+  __
+  + login(String, String) : Optional
+  + loginFruitore(String, String) : Optional
+  + registraNuovoConfiguratore(String, String) : Configuratore
+  + registraNuovoFruitore(String, String) : Fruitore
+  + esisteUsername(String) : boolean
+  - credenziali() : Credenziali
+  - validaNuovoAccount(String, String) : void
+  - validaCredenziali(String, String) : void
+}
+
+class PropostaService #FFF9C4 {
+  + CAMPO_TITOLO : String
+  + CAMPO_TERMINE_ISCRIZIONE : String
+  + CAMPO_DATA : String
+  + CAMPO_DATA_CONCLUSIVA : String
+  + CAMPO_ORA : String
+  + CAMPO_LUOGO : String
+  + CAMPO_QUOTA : String
+  + CAMPO_NUM_PARTECIPANTI : String
+  - bachecaRepo : IBachecaRepository
+  - proposteValide : List
+  __
+  + creaProposta(Categoria, List, List) : Proposta
+  + validaProposta(Proposta) : List
+  + validaCampo(Proposta, Map, String, String) : List
+  + pubblicaProposta(Proposta) : void
+  + salvaProposta(Proposta) : void
+  + rimuoviPropostaValida(Proposta) : void
+  + clearProposteValide() : void
+  + getProposteValide() : List
+  + <color:green>getTutteLeProposte()</color> : List
+  + getBacheca() : List
+  + getBachecaPerCategoria() : Map
+  + getCampiConErrore(Proposta, List) : List
+  + {static} isTermineIscrizioneValido(LocalDate) : boolean
+  + {static} isDataEventoValida(LocalDate, LocalDate) : boolean
+  + {static} isDataConclusivaValida(LocalDate, LocalDate) : boolean
+  - bacheca() : Bacheca
+  - controllaCampiObbligatori(List, Map, List) : void
+  - parseData(String) : LocalDate
+  - rilevaDuplicato(Proposta) : void
+}
+
+class IscrizioneService #FFF9C4 {
+  - bachecaRepo : IBachecaRepository
+  - stateTransitionService : StateTransitionService
+  __
+  + iscrivi(Proposta, Fruitore) : void
+  + <color:green>disiscrivi(Proposta, Fruitore)</color> : void
+}
+
+class NotificationService #EEEEEE {
+  + inviaNotifica(String, Notifica) : void
+  + getNotifiche(String) : List
+  + cancellaNotifica(String, Notifica) : void
+}
+
+class StateTransitionService #FFF9C4 {
+  - bachecaRepo : IBachecaRepository
+  - notificationService : NotificationService
+  - lock : ReentrantLock
+  __
+  + controllaScadenze() : void
+  + confermaProposta(Proposta) : void
+  + <color:green>ritiraProposta(Proposta)</color> : void
+  - annullaProposta(Proposta) : void
+  - concludiProposta(Proposta) : void
+  - getDataConclusiva(Proposta) : LocalDate
+}
+
+' ===========================================================
+' PERSISTENCE — INTERFACES
+' ===========================================================
+
+interface ICatalogoRepository #EEEEEE {
+  + get() : Catalogo
+  + save() : void
+}
+
+interface ICredenzialiRepository #EEEEEE {
+  + get() : Credenziali
+  + save() : void
+}
+
+interface IBachecaRepository #EEEEEE {
+  + get() : Bacheca
+  + save() : void
+}
+
+interface ISpazioPersonaleRepository #EEEEEE {
+  + get(String) : SpazioPersonale
+  + save() : void
+}
+
+' ===========================================================
+' PERSISTENCE — IMPLEMENTATIONS
+' ===========================================================
+
+abstract class AbstractFileRepository #EEEEEE {
+  # load() : T
+  # save(T) : void
+}
+
+class FileCatalogoRepository #EEEEEE {
+  + get() : Catalogo
+  + save() : void
+}
+
+class FileCredenzialiRepository #EEEEEE {
+  + get() : Credenziali
+  + save() : void
+}
+
+class FileBachecaRepository #EEEEEE {
+  + get() : Bacheca
+  + save() : void
+}
+
+class FileSpazioPersonaleRepository #EEEEEE {
+  + get(String) : SpazioPersonale
+  + save() : void
+}
+
+' ===========================================================
+' DOMAIN — INVARIATE DA V3
+' ===========================================================
+
+class Catalogo #EEEEEE {
+  + getCampiBase() : List
+  + getCampiComuni() : List
+  + getCategorie() : List
+}
+
+class Categoria #EEEEEE {
+  + getNome() : String
+  + getCampiSpecifici() : List
+}
+
+class Campo #EEEEEE {
+  + getNome() : String
+  + getTipoDato() : TipoDato
+  + isObbligatorio() : boolean
+}
+
+class CampoBaseDefinito #EEEEEE {
+  + getNomeCampo() : String
+  + getTipoDato() : TipoDato
+  + toCampo() : Campo
+}
+
+abstract class Persona #EEEEEE {
+  # getUsername() : String
+  + toString() : String
+}
+
+class Configuratore #EEEEEE {
+}
+
+class Fruitore #EEEEEE {
+}
+
+enum TipoCampo #EEEEEE {
+  + BASE
+  + COMUNE
+  + SPECIFICO
+}
+
+enum TipoDato #EEEEEE {
+  + STRINGA
+  + INTERO
+  + DECIMALE
+  + DATA
+  + ORA
+  + BOOLEANO
+}
+
+class Bacheca #EEEEEE {
+  + getProposte() : List
+  + addProposta(Proposta) : void
+}
+
+class Credenziali #EEEEEE {
+  + getConfiguratori() : Map
+  + addConfiguratore(String, String) : void
+  + getFruitori() : Map
+  + addFruitore(String, String) : void
+  + fromJson(Map, Map) : Credenziali
+}
+
+class AppConstants #EEEEEE {
+  + DATE_FORMAT_LABEL : String
+  + TIME_FORMAT_LABEL : String
+  + DATE_FMT : DateTimeFormatter
+  + TIME_FMT : DateTimeFormatter
+  + clock : Clock
+}
+
+class Notifica #EEEEEE {
+  + getId() : String
+  + getMessaggio() : String
+  + getDataCreazione() : LocalDateTime
+}
+
+class SpazioPersonale #EEEEEE {
+  + getNotifiche() : List
+  + addNotifica(Notifica) : void
+  + removeNotifica(Notifica) : void
+  + fromJson(List) : SpazioPersonale
+}
+
+class ArchivioNotifiche #EEEEEE {
+  + getUtenti() : Map
+  + getSpazioDi(String) : SpazioPersonale
+  + fromJson(Map) : ArchivioNotifiche
+}
+
+class PropostaStateChange #EEEEEE {
+  + getStato() : StatoProposta
+  + getDataCambio() : LocalDate
+}
+
+' ===========================================================
+' DOMAIN — MODIFICATE IN V4
+' ===========================================================
+
+class Proposta #FFF9C4 {
+  + getCategoria() : Categoria
+  + getCampi() : List
+  + getStato() : StatoProposta
+  + getDataPubblicazione() : LocalDate
+  + getTermineIscrizione() : LocalDate
+  + getDataEvento() : LocalDate
+  + getValoriCampi() : Map
+  + putAllValoriCampi(Map) : void
+  + setStato(StatoProposta) : void
+  + setDataPubblicazione(LocalDate) : void
+  + setTermineIscrizione(LocalDate) : void
+  + setDataEvento(LocalDate) : void
+  + getListaAderenti() : List
+  + addAderente(String) : void
+  + <color:green>removeAderente(String)</color> : void
+  + revertToBozzaSilent() : void
+  + getStateHistory() : List
+  + getNumeroPartecipanti() : int
+  + {static} fromJson(...) : Proposta
+}
+
+enum StatoProposta #FFF9C4 {
+  + BOZZA
+  + VALIDA
+  + <color:DarkOrange>APERTA</color>
+  + <color:DarkOrange>CONFERMATA</color>
+  + ANNULLATA
+  + CONCLUSA
+  + <color:green>RITIRATA</color>
+  __
+  + canTransitionTo(StatoProposta) : boolean
+}
+
+' ===========================================================
+' VIEW — CONTRACTS
+' ===========================================================
+
+together {
+  interface IOutputView #EEEEEE {
+    + stampa(String) : void
+    + newLine() : void
+    + header(String) : void
+    + stampaSezione(String) : void
+    + stampaCampi(List) : void
+    + stampaCategorie(List) : void
+    + stampaCategorieDettaglio(Map) : void
+    + stampaMenu(String, String[]) : void
+    + stampaMenu(String, String[], String) : void
+    + pausa() : void
+    + stampaSuccesso(String) : void
+    + stampaErrore(String) : void
+    + stampaAvviso(String) : void
+    + stampaInfo(String) : void
+    + mostraBacheca(Map<String, List<Proposta>>) : void
+    + mostraRiepilogoProposta(Proposta) : void
+    + pausaConSpaziatura() : void
+  }
+
+  interface IInputView #EEEEEE {
+    + acquisisciStringa(String) : String
+    + acquisisciStringaConValidazione(String, Predicate, String) : String
+    + acquisisciPassword(String) : String
+    + acquisisciIntero(String, int, int) : int
+    + acquisisciSiNo(String) : boolean
+    + acquisisciTipoDato(String) : TipoDato
+    + acquisisciListaNomi(String) : List
+    + selezionaElemento(String, List) : Optional
+    + selezionaElementoConInfo(String, List, Function) : Optional
+    + selezionaCategoria(List<Categoria>) : OptionalInt
+    + acquisisciValoriProposta(Proposta, ProposalFieldValidator) : Optional
+    + correggiCampiProposta(Proposta, Set, ProposalFieldValidator) : Optional
+  }
+
+  interface ProposalFieldValidator #EEEEEE {
+    + validate(Proposta, Map, String, String) : List
+  }
+
+  interface IAppView #EEEEEE {
+    + HINT_ANNULLA : String
+  }
+}
+
+' ===========================================================
+' VIEW — CLI / VALIDATION
+' ===========================================================
+
+together {
+  class ConsoleUI #EEEEEE {
+    - scanner : Scanner
+    + CANCEL_KEYWORD : String
+    + BACK_KEYWORD : String
+    + HINT_ANNULLA : String
+    __
+    + stampa(String) : void
+    + newLine() : void
+    + header(String) : void
+    + stampaSezione(String) : void
+    + stampaCampi(List) : void
+    + stampaCategorie(List) : void
+    + stampaCategorieDettaglio(Map) : void
+    + stampaMenu(String, String[]) : void
+    + stampaMenu(String, String[], String) : void
+    + pausa() : void
+    + stampaSuccesso(String) : void
+    + stampaErrore(String) : void
+    + stampaAvviso(String) : void
+    + stampaInfo(String) : void
+    + pausaConSpaziatura() : void
+    + mostraBacheca(Map<String, List<Proposta>>) : void
+    + mostraRiepilogoProposta(Proposta) : void
+    + acquisisciStringa(String) : String
+    + acquisisciStringaConValidazione(String, Predicate, String) : String
+    + acquisisciPassword(String) : String
+    + acquisisciIntero(String, int, int) : int
+    + acquisisciSiNo(String) : boolean
+    + acquisisciTipoDato(String) : TipoDato
+    + acquisisciListaNomi(String) : List
+    + selezionaElemento(String, List) : Optional
+    + selezionaElementoConInfo(String, List, Function) : Optional
+    + acquisisciValoriProposta(Proposta, ProposalFieldValidator) : Optional
+    + correggiCampiProposta(Proposta, Set, ProposalFieldValidator) : Optional
+    + selezionaCategoria(List<Categoria>) : OptionalInt
+    - eseguiForm(Proposta, List, ProposalFieldValidator) : Optional
+  }
+
+  interface TypeValidator #EEEEEE {
+    + validate(String, TipoDato) : String
+  }
+
+  class DefaultTypeValidator #EEEEEE {
+    + INSTANCE : DefaultTypeValidator
+    + validate(String, TipoDato) : String
+  }
+}
+
+' ===========================================================
+' EXCEPTIONS
+' ===========================================================
+
+together {
+  class OperationCancelledException #EEEEEE
+  class CancelException #EEEEEE
+  class BackException #EEEEEE
+}
+
+' ===========================================================
+' RELAZIONI
+' ===========================================================
+
+Application ..> AuthenticationService : create
+Application ..> CatalogoService : create
+Application ..> PropostaService : create
+Application ..> NotificationService : create
+Application ..> StateTransitionService : create
+Application ..> IscrizioneService : create
+Application ..> AuthController : create
+Application ..> ConfiguratoreController : create
+Application ..> PropostaController : create
+Application ..> FruitoreController : create
+Application ..> SpazioPersonaleController : create
+Application ..> ConsoleUI : create
+Application ..> FileCatalogoRepository : create
+Application ..> FileCredenzialiRepository : create
+Application ..> FileBachecaRepository : create
+Application ..> FileSpazioPersonaleRepository : create
+
+Configuratore --|> Persona
+Fruitore --|> Persona
+OperationCancelledException --|> RuntimeException
+CancelException --|> OperationCancelledException
+BackException --|> OperationCancelledException
+
+IAppView --|> IOutputView
+IAppView --|> IInputView
+ConsoleUI ..|> IAppView
+
+FileCatalogoRepository --|> AbstractFileRepository
+FileCredenzialiRepository --|> AbstractFileRepository
+FileBachecaRepository --|> AbstractFileRepository
+FileSpazioPersonaleRepository --|> AbstractFileRepository
+FileCatalogoRepository ..|> ICatalogoRepository
+FileCredenzialiRepository ..|> ICredenzialiRepository
+FileBachecaRepository ..|> IBachecaRepository
+FileSpazioPersonaleRepository ..|> ISpazioPersonaleRepository
+
+FileCatalogoRepository --> Catalogo : stores
+FileCredenzialiRepository --> Credenziali : stores
+FileBachecaRepository --> Bacheca : stores
+FileSpazioPersonaleRepository --> ArchivioNotifiche : stores
+
+ConfiguratoreController --> IAppView
+ConfiguratoreController --> CatalogoService
+ConfiguratoreController --> PropostaController
+ConfiguratoreController --> Configuratore
+ConfiguratoreController --> PropostaService : <color:green>new</color>
+ConfiguratoreController --> StateTransitionService : <color:green>new</color>
+
+AuthController --> IAppView
+AuthController --> AuthenticationService
+
+PropostaController --> IAppView
+PropostaController --> PropostaService
+PropostaController ..> ProposalFieldValidator : passes callback
+
+FruitoreController --> IAppView
+FruitoreController --> PropostaService
+FruitoreController --> IscrizioneService
+FruitoreController --> SpazioPersonaleController
+FruitoreController --> Fruitore
+
+SpazioPersonaleController --> IAppView
+SpazioPersonaleController --> NotificationService
+SpazioPersonaleController --> Fruitore
+
+CatalogoService --> ICatalogoRepository
+AuthenticationService --> ICredenzialiRepository
+PropostaService --> IBachecaRepository
+NotificationService --> ISpazioPersonaleRepository
+IscrizioneService --> IBachecaRepository
+IscrizioneService --> StateTransitionService
+StateTransitionService --> IBachecaRepository
+StateTransitionService --> NotificationService
+
+Catalogo *-- Campo : campiBase
+Catalogo *-- Campo : campiComuni
+Catalogo *-- Categoria : categorie
+Categoria *-- Campo : campiSpecifici
+Campo --> TipoCampo
+Campo --> TipoDato
+CampoBaseDefinito --> TipoDato
+CampoBaseDefinito ..> Campo : create
+
+Proposta --> Categoria
+Proposta --> StatoProposta
+Proposta --> Campo : campiBase/campiComuni
+Proposta *-- PropostaStateChange : stateHistory
+Bacheca *-- Proposta : proposte
+PropostaStateChange --> StatoProposta
+
+ArchivioNotifiche *-- SpazioPersonale : utenti
+SpazioPersonale *-- Notifica : notifiche
+
+ConsoleUI ..> DefaultTypeValidator : uses
+ConsoleUI ..> ProposalFieldValidator : uses
+DefaultTypeValidator ..|> TypeValidator
+StateTransitionService ..> Notifica : creates
+
+' ===========================================================
+' LAYOUT HINTS
+' ===========================================================
+
+Main -[hidden]down- Application
+Application -[hidden]down- AuthController
+AuthController -[hidden]right- AuthenticationService
+AuthenticationService -[hidden]right- ICredenzialiRepository
+ICredenzialiRepository -[hidden]right- FileCredenzialiRepository
+
+ConfiguratoreController -[hidden]right- CatalogoService
+CatalogoService -[hidden]right- ICatalogoRepository
+ICatalogoRepository -[hidden]right- FileCatalogoRepository
+PropostaController -[hidden]right- PropostaService
+PropostaService -[hidden]right- IBachecaRepository
+IBachecaRepository -[hidden]right- FileBachecaRepository
+
+FruitoreController -[hidden]right- IscrizioneService
+IscrizioneService -[hidden]right- StateTransitionService
+SpazioPersonaleController -[hidden]right- NotificationService
+NotificationService -[hidden]right- ISpazioPersonaleRepository
+ISpazioPersonaleRepository -[hidden]right- FileSpazioPersonaleRepository
+
+IAppView -[hidden]down- ConsoleUI
+ConsoleUI -[hidden]right- DefaultTypeValidator
+DefaultTypeValidator -[hidden]right- ProposalFieldValidator
+ConsoleUI -[hidden]left- IInputView
+IInputView -[hidden]right- IOutputView
+IOutputView -[hidden]right- IAppView
+
+OperationCancelledException -[hidden]down- CancelException
+CancelException -[hidden]down- BackException
+
+@enduml

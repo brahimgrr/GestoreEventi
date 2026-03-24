@@ -42,7 +42,10 @@
       "Bash(find . -name *.jar)",
       "Bash(find c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi -type f -name *.java -path *test* -o -type f -name *.java -path *tst*)",
       "Bash(find /c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/tst -type f -name *.java)",
-      "Bash(find /c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/tst -path *v3* -name *.java)"
+      "Bash(find /c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/tst -path *v3* -name *.java)",
+      "Bash(find c:UsersBrahimDesktopProgettoSwGestoreEventi -type f -name *.puml -o -name *.plantuml)",
+      "Bash(find /c/Users/Brahim/Desktop/ProgettoSw/GestoreEventi/doc -type f -name *.puml -o -name *.pu -o -name *.uml -o -name *.png -o -name *.jpg -o -name *.pdf -o -name *.svg)",
+      "Bash(find c:/Users/Brahim/Desktop/ProgettoSw/GestoreEventi -name *README* -o -name *FEATURES* -o -name *.md)"
     ]
   }
 }

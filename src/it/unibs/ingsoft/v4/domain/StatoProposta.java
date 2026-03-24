@@ -5,8 +5,10 @@ package it.unibs.ingsoft.v4.domain;
  *
  * <pre>
  *   BOZZA ──→ VALIDA ──→ APERTA ──→ CONFERMATA ──→ CONCLUSA
- *                          │
- *                          └──→ ANNULLATA
+ *                          │  ↘          │  ↘
+ *                          │  ANNULLATA  │  RITIRATA
+ *                          ↓
+ *                        RITIRATA
  * </pre>
  */
 public enum StatoProposta
@@ -23,12 +25,12 @@ public enum StatoProposta
     },
     APERTA {
         @Override public boolean canTransitionTo(StatoProposta next) {
-            return next == CONFERMATA || next == ANNULLATA;
+            return next == CONFERMATA || next == ANNULLATA || next == RITIRATA;
         }
     },
     CONFERMATA {
         @Override public boolean canTransitionTo(StatoProposta next) {
-            return next == CONCLUSA;
+            return next == CONCLUSA || next == RITIRATA;
         }
     },
     ANNULLATA {
@@ -37,6 +39,11 @@ public enum StatoProposta
         }
     },
     CONCLUSA {
+        @Override public boolean canTransitionTo(StatoProposta next) {
+            return false;
+        }
+    },
+    RITIRATA {
         @Override public boolean canTransitionTo(StatoProposta next) {
             return false;
         }

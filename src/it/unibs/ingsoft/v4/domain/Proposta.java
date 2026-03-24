@@ -12,7 +12,8 @@ import java.util.*;
  * Represents an event proposal.
  *
  * <p>Lifecycle: BOZZA → VALIDA → APERTA → CONFERMATA → CONCLUSA
- *                                         → ANNULLATA</p>
+ *                                  ↘          ↘
+ *                              ANNULLATA    RITIRATA</p>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class Proposta
@@ -125,6 +126,12 @@ public final class Proposta
         if (!listaAderenti.contains(username)) {
             listaAderenti.add(username);
         }
+    }
+
+    public void removeAderente(String username) {
+        if (stato != StatoProposta.APERTA)
+            throw new IllegalStateException("Impossibile rimuovere aderenti: la proposta non è APERTA.");
+        listaAderenti.remove(username);
     }
 
     /**

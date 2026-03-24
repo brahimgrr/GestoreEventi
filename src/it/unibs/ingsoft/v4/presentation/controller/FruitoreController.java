@@ -6,12 +6,14 @@ import it.unibs.ingsoft.v4.domain.Fruitore;
 import it.unibs.ingsoft.v4.domain.Proposta;
 import it.unibs.ingsoft.v4.presentation.view.contract.IAppView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public final class FruitoreController {
     private static final String[] MENU_PRINCIPALE = {
         "Visualizza bacheca (per categoria)",
+        "Disdici iscrizione a una proposta",
         "Spazio Personale (Notifiche)",
     };
 
@@ -41,6 +43,9 @@ public final class FruitoreController {
                     mostraBachecaEiscrizione();
                     break;
                 case 2:
+                    disdiciIscrizione();
+                    break;
+                case 3:
                     spazioPersonaleController.run();
                     break;
                 case 0:
@@ -86,6 +91,48 @@ public final class FruitoreController {
 
         Proposta selezionata = proposteSelezionabili.get(subChoice - 1);
         dettagliEIscrizione(selezionata);
+    }
+
+    private void disdiciIscrizione() {
+        List<Proposta> mieProposte = new ArrayList<>();
+        for (Proposta p : propostaService.getBacheca()) {
+            if (p.getListaAderenti().contains(fruitore.getUsername())) {
+                mieProposte.add(p);
+            }
+        }
+
+        if (mieProposte.isEmpty()) {
+            ui.stampa("Non sei iscritto a nessuna proposta aperta.");
+            ui.pausaConSpaziatura();
+            return;
+        }
+
+        ui.header("DISDICI ISCRIZIONE");
+        int indice = 1;
+        for (Proposta p : mieProposte) {
+            String titolo = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "Senza Titolo");
+            ui.stampa(String.format(" %d) %s (Scadenza: %s)", indice++, titolo, p.getTermineIscrizione()));
+        }
+        ui.newLine();
+
+        ui.stampa("Seleziona la proposta da cui disdire l'iscrizione (0 per tornare indietro).");
+        int subChoice = ui.acquisisciIntero("Scelta: ", 0, mieProposte.size());
+
+        if (subChoice == 0) return;
+
+        Proposta selezionata = mieProposte.get(subChoice - 1);
+        ui.mostraRiepilogoProposta(selezionata);
+        ui.newLine();
+
+        if (ui.acquisisciSiNo("Vuoi davvero disdire l'iscrizione a questa proposta?")) {
+            try {
+                iscrizioneService.disiscrivi(selezionata, fruitore);
+                ui.stampaSuccesso("Iscrizione disdetta con successo.");
+            } catch (IllegalStateException e) {
+                ui.stampaErrore("Errore durante la disiscrizione: " + e.getMessage());
+            }
+        }
+        ui.pausaConSpaziatura();
     }
 
     private void dettagliEIscrizione(Proposta p) {

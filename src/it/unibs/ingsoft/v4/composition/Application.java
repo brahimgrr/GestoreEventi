@@ -61,7 +61,7 @@ public final class Application
         AuthController authCtrl = new AuthController(ui, authService);
         PropostaController propostaController = new PropostaController(ui, propostaService);
 
-        ui.header("Gestore Eventi – Versione 3");
+        ui.header("Gestore Eventi – Versione 4");
 
         while (true) {
             ui.stampaMenu("MENU DI ACCESSO", new String[]{
@@ -81,7 +81,7 @@ public final class Application
                 if (configuratore != null) {
                     ui.stampa("Benvenuto Configuratore, " + configuratore.getUsername() + "!");
                     ui.newLine();
-                    new ConfiguratoreController(configuratore, ui, catalogoService, propostaController).run();
+                    new ConfiguratoreController(configuratore, ui, catalogoService, propostaController, propostaService, stateService).run();
                     
                     // Discard unpublished valid proposals on logout
                     propostaService.clearProposteValide();

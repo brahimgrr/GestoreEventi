@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Gestisce i cambi di stato automatici (mezzanotte) e immediati
- * (capienza massima raggiunta).
+ * Gestisce i cambi di stato automatici (mezzanotte), immediati
+ * (capienza massima raggiunta) e manuali (ritiro da parte del configuratore).
  */
 public final class StateTransitionService {
 
@@ -80,6 +80,44 @@ public final class StateTransitionService {
             for (String aderente : p.getListaAderenti()) {
                 notificationService.inviaNotifica(aderente, new Notifica(messaggio));
             }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Ritira una proposta APERTA o CONFERMATA (→ RITIRATA).
+     * Notifica tutti gli aderenti del ritiro.
+     *
+     * @throws IllegalStateException se la proposta non è APERTA né CONFERMATA,
+     *                               o se il termine per il ritiro è scaduto.
+     */
+    public void ritiraProposta(Proposta p) {
+        lock.lock();
+        try {
+            StatoProposta stato = p.getStato();
+            if (stato != StatoProposta.APERTA && stato != StatoProposta.CONFERMATA) {
+                throw new IllegalStateException(
+                        "Impossibile ritirare: la proposta non è APERTA né CONFERMATA.");
+            }
+
+            LocalDate oggi = LocalDate.now(AppConstants.clock);
+            if (p.getDataEvento() != null && !oggi.isBefore(p.getDataEvento())) {
+                throw new IllegalStateException(
+                        "Impossibile ritirare: il ritiro è consentito solo entro il giorno precedente la data dell'evento.");
+            }
+
+            p.setStato(StatoProposta.RITIRATA);
+
+            String titolo = p.getValoriCampi()
+                    .getOrDefault(PropostaService.CAMPO_TITOLO, "Senza titolo");
+            String messaggio = "La proposta \"" + titolo
+                    + "\" e' stata RITIRATA dal configuratore.";
+            for (String aderente : p.getListaAderenti()) {
+                notificationService.inviaNotifica(aderente, new Notifica(messaggio));
+            }
+
+            bachecaRepo.save();
         } finally {
             lock.unlock();
         }
