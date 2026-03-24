@@ -44,11 +44,14 @@ public final class PropostaService
      * Saves a valid proposal in memory for later publication.
      *
      * @pre p.getStato() == StatoProposta.VALIDA
+     * @throws IllegalStateException if a proposal with the same Titolo, Data, Ora, Luogo
+     *                               already exists (published or in memory)
      */
     public void salvaProposta(Proposta p)
     {
         if (p.getStato() != StatoProposta.VALIDA)
             throw new IllegalStateException("Solo una proposta VALIDA può essere salvata.");
+        rilevaDuplicatoAlSalvataggio(p);
         proposteValide.add(p);
     }
 
@@ -274,19 +277,31 @@ public final class PropostaService
         bachecaRepo.save();
     }
 
+    /**
+     * Checks for duplicates at save time: against both published proposals (bacheca)
+     * and in-memory VALIDA proposals. This protects both interactive and batch flows.
+     */
+    private void rilevaDuplicatoAlSalvataggio(Proposta p)
+    {
+        String chiave = p.getChiaveIdentita();
+
+        boolean inBacheca = bacheca().getProposte().stream()
+                .anyMatch(e -> e.getChiaveIdentita().equals(chiave));
+        boolean inValide = proposteValide.stream()
+                .anyMatch(e -> e.getChiaveIdentita().equals(chiave));
+
+        if (inBacheca || inValide)
+            throw new IllegalStateException(
+                    "Esiste già una proposta con lo stesso Titolo, Data, Ora e Luogo.");
+    }
+
+    /** Checks for duplicates at publication time: against published proposals only. */
     private void rilevaDuplicato(Proposta p)
     {
-        String titolo  = p.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim();
-        String dataStr = p.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim();
-        String ora     = p.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim();
-        String luogo   = p.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim();
+        String chiave = p.getChiaveIdentita();
 
-        boolean duplicato = bacheca().getProposte().stream().anyMatch(existing ->
-                existing.getValoriCampi().getOrDefault(CAMPO_TITOLO, "").trim().equalsIgnoreCase(titolo) &&
-                existing.getValoriCampi().getOrDefault(CAMPO_DATA,   "").trim().equals(dataStr)          &&
-                existing.getValoriCampi().getOrDefault(CAMPO_ORA,    "").trim().equalsIgnoreCase(ora)    &&
-                existing.getValoriCampi().getOrDefault(CAMPO_LUOGO,  "").trim().equalsIgnoreCase(luogo)
-        );
+        boolean duplicato = bacheca().getProposte().stream()
+                .anyMatch(e -> e.getChiaveIdentita().equals(chiave));
 
         if (duplicato)
             throw new IllegalStateException("Esiste già una proposta con lo stesso Titolo, Data, Ora e Luogo.");

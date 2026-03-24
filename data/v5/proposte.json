@@ -1,0 +1,150 @@
+{
+  "proposte" : [ {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Torneo Calcio",
+      "Numero di partecipanti" : "2",
+      "Termine ultimo di iscrizione" : "25/03/2026",
+      "Luogo" : "Brescia",
+      "Data" : "27/03/2026",
+      "Ora" : "18:30",
+      "Quota individuale" : "9,99",
+      "Data conclusiva" : "27/03/2026"
+    },
+    "stato" : "CONFERMATA",
+    "dataPubblicazione" : "24/03/2026",
+    "termineIscrizione" : "25/03/2026",
+    "dataEvento" : "27/03/2026",
+    "listaAderenti" : [ "user", "user2" ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "CONFERMATA",
+      "dataCambio" : "24/03/2026"
+    } ]
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Torneo Tennis",
+      "Numero di partecipanti" : "8",
+      "Termine ultimo di iscrizione" : "15/05/2026",
+      "Luogo" : "Roma",
+      "Data" : "20/05/2026",
+      "Ora" : "09:00",
+      "Quota individuale" : "25",
+      "Data conclusiva" : "20/05/2026",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "24/03/2026",
+    "termineIscrizione" : "15/05/2026",
+    "dataEvento" : "20/05/2026",
+    "listaAderenti" : [ ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "24/03/2026"
+    } ]
+  }, {
+    "categoria" : {
+      "nome" : "Cultura",
+      "campiSpecifici" : [ {
+        "nome" : "Genere",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "STRINGA",
+        "obbligatorio" : true
+      }, {
+        "nome" : "Livello",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "STRINGA",
+        "obbligatorio" : false
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Visita al Museo",
+      "Numero di partecipanti" : "15",
+      "Termine ultimo di iscrizione" : "10/05/2026",
+      "Luogo" : "Brescia",
+      "Data" : "15/05/2026",
+      "Ora" : "10:00",
+      "Quota individuale" : "12.50",
+      "Data conclusiva" : "15/05/2026",
+      "Genere" : "Arte contemporanea"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "24/03/2026",
+    "termineIscrizione" : "10/05/2026",
+    "dataEvento" : "15/05/2026",
+    "listaAderenti" : [ ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "24/03/2026"
+    } ]
+  }, {
+    "categoria" : {
+      "nome" : "Gastronomia",
+      "campiSpecifici" : [ {
+        "nome" : "Allergeni",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      }, {
+        "nome" : "Menu",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "STRINGA",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Degustazione Vini",
+      "Numero di partecipanti" : "10",
+      "Termine ultimo di iscrizione" : "20/05/2026",
+      "Luogo" : "Franciacorta",
+      "Data" : "25/05/2026",
+      "Ora" : "18:00",
+      "Quota individuale" : "30.00",
+      "Data conclusiva" : "25/05/2026",
+      "Allergeni" : "no",
+      "Menu" : "Degustazione 5 vini locali"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "25/03/2026",
+    "termineIscrizione" : "20/05/2026",
+    "dataEvento" : "25/05/2026",
+    "listaAderenti" : [ ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "25/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "25/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "25/03/2026"
+    } ]
+  } ]
+}

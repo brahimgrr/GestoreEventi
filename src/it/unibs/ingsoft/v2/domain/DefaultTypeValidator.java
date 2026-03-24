@@ -1,7 +1,4 @@
-package it.unibs.ingsoft.v3.presentation.view.validation;
-
-import it.unibs.ingsoft.v3.domain.AppConstants;
-import it.unibs.ingsoft.v3.domain.TipoDato;
+package it.unibs.ingsoft.v2.domain;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

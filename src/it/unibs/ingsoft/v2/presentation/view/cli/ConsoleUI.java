@@ -9,8 +9,8 @@ import it.unibs.ingsoft.v2.presentation.view.contract.CancelException;
 import it.unibs.ingsoft.v2.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v2.presentation.view.contract.OperationCancelledException;
 import it.unibs.ingsoft.v2.presentation.view.contract.ProposalFieldValidator;
-import it.unibs.ingsoft.v2.presentation.view.validation.DefaultTypeValidator;
-import it.unibs.ingsoft.v2.presentation.view.validation.TypeValidator;
+import it.unibs.ingsoft.v2.domain.DefaultTypeValidator;
+import it.unibs.ingsoft.v2.domain.TypeValidator;
 
 import java.io.Console;
 import java.util.ArrayList;

@@ -23,9 +23,9 @@ import java.util.Scanner;
  */
 public final class Application
 {
-    private static final Path DATA_CATALOGO = Path.of("data", "v2_catalogo.json");
-    private static final Path DATA_UTENTI   = Path.of("data", "v2_utenti.json");
-    private static final Path DATA_PROPOSTE = Path.of("data", "v2_proposte.json");
+    private static final Path DATA_CATALOGO = Path.of("data/v2", "catalogo.json");
+    private static final Path DATA_UTENTI   = Path.of("data/v2", "utenti.json");
+    private static final Path DATA_PROPOSTE = Path.of("data/v2", "proposte.json");
 
     public void start()
     {

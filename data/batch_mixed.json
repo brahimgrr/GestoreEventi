@@ -1,0 +1,57 @@
+{
+  "campiComuni": [
+    { "nome": "Nota", "tipoDato": "STRINGA", "obbligatorio": false },
+    { "nome": "", "tipoDato": "STRINGA", "obbligatorio": false },
+    { "nome": "Invalido", "tipoDato": "TIPO_INESISTENTE", "obbligatorio": false },
+    { "nome": "Nota", "tipoDato": "STRINGA", "obbligatorio": true }
+  ],
+  "categorie": [
+    {
+      "nome": "Musica",
+      "campiSpecifici": [
+        { "nome": "Strumento", "tipoDato": "STRINGA", "obbligatorio": false },
+        { "nome": "", "tipoDato": "INTERO", "obbligatorio": false }
+      ]
+    },
+    {
+      "nome": "",
+      "campiSpecifici": []
+    }
+  ],
+  "proposte": [
+    {
+      "categoria": "CategoriaInesistente",
+      "valoriCampi": {
+        "Titolo": "Evento Fantasma"
+      }
+    },
+    {
+      "categoria": "Sport",
+      "valoriCampi": {
+        "Titolo": "Torneo Basket",
+        "Numero di partecipanti": "abc",
+        "Termine ultimo di iscrizione": "01/05/2026",
+        "Luogo": "Milano",
+        "Data": "05/05/2026",
+        "Ora": "15:00",
+        "Quota individuale": "10",
+        "Data conclusiva": "05/05/2026",
+        "Certificato Medico": "si"
+      }
+    },
+    {
+      "categoria": "Sport",
+      "valoriCampi": {
+        "Titolo": "Torneo Tennis",
+        "Numero di partecipanti": "8",
+        "Termine ultimo di iscrizione": "15/05/2026",
+        "Luogo": "Roma",
+        "Data": "20/05/2026",
+        "Ora": "09:00",
+        "Quota individuale": "25",
+        "Data conclusiva": "20/05/2026",
+        "Certificato Medico": "si"
+      }
+    }
+  ]
+}

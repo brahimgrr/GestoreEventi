@@ -10,6 +10,7 @@ out/
 .factorypath
 .project
 .settings
+.claude
 .springBeans
 .sts4-cache
 bin/
@@ -28,3 +29,4 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/.claude/

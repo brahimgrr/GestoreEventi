@@ -155,8 +155,12 @@ public final class PropostaController
         ui.newLine();
         ui.mostraRiepilogoProposta(proposta);
 
-        ps.salvaProposta(proposta);
-        ui.stampaSuccesso("Proposta valida salvata. Puoi pubblicarla dal menu 'Pubblicare una proposta di iniziativa'.");
+        try {
+            ps.salvaProposta(proposta);
+            ui.stampaSuccesso("Proposta valida salvata. Puoi pubblicarla dal menu 'Pubblicare una proposta di iniziativa'.");
+        } catch (IllegalStateException e) {
+            ui.stampaErrore(e.getMessage());
+        }
 
         ui.newLine();
         ui.pausa();

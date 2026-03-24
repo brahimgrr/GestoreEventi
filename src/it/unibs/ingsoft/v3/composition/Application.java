@@ -39,10 +39,10 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Application
 {
-    private static final Path DATA_CATALOGO   = Path.of("data", "v3_catalogo.json");
-    private static final Path DATA_UTENTI     = Path.of("data", "v3_utenti.json");
-    private static final Path DATA_PROPOSTE   = Path.of("data", "v3_proposte.json");
-    private static final Path DATA_NOTIFICHE  = Path.of("data", "v3_notifiche.json");
+    private static final Path DATA_CATALOGO   = Path.of("data/v3", "catalogo.json");
+    private static final Path DATA_UTENTI     = Path.of("data/v3", "utenti.json");
+    private static final Path DATA_PROPOSTE   = Path.of("data/v3", "proposte.json");
+    private static final Path DATA_NOTIFICHE  = Path.of("data/v3", "notifiche.json");
     private ScheduledExecutorService midnightScheduler;
 
     public void start()

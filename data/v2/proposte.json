@@ -1,0 +1,163 @@
+{
+  "proposte" : [ {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Torneo calcio",
+      "Numero di partecipanti" : "10",
+      "Termine ultimo di iscrizione" : "23/03/2026",
+      "Luogo" : "Brixia",
+      "Data" : "25/03/2026",
+      "Ora" : "12",
+      "Quota individuale" : "10",
+      "Data conclusiva" : "25/03/2026",
+      "CampoBaseExtraTest" : "test",
+      "Campo Comune di Prova" : "123",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "22/03/2026",
+    "termineIscrizione" : "23/03/2026",
+    "dataEvento" : "25/03/2026"
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "ciao",
+      "Numero di partecipanti" : "10",
+      "Termine ultimo di iscrizione" : "27/03/2026",
+      "Luogo" : "s",
+      "Data" : "30/03/2026",
+      "Ora" : "16:30",
+      "Quota individuale" : "10",
+      "Data conclusiva" : "30/03/2026",
+      "CampoBaseExtraTest" : "s",
+      "Campo Comune di Prova" : "1",
+      "Certificato Medico" : "s"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "22/03/2026",
+    "termineIscrizione" : "27/03/2026",
+    "dataEvento" : "30/03/2026"
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Prova",
+      "Numero di partecipanti" : "456",
+      "Termine ultimo di iscrizione" : "25/03/2026",
+      "Luogo" : "Brescia",
+      "Data" : "30/03/2026",
+      "Ora" : "23:30",
+      "Quota individuale" : "10",
+      "Data conclusiva" : "30/03/2026",
+      "CampoBaseExtraTest" : "a",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "22/03/2026",
+    "termineIscrizione" : "25/03/2026",
+    "dataEvento" : "30/03/2026"
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "abc",
+      "Numero di partecipanti" : "10",
+      "Termine ultimo di iscrizione" : "25/03/2026",
+      "Luogo" : "Brescia",
+      "Data" : "27/03/2026",
+      "Ora" : "24:00",
+      "Quota individuale" : "45",
+      "Data conclusiva" : "30/03/2026",
+      "CampoBaseExtraTest" : "d",
+      "Campo Comune di Prova" : "1",
+      "Certificato Medico" : "s"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "23/03/2026",
+    "termineIscrizione" : "25/03/2026",
+    "dataEvento" : "27/03/2026"
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "abc",
+      "Numero di partecipanti" : "10",
+      "Termine ultimo di iscrizione" : "24/03/2026",
+      "Luogo" : "Brescia",
+      "Data" : "26/03/2026",
+      "Ora" : "17:34",
+      "Quota individuale" : "10",
+      "Data conclusiva" : "30/03/2026",
+      "CampoBaseExtraTest" : "test",
+      "Campo Comune di Prova" : "12",
+      "Certificato Medico" : "no"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "23/03/2026",
+    "termineIscrizione" : "24/03/2026",
+    "dataEvento" : "26/03/2026"
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Torneo Golf",
+      "Numero di partecipanti" : "123",
+      "Termine ultimo di iscrizione" : "24/03/2026",
+      "Luogo" : "Brescia",
+      "Data" : "26/03/2026",
+      "Ora" : "12:00",
+      "Quota individuale" : "12",
+      "Data conclusiva" : "26/03/2026",
+      "CampoBaseExtraTest" : "obl",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "APERTA",
+    "dataPubblicazione" : "23/03/2026",
+    "termineIscrizione" : "24/03/2026",
+    "dataEvento" : "26/03/2026"
+  } ]
+}

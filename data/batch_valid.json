@@ -1,0 +1,53 @@
+{
+  "campiComuni": [
+    { "nome": "Nota", "tipoDato": "STRINGA", "obbligatorio": false },
+    { "nome": "Accompagnatore", "tipoDato": "BOOLEANO", "obbligatorio": false }
+  ],
+  "categorie": [
+    {
+      "nome": "Cultura",
+      "campiSpecifici": [
+        { "nome": "Genere", "tipoDato": "STRINGA", "obbligatorio": true },
+        { "nome": "Livello", "tipoDato": "STRINGA", "obbligatorio": false }
+      ]
+    },
+    {
+      "nome": "Gastronomia",
+      "campiSpecifici": [
+        { "nome": "Menu", "tipoDato": "STRINGA", "obbligatorio": true },
+        { "nome": "Allergeni", "tipoDato": "BOOLEANO", "obbligatorio": true }
+      ]
+    }
+  ],
+  "proposte": [
+    {
+      "categoria": "Cultura",
+      "valoriCampi": {
+        "Titolo": "Visita al Museo",
+        "Numero di partecipanti": "15",
+        "Termine ultimo di iscrizione": "10/05/2026",
+        "Luogo": "Brescia",
+        "Data": "15/05/2026",
+        "Ora": "10:00",
+        "Quota individuale": "12.50",
+        "Data conclusiva": "15/05/2026",
+        "Genere": "Arte contemporanea"
+      }
+    },
+    {
+      "categoria": "Gastronomia",
+      "valoriCampi": {
+        "Titolo": "Degustazione Vini",
+        "Numero di partecipanti": "10",
+        "Termine ultimo di iscrizione": "20/05/2026",
+        "Luogo": "Franciacorta",
+        "Data": "25/05/2026",
+        "Ora": "18:00",
+        "Quota individuale": "30.00",
+        "Data conclusiva": "25/05/2026",
+        "Menu": "Degustazione 5 vini locali",
+        "Allergeni": "no"
+      }
+    }
+  ]
+}

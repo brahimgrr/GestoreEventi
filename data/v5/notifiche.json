@@ -1,0 +1,18 @@
+{
+  "utenti" : {
+    "user2" : {
+      "notifiche" : [ {
+        "id" : "b8f6ba07-5084-4bd1-a019-476eaf4ada4a",
+        "messaggio" : "La proposta \"Torneo Calcio\" e' stata CONFERMATA.\nData: 27/03/2026\nOra: 18:30\nLuogo: Brescia\nQuota: 9,99",
+        "dataCreazione" : "24/03/2026 23:05:53"
+      } ]
+    },
+    "user" : {
+      "notifiche" : [ {
+        "id" : "b50fb5e8-0835-4e02-8850-7c49c387031c",
+        "messaggio" : "La proposta \"Torneo Calcio\" e' stata CONFERMATA.\nData: 27/03/2026\nOra: 18:30\nLuogo: Brescia\nQuota: 9,99",
+        "dataCreazione" : "24/03/2026 23:05:53"
+      } ]
+    }
+  }
+}

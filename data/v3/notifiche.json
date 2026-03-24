@@ -1,0 +1,45 @@
+{
+  "utenti" : {
+    "user" : {
+      "notifiche" : [ {
+        "id" : "n1",
+        "messaggio" : "Benvenuto!",
+        "dataCreazione" : "23/03/2026 10:15:30"
+      }, {
+        "id" : "n2",
+        "messaggio" : "Hai un messaggio",
+        "dataCreazione" : "23/03/2026 11:00:00"
+      }, {
+        "id" : "n3",
+        "messaggio" : "Update disponibile",
+        "dataCreazione" : "23/03/2026 12:45:10"
+      } ]
+    },
+    "bar" : {
+      "notifiche" : [ {
+        "id" : "n7",
+        "messaggio" : "Password aggiornata",
+        "dataCreazione" : "21/03/2026 16:05:00"
+      }, {
+        "id" : "n8",
+        "messaggio" : "Nuovo accesso",
+        "dataCreazione" : "21/03/2026 18:25:30"
+      }, {
+        "id" : "n9",
+        "messaggio" : "Email verificata",
+        "dataCreazione" : "22/03/2026 07:55:15"
+      } ]
+    },
+    "foo" : {
+      "notifiche" : [ {
+        "id" : "n5",
+        "messaggio" : "In consegna",
+        "dataCreazione" : "22/03/2026 14:20:00"
+      }, {
+        "id" : "n6",
+        "messaggio" : "Consegnato",
+        "dataCreazione" : "23/03/2026 08:10:45"
+      } ]
+    }
+  }
+}

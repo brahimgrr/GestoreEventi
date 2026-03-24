@@ -7,8 +7,8 @@ import it.unibs.ingsoft.v4.domain.Proposta;
 import it.unibs.ingsoft.v4.domain.PropostaStateChange;
 import it.unibs.ingsoft.v4.domain.TipoDato;
 import it.unibs.ingsoft.v4.presentation.view.contract.*;
-import it.unibs.ingsoft.v4.presentation.view.validation.DefaultTypeValidator;
-import it.unibs.ingsoft.v4.presentation.view.validation.TypeValidator;
+import it.unibs.ingsoft.v4.domain.DefaultTypeValidator;
+import it.unibs.ingsoft.v4.domain.TypeValidator;
 
 import java.io.Console;
 import java.util.*;

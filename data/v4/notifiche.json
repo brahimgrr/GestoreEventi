@@ -1,0 +1,11 @@
+{
+  "utenti" : {
+    "user" : {
+      "notifiche" : [ {
+        "id" : "c5463a4f-8345-4bbd-a85c-7033617a9960",
+        "messaggio" : "La proposta \"Torneo Pallavolo\" e' stata ANNULLATA per mancato raggiungimento del numero di partecipanti.",
+        "dataCreazione" : "25/03/2026 00:07:28"
+      } ]
+    }
+  }
+}

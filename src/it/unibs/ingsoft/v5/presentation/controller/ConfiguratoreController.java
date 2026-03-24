@@ -24,7 +24,8 @@ public final class ConfiguratoreController {
         "Pubblicare una proposta di iniziativa",
         "Visualizzare la bacheca",
         "Ritirare una proposta",
-        "Visualizzare archivio proposte"
+        "Visualizzare archivio proposte",
+        "Importa dati da file"
     };
 
     private static final String[] MENU_CAMPI = {
@@ -51,16 +52,19 @@ public final class ConfiguratoreController {
     private final PropostaController propostaController;
     private final PropostaService propostaService;
     private final StateTransitionService stateTransitionService;
+    private final BatchImportController batchImportController;
 
     public ConfiguratoreController(Configuratore configuratore, IAppView ui, CatalogoService catalogoService,
                                    PropostaController propostaController, PropostaService propostaService,
-                                   StateTransitionService stateTransitionService) {
+                                   StateTransitionService stateTransitionService,
+                                   BatchImportController batchImportController) {
         this.configuratore = configuratore;
         this.ui  = ui;
         this.catalogoService = catalogoService;
         this.propostaController = propostaController;
         this.propostaService = propostaService;
         this.stateTransitionService = stateTransitionService;
+        this.batchImportController = batchImportController;
     }
 
     /**
@@ -118,6 +122,9 @@ public final class ConfiguratoreController {
                     break;
                 case 8:
                     propostaController.visualizzaArchivioProposte();
+                    break;
+                case 9:
+                    batchImportController.avviaImportazione();
                     break;
                 case 0:
                     return;

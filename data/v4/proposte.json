@@ -1,0 +1,81 @@
+{
+  "proposte" : [ {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Torneo Pallavolo",
+      "Numero di partecipanti" : "20",
+      "Termine ultimo di iscrizione" : "25/03/2026",
+      "Luogo" : "Roma",
+      "Data" : "27/03/2026",
+      "Ora" : "16:30",
+      "Quota individuale" : "15.99",
+      "Data conclusiva" : "27/09/2026",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "RITIRATA",
+    "dataPubblicazione" : "24/03/2026",
+    "termineIscrizione" : "25/03/2026",
+    "dataEvento" : "27/03/2026",
+    "listaAderenti" : [ ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "RITIRATA",
+      "dataCambio" : "24/03/2026"
+    } ]
+  }, {
+    "categoria" : {
+      "nome" : "Sport",
+      "campiSpecifici" : [ {
+        "nome" : "Certificato Medico",
+        "tipo" : "SPECIFICO",
+        "tipoDato" : "BOOLEANO",
+        "obbligatorio" : true
+      } ]
+    },
+    "valoriCampi" : {
+      "Titolo" : "Torneo Pallavolo",
+      "Numero di partecipanti" : "20",
+      "Termine ultimo di iscrizione" : "24/03/2026",
+      "Luogo" : "Roma",
+      "Data" : "27/03/2026",
+      "Ora" : "12:30",
+      "Quota individuale" : "12.99",
+      "Data conclusiva" : "27/03/2026",
+      "Certificato Medico" : "si"
+    },
+    "stato" : "ANNULLATA",
+    "dataPubblicazione" : "24/03/2026",
+    "termineIscrizione" : "24/03/2026",
+    "dataEvento" : "27/03/2026",
+    "listaAderenti" : [ "user" ],
+    "stateHistory" : [ {
+      "stato" : "BOZZA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "VALIDA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "APERTA",
+      "dataCambio" : "24/03/2026"
+    }, {
+      "stato" : "ANNULLATA",
+      "dataCambio" : "25/03/2026"
+    } ]
+  } ]
+}

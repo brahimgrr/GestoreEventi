@@ -1,6 +1,7 @@
 package it.unibs.ingsoft.v5.composition;
 
 import it.unibs.ingsoft.v5.application.*;
+import it.unibs.ingsoft.v5.application.batch.BatchImportService;
 import it.unibs.ingsoft.v5.domain.AppConstants;
 import it.unibs.ingsoft.v5.domain.Configuratore;
 import it.unibs.ingsoft.v5.domain.Fruitore;
@@ -30,10 +31,10 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Application
 {
-    private static final Path DATA_CATALOGO   = Path.of("data", "v5_catalogo.json");
-    private static final Path DATA_UTENTI     = Path.of("data", "v5_utenti.json");
-    private static final Path DATA_PROPOSTE   = Path.of("data", "v5_proposte.json");
-    private static final Path DATA_NOTIFICHE  = Path.of("data", "v5_notifiche.json");
+    private static final Path DATA_CATALOGO   = Path.of("data/v5", "catalogo.json");
+    private static final Path DATA_UTENTI     = Path.of("data/v5", "utenti.json");
+    private static final Path DATA_PROPOSTE   = Path.of("data/v5", "proposte.json");
+    private static final Path DATA_NOTIFICHE  = Path.of("data/v5", "notifiche.json");
     private ScheduledExecutorService midnightScheduler;
 
     public void start()
@@ -56,10 +57,14 @@ public final class Application
         stateService.controllaScadenze();
         startMidnightScheduler(stateService);
 
+        // Batch import
+        BatchImportService batchImportService = new BatchImportService(catalogoService, propostaService);
+
         // View & Controllers
         IAppView ui = new ConsoleUI(new Scanner(System.in));
         AuthController authCtrl = new AuthController(ui, authService);
         PropostaController propostaController = new PropostaController(ui, propostaService);
+        BatchImportController batchImportController = new BatchImportController(ui, batchImportService);
 
         ui.header("Gestore Eventi – Versione 5");
 
@@ -81,7 +86,7 @@ public final class Application
                 if (configuratore != null) {
                     ui.stampa("Benvenuto Configuratore, " + configuratore.getUsername() + "!");
                     ui.newLine();
-                    new ConfiguratoreController(configuratore, ui, catalogoService, propostaController, propostaService, stateService).run();
+                    new ConfiguratoreController(configuratore, ui, catalogoService, propostaController, propostaService, stateService, batchImportController).run();
                     
                     // Discard unpublished valid proposals on logout
                     propostaService.clearProposteValide();

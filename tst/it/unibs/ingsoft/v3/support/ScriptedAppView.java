@@ -1,9 +1,6 @@
 package it.unibs.ingsoft.v3.support;
 
-import it.unibs.ingsoft.v3.domain.Campo;
-import it.unibs.ingsoft.v3.domain.Categoria;
-import it.unibs.ingsoft.v3.domain.Proposta;
-import it.unibs.ingsoft.v3.domain.TipoDato;
+import it.unibs.ingsoft.v3.domain.*;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v3.presentation.view.contract.ProposalFieldValidator;
 
@@ -199,6 +196,16 @@ public final class ScriptedAppView implements IAppView {
     @Override
     public void mostraRiepilogoProposta(Proposta proposta) {
         outputs.add("PROPOSTA: " + proposta.getValoriCampi().getOrDefault("Titolo", ""));
+    }
+
+    @Override
+    public void mostraAderenti(List<String> aderenti) {
+
+    }
+
+    @Override
+    public void mostraCronologiaStati(List<PropostaStateChange> history) {
+
     }
 
     @Override

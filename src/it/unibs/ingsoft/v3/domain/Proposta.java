@@ -188,4 +188,27 @@ public final class Proposta
         this.stato = next;
         this.stateHistory.add(new PropostaStateChange(next, LocalDate.now(AppConstants.clock)));
     }
+
+    // ----------------------------------------------------------------
+    // IDENTITY KEY (duplicate detection)
+    // ----------------------------------------------------------------
+
+    /**
+     * Builds a case-insensitive identity key (Titolo|Data|Ora|Luogo) from raw field values.
+     * Used for duplicate detection before a Proposta object exists (e.g. batch intra-file check).
+     */
+    public static String chiaveIdentita(Map<String, String> valori) {
+        return (valori.getOrDefault(AppConstants.CAMPO_TITOLO, "").trim() + "|"
+              + valori.getOrDefault(AppConstants.CAMPO_DATA,   "").trim() + "|"
+              + valori.getOrDefault(AppConstants.CAMPO_ORA,    "").trim() + "|"
+              + valori.getOrDefault(AppConstants.CAMPO_LUOGO,  "").trim()).toLowerCase();
+    }
+
+    /**
+     * Returns this proposal's identity key for duplicate detection.
+     */
+    @JsonIgnore
+    public String getChiaveIdentita() {
+        return chiaveIdentita(valoriCampi);
+    }
 }

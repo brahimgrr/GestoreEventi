@@ -1,6 +1,4 @@
-package it.unibs.ingsoft.v5.presentation.view.validation;
-
-import it.unibs.ingsoft.v5.domain.TipoDato;
+package it.unibs.ingsoft.v5.domain;
 
 /**
  * Validates a raw string against the expected {@link TipoDato}.
