@@ -3,6 +3,7 @@ package it.unibs.ingsoft.v3.presentation.view.contract;
 import it.unibs.ingsoft.v3.domain.Campo;
 import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Proposta;
+import it.unibs.ingsoft.v3.domain.PropostaStateChange;
 
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,12 @@ public interface IOutputView
 
     /** Displays a single-proposal summary box. */
     void mostraRiepilogoProposta(Proposta proposta);
+
+    /** Displays the list of subscribers for a proposal. */
+    void mostraAderenti(List<String> aderenti);
+
+    /** Displays the state-change history of a proposal. */
+    void mostraCronologiaStati(List<PropostaStateChange> history);
 
     /** Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern. */
     default void pausaConSpaziatura() {

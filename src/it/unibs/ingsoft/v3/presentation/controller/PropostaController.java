@@ -1,12 +1,15 @@
 package it.unibs.ingsoft.v3.presentation.controller;
 
 import it.unibs.ingsoft.v3.application.PropostaService;
+import it.unibs.ingsoft.v3.domain.AppConstants;
 import it.unibs.ingsoft.v3.domain.Campo;
 import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Proposta;
+import it.unibs.ingsoft.v3.domain.StatoProposta;
 import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v3.presentation.view.contract.OperationCancelledException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -157,6 +160,77 @@ public final class PropostaController
 
         ui.newLine();
         ui.pausa();
+    }
+
+    // ---------------------------------------------------------------
+    // ARCHIVIO PROPOSTE
+    // ---------------------------------------------------------------
+
+    private static final String[] MENU_DETTAGLI_PROPOSTA = {
+        "Visualizza dettagli",
+        "Visualizza aderenti",
+        "Visualizza cronologia stati"
+    };
+
+    /**
+     * Lets the configuratore browse the full proposal archive: pick a state, pick a proposal,
+     * then view its details, subscribers, or state history.
+     */
+    public void visualizzaArchivioProposte()
+    {
+        Map<StatoProposta, List<Proposta>> archivio = ps.getPropostePerStato();
+        if (archivio.isEmpty())
+        {
+            ui.stampa("  Archivio vuoto.");
+            ui.pausaConSpaziatura();
+            return;
+        }
+
+        List<StatoProposta> statiPresenti = new ArrayList<>(archivio.keySet());
+        String[] menuStati = statiPresenti.stream()
+                .map(s -> s.name() + " (" + archivio.get(s).size() + ")")
+                .toArray(String[]::new);
+
+        while (true)
+        {
+            ui.stampaMenu("ARCHIVIO PROPOSTE", menuStati, "Torna");
+            int sceltaStato = ui.acquisisciIntero("Scelta: ", 0, statiPresenti.size());
+            if (sceltaStato == 0) return;
+
+            StatoProposta statoScelto = statiPresenti.get(sceltaStato - 1);
+            List<Proposta> proposteStato = archivio.get(statoScelto);
+
+            String[] menuProposte = proposteStato.stream()
+                    .map(p -> p.getValoriCampi().getOrDefault(AppConstants.CAMPO_TITOLO, "(senza titolo)")
+                            + " – " + p.getCategoria().getNome())
+                    .toArray(String[]::new);
+
+            while (true)
+            {
+                ui.stampaMenu("PROPOSTE IN STATO " + statoScelto.name(), menuProposte, "Torna");
+                int sceltaProposta = ui.acquisisciIntero("Scelta: ", 0, proposteStato.size());
+                if (sceltaProposta == 0) break;
+
+                menuDettagliProposta(proposteStato.get(sceltaProposta - 1));
+            }
+        }
+    }
+
+    private void menuDettagliProposta(Proposta p)
+    {
+        String titolo = p.getValoriCampi().getOrDefault(AppConstants.CAMPO_TITOLO, "?");
+        while (true)
+        {
+            ui.stampaMenu("PROPOSTA — " + titolo, MENU_DETTAGLI_PROPOSTA, "Torna");
+            int scelta = ui.acquisisciIntero("Scelta: ", 0, MENU_DETTAGLI_PROPOSTA.length);
+            switch (scelta)
+            {
+                case 1: ui.mostraRiepilogoProposta(p);       ui.pausaConSpaziatura(); break;
+                case 2: ui.mostraAderenti(p.getListaAderenti()); ui.pausaConSpaziatura(); break;
+                case 3: ui.mostraCronologiaStati(p.getStateHistory()); ui.pausaConSpaziatura(); break;
+                case 0: return;
+            }
+        }
     }
 
     /**

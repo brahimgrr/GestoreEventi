@@ -24,7 +24,8 @@ public final class ConfiguratoreController {
         "Visualizzare categorie e campi",
         "Creare una proposta di iniziativa",
         "Pubblicare una proposta di iniziativa",
-        "Visualizzare la bacheca"
+        "Visualizzare la bacheca",
+        "Visualizzare archivio proposte"
     };
 
     private static final String[] MENU_CAMPI = {
@@ -106,6 +107,9 @@ public final class ConfiguratoreController {
                     break;
                 case 6:
                     propostaController.mostraBacheca();
+                    break;
+                case 7:
+                    propostaController.visualizzaArchivioProposte();
                     break;
                 case 0:
                     return;

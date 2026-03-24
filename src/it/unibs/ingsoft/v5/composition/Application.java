@@ -61,7 +61,7 @@ public final class Application
         AuthController authCtrl = new AuthController(ui, authService);
         PropostaController propostaController = new PropostaController(ui, propostaService);
 
-        ui.header("Gestore Eventi – Versione 4");
+        ui.header("Gestore Eventi – Versione 5");
 
         while (true) {
             ui.stampaMenu("MENU DI ACCESSO", new String[]{

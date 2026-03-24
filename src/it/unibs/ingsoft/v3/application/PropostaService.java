@@ -296,12 +296,27 @@ public final class PropostaService
     // BACHECA
     // ----------------------------------------------------------------
 
+    /** Returns all proposals (any state) as a flat list. */
+    public List<Proposta> getTutteLeProposte()
+    {
+        return Collections.unmodifiableList(bacheca().getProposte());
+    }
+
     /** Returns all open (APERTA) proposals as a flat list. */
     public List<Proposta> getBacheca()
     {
         return bacheca().getProposte().stream()
                 .filter(p -> p.getStato() == StatoProposta.APERTA)
                 .collect(Collectors.toList());
+    }
+
+    /** Returns all proposals (any state) grouped by their current state. */
+    public Map<StatoProposta, List<Proposta>> getPropostePerStato()
+    {
+        Map<StatoProposta, List<Proposta>> mappa = new LinkedHashMap<>();
+        for (Proposta p : getTutteLeProposte())
+            mappa.computeIfAbsent(p.getStato(), k -> new ArrayList<>()).add(p);
+        return mappa;
     }
 
     /** Returns all open (APERTA) proposals, grouped by category name. */

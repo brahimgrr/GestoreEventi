@@ -1,8 +1,10 @@
 package it.unibs.ingsoft.v3.presentation.view.cli;
 
+import it.unibs.ingsoft.v3.domain.AppConstants;
 import it.unibs.ingsoft.v3.domain.Campo;
 import it.unibs.ingsoft.v3.domain.Categoria;
 import it.unibs.ingsoft.v3.domain.Proposta;
+import it.unibs.ingsoft.v3.domain.PropostaStateChange;
 import it.unibs.ingsoft.v3.domain.TipoDato;
 import it.unibs.ingsoft.v3.presentation.view.contract.BackException;
 import it.unibs.ingsoft.v3.presentation.view.contract.CancelException;
@@ -216,6 +218,34 @@ public final class ConsoleUI implements IAppView {
             String valore = p.getValoriCampi().getOrDefault(campo, "");
             System.out.println("  " + campo + ": " + (valore.isBlank() ? "(non compilato)" : valore));
         }
+        System.out.println(SEPARATORE);
+    }
+
+    @Override
+    public void mostraAderenti(List<String> aderenti)
+    {
+        newLine();
+        System.out.println(SEPARATORE);
+        System.out.println("  ADERENTI (" + aderenti.size() + ")");
+        System.out.println(SEPARATORE);
+        if (aderenti.isEmpty())
+            System.out.println("  Nessun aderente.");
+        else
+            for (String a : aderenti)
+                System.out.println("  - " + a);
+        System.out.println(SEPARATORE);
+    }
+
+    @Override
+    public void mostraCronologiaStati(List<PropostaStateChange> history)
+    {
+        newLine();
+        System.out.println(SEPARATORE);
+        System.out.println("  CRONOLOGIA STATI");
+        System.out.println(SEPARATORE);
+        for (PropostaStateChange sc : history)
+            System.out.println("  " + sc.getDataCambio().format(AppConstants.DATE_FMT)
+                    + "  ->  " + sc.getStato());
         System.out.println(SEPARATORE);
     }
 

@@ -310,6 +310,15 @@ public final class PropostaService
                 .collect(Collectors.toList());
     }
 
+    /** Returns all proposals (any state) grouped by their current state. */
+    public Map<StatoProposta, List<Proposta>> getPropostePerStato()
+    {
+        Map<StatoProposta, List<Proposta>> mappa = new LinkedHashMap<>();
+        for (Proposta p : getTutteLeProposte())
+            mappa.computeIfAbsent(p.getStato(), k -> new ArrayList<>()).add(p);
+        return mappa;
+    }
+
     /** Returns all open (APERTA) proposals, grouped by category name. */
     public Map<String, List<Proposta>> getBachecaPerCategoria()
     {

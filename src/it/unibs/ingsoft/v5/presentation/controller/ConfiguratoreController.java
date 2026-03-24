@@ -23,7 +23,8 @@ public final class ConfiguratoreController {
         "Creare una proposta di iniziativa",
         "Pubblicare una proposta di iniziativa",
         "Visualizzare la bacheca",
-        "Ritirare una proposta"
+        "Ritirare una proposta",
+        "Visualizzare archivio proposte"
     };
 
     private static final String[] MENU_CAMPI = {
@@ -114,6 +115,9 @@ public final class ConfiguratoreController {
                     break;
                 case 7:
                     ritiraProposta();
+                    break;
+                case 8:
+                    propostaController.visualizzaArchivioProposte();
                     break;
                 case 0:
                     return;
