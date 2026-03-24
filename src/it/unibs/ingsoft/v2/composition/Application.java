@@ -45,7 +45,7 @@ public final class Application
         PropostaController propostaController = new PropostaController(ui, propostaService);
         ConfiguratoreController configuratoreController;
 
-        ui.header("Iniziative - Versione 2 (solo configuratore)");
+        ui.header("Gestore Eventi - Versione 2 (solo configuratore)");
         while (true) {
             try
             {

@@ -39,7 +39,7 @@ public final class Application
         AuthController authCtrl = new AuthController(ui, authService);
         ConfiguratoreController configuratoreController;
 
-        ui.header("Iniziative - Versione 1 (solo configuratore)");
+        ui.header("Gestore Eventi - Versione 1 (solo configuratore)");
         while (true) {
             try
             {
