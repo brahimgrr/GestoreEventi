@@ -3,7 +3,6 @@ left to right direction
 
 actor Configuratore as C
 actor Fruitore as F
-actor Sistema as S
 
 rectangle "GestoreEventi - Back-End V1 + V2 + V3 + V4" {
 
@@ -33,11 +32,12 @@ together {
   usecase "UC13: Creare una\nProposta di Iniziativa" as CreaProp
   usecase "UC14: Pubblicare una\nProposta in Bacheca" as PubProp
   usecase "UC15: Visualizzare\nla Bacheca" as VisBach
+  usecase "UC22: Visualizzare\nArchivio Proposte" as VisArch
 
   usecase "UC23: Ritirare\nuna Proposta" as RitProp #PaleGreen
 }
 
-' ================= RIGHT SIDE (Fruitore + Sistema) =================
+' ================= RIGHT SIDE (Fruitore) =================
 together {
   usecase "UC16: Login\nFruitore" as LoginF
   usecase "UC17: Registrazione\nFruitore" as RegF
@@ -47,8 +47,6 @@ together {
 
   usecase "UC20: Visualizzare\nSpazio Personale" as VisSP
   usecase "UC21: Eliminare\nuna Notifica" as DelNot
-
-  usecase "UC22: Transizione\nAutomatica di Stato" as TransAuto
 
   usecase "UC24: Disdire Iscrizione\na una Proposta" as DisdIscrivi #PaleGreen
 }
@@ -88,6 +86,7 @@ C --> MOCS
 C --> CreaProp
 C --> PubProp
 C --> VisBach
+C --> VisArch
 C --> RitProp
 
 F --> LoginF
@@ -96,10 +95,7 @@ F --> VisBachF
 F --> VisSP
 F --> DisdIscrivi
 
-S --> TransAuto
-
 ' ===== FORCE ACTORS TO THE RIGHT =====
 C -[hidden]right-> F
-F -[hidden]right-> S
 
 @enduml
