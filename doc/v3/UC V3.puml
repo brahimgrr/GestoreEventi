@@ -89,7 +89,7 @@ F --> RegF
 F --> VisBachF
 F --> VisSP
 
-' ===== FORCE ACTORS TO THE RIGHT =====
+' ===== FORCE ACTORS TO THE RIGHTT =====
 C -[hidden]right-> F
 
 @enduml
