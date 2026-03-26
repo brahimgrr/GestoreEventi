@@ -6,28 +6,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Immutable value object representing a field definition (base, common, or category-specific).
  */
-public final class Campo
-{
-    private final String    nome;
+public final class Campo {
+    private final String nome;
     private final TipoCampo tipo;
     private final TipoDato tipoDato;
-    private final boolean   obbligatorio;
+    private final boolean obbligatorio;
 
     /**
-     * @pre  nome != null &amp;&amp; !nome.isBlank()
-     * @pre  tipo != null
-     * @pre  tipoDato != null
-     * @post getNome().equals(nome.trim())
+     * @pre nome != null &amp;&amp; !nome.isBlank()
+     * @pre tipo != null
+     * @pre tipoDato != null
+     * @post getNome().equals(nome.trim ())
      * @post getTipo() == tipo
      * @post getTipoDato() == tipoDato
      * @post isObbligatorio() == obbligatorio
      */
     @JsonCreator
-    public Campo(@JsonProperty("nome")         String    nome,
+    public Campo(@JsonProperty("nome") String nome,
                  @JsonProperty("tipo") TipoCampo tipo,
                  @JsonProperty("tipoDato") TipoDato tipoDato,
-                 @JsonProperty("obbligatorio") boolean   obbligatorio)
-    {
+                 @JsonProperty("obbligatorio") boolean obbligatorio) {
         if (nome == null || nome.isBlank())
             throw new IllegalArgumentException("Il nome del campo non può essere vuoto.");
         if (tipo == null)
@@ -35,9 +33,9 @@ public final class Campo
         if (tipoDato == null)
             throw new IllegalArgumentException("Il tipo dato del campo non può essere null.");
 
-        this.nome         = nome.trim();
-        this.tipo         = tipo;
-        this.tipoDato     = tipoDato;
+        this.nome = nome.trim();
+        this.tipo = tipo;
+        this.tipoDato = tipoDato;
         this.obbligatorio = obbligatorio;
     }
 
@@ -52,7 +50,7 @@ public final class Campo
         return nome;
     }
 
-    public TipoCampo getTipo(){
+    public TipoCampo getTipo() {
         return tipo;
     }
 
@@ -67,29 +65,27 @@ public final class Campo
     /**
      * Returns a new Campo identical to this one but with the given {@code obbligatorio} value.
      */
-    public Campo withObbligatorio(boolean obbligatorio)
-    {
+    public Campo withObbligatorio(boolean obbligatorio) {
         return new Campo(this.nome, this.tipo, this.tipoDato, obbligatorio);
     }
 
-    /** Case-insensitive name equality. */
+    /**
+     * Case-insensitive name equality.
+     */
     @Override
-    public boolean equals(Object o)
-    {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Campo)) return false;
         return nome.equalsIgnoreCase(((Campo) o).nome);
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return nome.toLowerCase().hashCode();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return nome + " [" + tipoDato + "]" + (obbligatorio ? "  (obbligatorio)" : "");
     }
 }

@@ -1,7 +1,7 @@
 package it.unibs.ingsoft.v1.persistence.api;
 
-import it.unibs.ingsoft.v1.persistence.impl.FileCatalogoRepository;
 import it.unibs.ingsoft.v1.domain.Catalogo;
+import it.unibs.ingsoft.v1.persistence.impl.FileCatalogoRepository;
 
 /**
  * Repository abstraction for the field/category catalogue.
@@ -10,8 +10,7 @@ import it.unibs.ingsoft.v1.domain.Catalogo;
  * A different implementation (JSON, in-memory for tests) can be
  * substituted without touching any service class.
  */
-public interface ICatalogoRepository
-{
+public interface ICatalogoRepository {
     /**
      * Loads the catalogue from persistent storage, or returns a fresh
      *

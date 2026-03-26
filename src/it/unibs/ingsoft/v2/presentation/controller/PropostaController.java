@@ -25,13 +25,11 @@ import java.util.stream.Collectors;
  * <p>Dependencies: only {@link IAppView} and {@link PropostaService}.
  * Category selection is performed by the caller before invoking
  */
-public final class PropostaController
-{
-    private final IAppView        ui;
+public final class PropostaController {
+    private final IAppView ui;
     private final PropostaService ps;
 
-    public PropostaController(IAppView ui, PropostaService ps)
-    {
+    public PropostaController(IAppView ui, PropostaService ps) {
         this.ui = ui;
         this.ps = ps;
     }
@@ -43,17 +41,13 @@ public final class PropostaController
     /**
      * Runs the full proposal-creation workflow for the given category.
      */
-    public void avviaCreazione(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni)
-    {
+    public void avviaCreazione(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni) {
         ui.header("CREA PROPOSTA");
 
         Proposta proposta;
-        try
-        {
+        try {
             proposta = ps.creaProposta(categoria, campiBase, campiComuni);
-        }
-        catch (IllegalArgumentException e)
-        {
+        } catch (IllegalArgumentException e) {
             ui.stampaErrore(e.getMessage());
             ui.newLine();
             ui.pausa();
@@ -65,11 +59,9 @@ public final class PropostaController
         ui.stampa("(*) = obbligatorio | il tipo è indicato tra [  ]");
         ui.newLine();
 
-        try
-        {
+        try {
             Optional<Map<String, String>> formResult = ui.acquisisciValoriProposta(proposta, ps::validaCampo);
-            if (formResult.isEmpty())
-            {
+            if (formResult.isEmpty()) {
                 ui.stampa("Operazione annullata.");
                 ui.newLine();
                 ui.pausa();
@@ -82,18 +74,17 @@ public final class PropostaController
             if (abortito) return;
 
             mostraRiepilogoEPubblica(proposta);
-        }
-        catch (OperationCancelledException e)
-        {
+        } catch (OperationCancelledException e) {
             ui.stampa("Operazione annullata.");
             ui.newLine();
             ui.pausa();
         }
     }
 
-    /** Displays the bulletin board (APERTA proposals grouped by category). */
-    public void mostraBacheca()
-    {
+    /**
+     * Displays the bulletin board (APERTA proposals grouped by category).
+     */
+    public void mostraBacheca() {
         ui.header("BACHECA");
         ui.mostraBacheca(ps.getBachecaPerCategoria());
         ui.newLine();
@@ -109,18 +100,15 @@ public final class PropostaController
      *
      * @return {@code true} if the user chose to discard the proposal, {@code false} if it is valid
      */
-    private boolean correggiFinchéValida(Proposta proposta, List<String> errori)
-    {
-        while (!errori.isEmpty())
-        {
+    private boolean correggiFinchéValida(Proposta proposta, List<String> errori) {
+        while (!errori.isEmpty()) {
             ui.newLine();
             ui.stampa("La proposta NON è valida per i seguenti motivi:");
             for (String err : errori)
                 ui.stampaErrore(err);
             ui.newLine();
 
-            if (!ui.acquisisciSiNo("Vuoi correggere i campi errati?"))
-            {
+            if (!ui.acquisisciSiNo("Vuoi correggere i campi errati?")) {
                 ui.stampa("Proposta scartata.");
                 ui.newLine();
                 ui.pausa();
@@ -132,8 +120,7 @@ public final class PropostaController
                     .collect(Collectors.toSet());
 
             Optional<Map<String, String>> corrResult = ui.correggiCampiProposta(proposta, nomiConErrore, ps::validaCampo);
-            if (corrResult.isEmpty())
-            {
+            if (corrResult.isEmpty()) {
                 ui.stampa("Proposta scartata.");
                 ui.newLine();
                 ui.pausa();
@@ -146,9 +133,10 @@ public final class PropostaController
         return false;
     }
 
-    /** Shows the proposal summary and saves it in memory for later publication. */
-    private void mostraRiepilogoEPubblica(Proposta proposta)
-    {
+    /**
+     * Shows the proposal summary and saves it in memory for later publication.
+     */
+    private void mostraRiepilogoEPubblica(Proposta proposta) {
         ui.newLine();
         ui.mostraRiepilogoProposta(proposta);
 
@@ -166,13 +154,11 @@ public final class PropostaController
     /**
      * Lists saved valid proposals, lets the user select one, and publishes it.
      */
-    public void pubblicaPropostaSalvata()
-    {
+    public void pubblicaPropostaSalvata() {
         ui.header("PUBBLICA PROPOSTA");
 
         List<Proposta> valide = ps.getProposteValide();
-        if (valide.isEmpty())
-        {
+        if (valide.isEmpty()) {
             ui.stampa("Nessuna proposta valida da pubblicare.");
             ui.newLine();
             ui.pausa();
@@ -181,11 +167,10 @@ public final class PropostaController
 
         // Build display labels from the saved proposals
         List<String> labels = new java.util.ArrayList<>();
-        for (int i = 0; i < valide.size(); i++)
-        {
+        for (int i = 0; i < valide.size(); i++) {
             Proposta p = valide.get(i);
             String titolo = p.getValoriCampi().getOrDefault("Titolo", "(senza titolo)");
-            String cat    = p.getCategoria().getNome();
+            String cat = p.getCategoria().getNome();
             labels.add((i + 1) + ". " + titolo + "  [" + cat + "]");
         }
 
@@ -195,8 +180,7 @@ public final class PropostaController
         ui.stampa("  0. Torna");
         ui.newLine();
 
-        try
-        {
+        try {
             int scelta = ui.acquisisciIntero("Scelta: ", 0, valide.size());
             if (scelta == 0)
                 return;
@@ -206,29 +190,21 @@ public final class PropostaController
             ui.newLine();
             ui.mostraRiepilogoProposta(selezionata);
 
-            if (ui.acquisisciSiNo("Vuoi pubblicare questa proposta in bacheca?"))
-            {
-                try
-                {
+            if (ui.acquisisciSiNo("Vuoi pubblicare questa proposta in bacheca?")) {
+                try {
                     ps.pubblicaProposta(selezionata);
                     ps.rimuoviPropostaValida(selezionata);
                     ui.stampaSuccesso("Proposta pubblicata in bacheca!");
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     ui.stampaErrore(e.getMessage());
                 }
-            }
-            else
-            {
+            } else {
                 ui.stampa("Pubblicazione annullata. La proposta resta disponibile per la pubblicazione.");
             }
 
             ui.newLine();
             ui.pausa();
-        }
-        catch (OperationCancelledException e)
-        {
+        } catch (OperationCancelledException e) {
             ui.stampa("Operazione annullata.");
             ui.newLine();
             ui.pausa();

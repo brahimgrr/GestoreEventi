@@ -12,7 +12,7 @@ public final class Notifica {
 
     @JsonCreator
     public Notifica(@JsonProperty("id") String id,
-                    @JsonProperty("messaggio") String messaggio, 
+                    @JsonProperty("messaggio") String messaggio,
                     @JsonProperty("dataCreazione") LocalDateTime dataCreazione) {
         this.id = id;
         this.messaggio = messaggio;

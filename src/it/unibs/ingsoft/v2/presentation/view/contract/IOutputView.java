@@ -15,38 +15,57 @@ import java.util.Map;
  * <p>This interface exposes the domain objects directly because the current
  * CLI renders them without an additional presentation layer.</p>
  */
-public interface IOutputView
-{
+public interface IOutputView {
     void stampa(String testo);
+
     void newLine();
+
     void header(String titolo);
+
     void stampaSezione(String titolo);
+
     void stampaCampi(List<Campo> campi);
+
     void stampaCategorie(List<Categoria> categorie);
 
-    /** Displays categories with their specific fields listed below each. */
+    /**
+     * Displays categories with their specific fields listed below each.
+     */
     void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi);
 
-    /** Displays a numbered menu; {@code 0} exits/goes back with the label "Esci". */
+    /**
+     * Displays a numbered menu; {@code 0} exits/goes back with the label "Esci".
+     */
     void stampaMenu(String titolo, String[] voci);
 
-    /** Displays a numbered menu; {@code 0} exits/goes back with the custom {@code uscitaLabel}. */
+    /**
+     * Displays a numbered menu; {@code 0} exits/goes back with the custom {@code uscitaLabel}.
+     */
     void stampaMenu(String titolo, String[] voci, String uscitaLabel);
 
     void pausa();
 
     void stampaSuccesso(String msg);
+
     void stampaErrore(String msg);
+
     void stampaAvviso(String msg);
+
     void stampaInfo(String msg);
 
-    /** Displays the bacheca (bulletin board) organised by category. */
+    /**
+     * Displays the bacheca (bulletin board) organised by category.
+     */
     void mostraBacheca(Map<String, List<Proposta>> bacheca);
 
-    /** Displays a single-proposal summary box. */
+    /**
+     * Displays a single-proposal summary box.
+     */
     void mostraRiepilogoProposta(Proposta proposta);
 
-    /** Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern. */
+    /**
+     * Prints a blank line then waits for ENTER — convenience for the common end-of-action pattern.
+     */
     default void pausaConSpaziatura() {
         newLine();
         pausa();

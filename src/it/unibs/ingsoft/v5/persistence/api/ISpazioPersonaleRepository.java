@@ -5,6 +5,7 @@ import it.unibs.ingsoft.v5.domain.SpazioPersonale;
 public interface ISpazioPersonaleRepository {
     /**
      * Retrieves the personal space (notifications) for a given user.
+     *
      * @param username the username of the Fruitore
      * @return the SpazioPersonale object
      */

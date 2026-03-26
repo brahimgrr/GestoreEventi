@@ -20,6 +20,7 @@ public final class NotificationService {
 
     /**
      * Invia una notifica a un determinato fruitore.
+     *
      * @param username username del fruitore
      * @param notifica la notifica da salvare
      */

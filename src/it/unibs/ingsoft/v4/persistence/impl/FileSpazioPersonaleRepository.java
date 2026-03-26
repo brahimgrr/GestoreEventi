@@ -7,7 +7,7 @@ import it.unibs.ingsoft.v4.persistence.api.ISpazioPersonaleRepository;
 import java.nio.file.Path;
 
 public class FileSpazioPersonaleRepository extends AbstractFileRepository<ArchivioNotifiche> implements ISpazioPersonaleRepository {
-    
+
     private ArchivioNotifiche cached;
 
     public FileSpazioPersonaleRepository(Path path) {

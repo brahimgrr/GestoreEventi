@@ -6,7 +6,6 @@ package it.unibs.ingsoft.v4.domain;
  * @return an error message, or {@code null} if the value is valid for that type
  */
 @FunctionalInterface
-public interface TypeValidator
-{
+public interface TypeValidator {
     String validate(String input, TipoDato tipo);
 }

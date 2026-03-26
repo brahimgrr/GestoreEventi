@@ -19,7 +19,7 @@ public final class BatchImportController {
     private final BatchImportService importService;
 
     public BatchImportController(IAppView ui, BatchImportService importService) {
-        this.ui            = ui;
+        this.ui = ui;
         this.importService = importService;
     }
 

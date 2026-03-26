@@ -5,8 +5,9 @@ package it.unibs.ingsoft.v5.presentation.view.contract;
  * Components needing only output depend on {@link IOutputView};
  * components needing only input depend on {@link IInputView}.
  */
-public interface IAppView extends IOutputView, IInputView
-{
-    /** Context hint shown at the start of every form that accepts free-text input. */
+public interface IAppView extends IOutputView, IInputView {
+    /**
+     * Context hint shown at the start of every form that accepts free-text input.
+     */
     String HINT_ANNULLA = "Digita 'annulla' per annullare.";
 }

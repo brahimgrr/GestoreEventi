@@ -1,18 +1,16 @@
 package it.unibs.ingsoft.v2.persistence.impl;
 
-import it.unibs.ingsoft.v2.persistence.api.IBachecaRepository;
 import it.unibs.ingsoft.v2.domain.Bacheca;
+import it.unibs.ingsoft.v2.persistence.api.IBachecaRepository;
 
 import java.nio.file.Path;
 
 public final class FileBachecaRepository
         extends AbstractFileRepository<Bacheca>
-        implements IBachecaRepository
-{
+        implements IBachecaRepository {
     private Bacheca cached;
 
-    public FileBachecaRepository(Path path)
-    {
+    public FileBachecaRepository(Path path) {
         super(path, Bacheca.class, Bacheca::new);
     }
 

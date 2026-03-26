@@ -9,7 +9,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/** Manages base fields, common fields, categories and category-specific fields. */
+/**
+ * Manages base fields, common fields, categories and category-specific fields.
+ */
 public final class CatalogoService {
 
     private final ICatalogoRepository repo;

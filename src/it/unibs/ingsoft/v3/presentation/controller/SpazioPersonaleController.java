@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public final class SpazioPersonaleController {
-    
+
     private final Fruitore fruitore;
     private final IAppView ui;
     private final NotificationService notificationService;
@@ -23,9 +23,9 @@ public final class SpazioPersonaleController {
     public void run() {
         while (true) {
             ui.header("SPAZIO PERSONALE DI " + fruitore.getUsername());
-            
+
             List<Notifica> notifiche = notificationService.getNotifiche(fruitore.getUsername());
-            
+
             if (notifiche.isEmpty()) {
                 ui.stampa("Nessuna notifica presente.");
                 ui.newLine();

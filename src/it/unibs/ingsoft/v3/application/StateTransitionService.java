@@ -1,10 +1,6 @@
 package it.unibs.ingsoft.v3.application;
 
-import it.unibs.ingsoft.v3.domain.AppConstants;
-import it.unibs.ingsoft.v3.domain.Bacheca;
-import it.unibs.ingsoft.v3.domain.Notifica;
-import it.unibs.ingsoft.v3.domain.Proposta;
-import it.unibs.ingsoft.v3.domain.StatoProposta;
+import it.unibs.ingsoft.v3.domain.*;
 import it.unibs.ingsoft.v3.persistence.api.IBachecaRepository;
 
 import java.time.LocalDate;
@@ -65,7 +61,9 @@ public final class StateTransitionService {
         }
     }
 
-    /** Transizione manuale o indotta dal raggiungimento della capienza. */
+    /**
+     * Transizione manuale o indotta dal raggiungimento della capienza.
+     */
     public void confermaProposta(Proposta p) {
         lock.lock();
         try {

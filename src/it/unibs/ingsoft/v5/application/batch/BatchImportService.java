@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unibs.ingsoft.v5.application.CatalogoService;
 import it.unibs.ingsoft.v5.application.PropostaService;
 import it.unibs.ingsoft.v5.application.batch.dto.*;
-import it.unibs.ingsoft.v5.domain.DefaultTypeValidator;
 import it.unibs.ingsoft.v5.domain.*;
 
 import java.io.IOException;
@@ -195,7 +194,7 @@ public final class BatchImportService {
             }
 
             // Get field definitions
-            List<Campo> campiBase   = catalogoService.getCampiBase();
+            List<Campo> campiBase = catalogoService.getCampiBase();
             List<Campo> campiComuni = catalogoService.getCampiComuni();
 
             // Type-validate each field value against its TipoDato

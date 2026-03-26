@@ -7,8 +7,7 @@ import it.unibs.ingsoft.v4.domain.Credenziali;
  * Satisfies DIP: {@link it.unibs.ingsoft.v1.application.AuthenticationService}
  * depends on this interface, not on the concrete file-based implementation.
  */
-public interface ICredenzialiRepository
-{
+public interface ICredenzialiRepository {
     /**
      * Loads user data from persistent storage, or returns a fresh
      * {@link Credenziali} if no data has been saved yet.
@@ -20,7 +19,7 @@ public interface ICredenzialiRepository
     /**
      * Persists the given user data snapshot.
      *
-     * @pre  data != null
+     * @pre data != null
      */
     void save();
 }

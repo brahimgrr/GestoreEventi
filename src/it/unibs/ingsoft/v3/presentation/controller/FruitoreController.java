@@ -8,12 +8,11 @@ import it.unibs.ingsoft.v3.presentation.view.contract.IAppView;
 
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalInt;
 
 public final class FruitoreController {
     private static final String[] MENU_PRINCIPALE = {
-        "Visualizza bacheca (per categoria)",
-        "Spazio Personale (Notifiche)",
+            "Visualizza bacheca (per categoria)",
+            "Spazio Personale (Notifiche)",
     };
 
     private final Fruitore fruitore;
@@ -22,7 +21,7 @@ public final class FruitoreController {
     private final IscrizioneService iscrizioneService;
     private final SpazioPersonaleController spazioPersonaleController;
 
-    public FruitoreController(Fruitore fruitore, IAppView ui, PropostaService propostaService, 
+    public FruitoreController(Fruitore fruitore, IAppView ui, PropostaService propostaService,
                               IscrizioneService iscrizioneService, SpazioPersonaleController spazioPersonaleController) {
         this.fruitore = fruitore;
         this.ui = ui;
@@ -52,7 +51,7 @@ public final class FruitoreController {
 
     private void mostraBachecaEiscrizione() {
         Map<String, List<Proposta>> bachecaPerCategoria = propostaService.getBachecaPerCategoria();
-        
+
         if (bachecaPerCategoria.isEmpty()) {
             ui.stampa("La bacheca è vuota. Nessuna proposta aperta al momento.");
             ui.pausaConSpaziatura();
@@ -60,7 +59,7 @@ public final class FruitoreController {
         }
 
         ui.header("BACHECA PROPOSTE");
-        
+
         // Costruisci lista lineare per la selezione
         java.util.List<Proposta> proposteSelezionabili = new java.util.ArrayList<>();
         int indice = 1;
@@ -71,9 +70,9 @@ public final class FruitoreController {
                 proposteSelezionabili.add(p);
                 String titolo = p.getValoriCampi().getOrDefault(PropostaService.CAMPO_TITOLO, "Senza Titolo");
                 String liberi = (p.getNumeroPartecipanti() - p.getListaAderenti().size()) + " posti liberi";
-                ui.stampa(String.format(" %d) %s (Scadenza: %s, %s)", 
-                        indice++, 
-                        titolo, 
+                ui.stampa(String.format(" %d) %s (Scadenza: %s, %s)",
+                        indice++,
+                        titolo,
                         p.getTermineIscrizione(),
                         liberi));
             }
@@ -82,7 +81,7 @@ public final class FruitoreController {
 
         ui.stampa("Digita il numero della proposta per i dettagli o per iscriverti (0 per tornare indietro).");
         int subChoice = ui.acquisisciIntero("Scelta: ", 0, proposteSelezionabili.size());
-        
+
         if (subChoice == 0) return;
 
         Proposta selezionata = proposteSelezionabili.get(subChoice - 1);
@@ -94,7 +93,7 @@ public final class FruitoreController {
         ui.mostraRiepilogoProposta(p);
 
         ui.newLine();
-        
+
         if (p.getListaAderenti().contains(fruitore.getUsername())) {
             ui.stampaAvviso("Sei già iscritto a questa proposta.");
             ui.pausaConSpaziatura();

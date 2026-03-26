@@ -10,14 +10,12 @@ import it.unibs.ingsoft.v4.presentation.view.contract.OperationCancelledExceptio
  * Handles configuratore login and first-time credential setup.
  * Contains no business logic — only UI interaction for authentication.
  */
-public final class AuthController
-{
+public final class AuthController {
     private final IAppView ui;
     private final AuthenticationService auth;
 
-    public AuthController(IAppView ui, AuthenticationService auth)
-    {
-        this.ui   = ui;
+    public AuthController(IAppView ui, AuthenticationService auth) {
+        this.ui = ui;
         this.auth = auth;
     }
 
@@ -28,10 +26,8 @@ public final class AuthController
      *
      * @return the authenticated Configuratore
      */
-    public Configuratore loginConfiguratore()
-    {
-        while (true)
-        {
+    public Configuratore loginConfiguratore() {
+        while (true) {
             ui.newLine();
             ui.stampa("LOGIN CONFIGURATORE");
             String u = ui.acquisisciStringa("Username: ");
@@ -39,8 +35,7 @@ public final class AuthController
 
             var result = auth.login(u, p);
 
-            if (result.isEmpty())
-            {
+            if (result.isEmpty()) {
                 ui.stampaErrore("Credenziali non valide. Riprova.");
                 ui.newLine();
                 continue;
@@ -50,19 +45,15 @@ public final class AuthController
             ui.stampaSuccesso("Login riuscito.");
 
             // First login with default credentials — force personal registration
-            if (AuthenticationService.USERNAME_PREDEFINITO.equals(logged.getUsername()))
-            {
+            if (AuthenticationService.USERNAME_PREDEFINITO.equals(logged.getUsername())) {
                 ui.newLine();
                 ui.stampa("Primo accesso con credenziali predefinite.");
                 ui.stampa("Scegli le tue credenziali personali.");
-                try
-                {
+                try {
                     Configuratore registered = registrazioneInterattiva();
                     ui.newLine();
                     return registered;
-                }
-                catch (OperationCancelledException e)
-                {
+                } catch (OperationCancelledException e) {
                     ui.stampaInfo("Registrazione annullata. Effettua nuovamente il login.");
                     ui.newLine();
                     continue;
@@ -128,24 +119,20 @@ public final class AuthController
      * Guides the user through first-time credential registration with field-level re-prompts.
      * Throws {@link OperationCancelledException} if the user aborts.
      */
-    private Configuratore registrazioneInterattiva()
-    {
+    private Configuratore registrazioneInterattiva() {
         // Show all constraints upfront before starting the form
         ui.stampaInfo("Username: minimo 3 caratteri, non può essere '" +
-                      AuthenticationService.USERNAME_PREDEFINITO + "'.");
+                AuthenticationService.USERNAME_PREDEFINITO + "'.");
         ui.stampaInfo("Password: minimo 4 caratteri.");
         ui.stampaInfo(IAppView.HINT_ANNULLA);
         ui.newLine();
 
-        while (true)
-        {
+        while (true) {
             String newU = raccogliUsername();
             String newP = raccogliPassword();
 
-            try
-            {
-                if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?"))
-                {
+            try {
+                if (!ui.acquisisciSiNo("Confermi la registrazione con username \"" + newU + "\"?")) {
                     ui.stampaInfo("Registrazione non confermata. Inserisci nuovamente i dati.");
                     ui.newLine();
                     continue;
@@ -153,34 +140,30 @@ public final class AuthController
                 Configuratore registered = auth.registraNuovoConfiguratore(newU, newP);
                 ui.stampaSuccesso("Registrazione completata. Benvenuto, " + newU + "!");
                 return registered;
-            }
-            catch (IllegalArgumentException e)
-            {
+            } catch (IllegalArgumentException e) {
                 ui.stampaErrore(e.getMessage());
                 ui.newLine();
             }
         }
     }
 
-    /** Inline-validated username acquisition — only re-asks this field on error. */
-    private String raccogliUsername()
-    {
-        while (true)
-        {
+    /**
+     * Inline-validated username acquisition — only re-asks this field on error.
+     */
+    private String raccogliUsername() {
+        while (true) {
             String newU = ui.acquisisciStringaConValidazione(
                     "Nuovo username: ",
                     u -> !u.isBlank() && u.trim().length() >= 3,
                     "Username troppo corto (minimo 3 caratteri)."
             ).trim();
 
-            if (newU.equalsIgnoreCase(AuthenticationService.USERNAME_PREDEFINITO))
-            {
+            if (newU.equalsIgnoreCase(AuthenticationService.USERNAME_PREDEFINITO)) {
                 ui.stampaErrore("Username riservato. Scegli un nome diverso.");
                 continue;
             }
 
-            if (auth.esisteUsername(newU))
-            {
+            if (auth.esisteUsername(newU)) {
                 ui.stampaErrore("Username già in uso. Scegli un nome diverso.");
                 continue;
             }
@@ -189,15 +172,14 @@ public final class AuthController
         }
     }
 
-    /** Inline-validated password acquisition — only re-asks this field on error. */
-    private String raccogliPassword()
-    {
-        while (true)
-        {
+    /**
+     * Inline-validated password acquisition — only re-asks this field on error.
+     */
+    private String raccogliPassword() {
+        while (true) {
             String newP = ui.acquisisciPassword("Nuova password: ");
 
-            if (newP == null || newP.isBlank() || newP.trim().length() < 4)
-            {
+            if (newP == null || newP.isBlank() || newP.trim().length() < 4) {
                 ui.stampaErrore("Password troppo corta (minimo 4 caratteri).");
                 continue;
             }

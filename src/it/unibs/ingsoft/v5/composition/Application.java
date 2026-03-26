@@ -29,26 +29,24 @@ import java.util.concurrent.TimeUnit;
 /**
  * Composition root: wires all components and runs the application loop.
  */
-public final class Application
-{
-    private static final Path DATA_CATALOGO   = Path.of("data/v5", "catalogo.json");
-    private static final Path DATA_UTENTI     = Path.of("data/v5", "utenti.json");
-    private static final Path DATA_PROPOSTE   = Path.of("data/v5", "proposte.json");
-    private static final Path DATA_NOTIFICHE  = Path.of("data/v5", "notifiche.json");
+public final class Application {
+    private static final Path DATA_CATALOGO = Path.of("data/v5", "catalogo.json");
+    private static final Path DATA_UTENTI = Path.of("data/v5", "utenti.json");
+    private static final Path DATA_PROPOSTE = Path.of("data/v5", "proposte.json");
+    private static final Path DATA_NOTIFICHE = Path.of("data/v5", "notifiche.json");
     private ScheduledExecutorService midnightScheduler;
 
-    public void start()
-    {
+    public void start() {
         // Persistence
-        ICatalogoRepository catalogoRepo      = new FileCatalogoRepository(DATA_CATALOGO);
-        ICredenzialiRepository credenzialiRepo   = new FileCredenzialiRepository(DATA_UTENTI);
+        ICatalogoRepository catalogoRepo = new FileCatalogoRepository(DATA_CATALOGO);
+        ICredenzialiRepository credenzialiRepo = new FileCredenzialiRepository(DATA_UTENTI);
         IBachecaRepository propostaRepo = new FileBachecaRepository(DATA_PROPOSTE);
         ISpazioPersonaleRepository spazioRepo = new FileSpazioPersonaleRepository(DATA_NOTIFICHE);
 
         // Services
-        AuthenticationService authService      = new AuthenticationService(credenzialiRepo);
-        CatalogoService catalogoService     = new CatalogoService(catalogoRepo);
-        PropostaService propostaService  = new PropostaService(propostaRepo);
+        AuthenticationService authService = new AuthenticationService(credenzialiRepo);
+        CatalogoService catalogoService = new CatalogoService(catalogoRepo);
+        PropostaService propostaService = new PropostaService(propostaRepo);
         NotificationService notifService = new NotificationService(spazioRepo);
         StateTransitionService stateService = new StateTransitionService(propostaRepo, notifService);
         IscrizioneService iscrizioneService = new IscrizioneService(propostaRepo, stateService);
@@ -70,13 +68,13 @@ public final class Application
 
         while (true) {
             ui.stampaMenu("MENU DI ACCESSO", new String[]{
-                "Accedi come Configuratore",
-                "Accedi come Fruitore",
-                "Registrati come Fruitore"
+                    "Accedi come Configuratore",
+                    "Accedi come Fruitore",
+                    "Registrati come Fruitore"
             }, "Esci dall'applicazione");
-            
+
             int choice = ui.acquisisciIntero("Scelta: ", 0, 3);
-            
+
             if (choice == 0) {
                 ui.stampa("Arrivederci!");
                 stopMidnightScheduler();
@@ -87,7 +85,7 @@ public final class Application
                     ui.stampa("Benvenuto Configuratore, " + configuratore.getUsername() + "!");
                     ui.newLine();
                     new ConfiguratoreController(configuratore, ui, catalogoService, propostaController, propostaService, stateService, batchImportController).run();
-                    
+
                     // Discard unpublished valid proposals on logout
                     propostaService.clearProposteValide();
                     ui.stampa("Logout configuratore effettuato.");
@@ -107,8 +105,7 @@ public final class Application
         }
     }
 
-    private void startMidnightScheduler(StateTransitionService stateService)
-    {
+    private void startMidnightScheduler(StateTransitionService stateService) {
         ThreadFactory threadFactory = runnable -> {
             Thread thread = new Thread(runnable, "state-transition-midnight");
             thread.setDaemon(true);
@@ -119,22 +116,19 @@ public final class Application
         scheduleNextMidnightCheck(stateService);
     }
 
-    private void stopMidnightScheduler()
-    {
+    private void stopMidnightScheduler() {
         if (midnightScheduler != null) {
             midnightScheduler.shutdownNow();
         }
     }
 
-    private long millisUntilNextMidnight()
-    {
+    private long millisUntilNextMidnight() {
         ZonedDateTime now = ZonedDateTime.now(AppConstants.clock);
         ZonedDateTime nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.getZone());
         return Duration.between(now, nextMidnight).toMillis();
     }
 
-    private void scheduleNextMidnightCheck(StateTransitionService stateService)
-    {
+    private void scheduleNextMidnightCheck(StateTransitionService stateService) {
         if (midnightScheduler == null || midnightScheduler.isShutdown()) {
             return;
         }

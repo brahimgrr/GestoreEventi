@@ -5,7 +5,8 @@ package it.unibs.ingsoft.v2.presentation.view.contract;
  * Extends {@link OperationCancelledException} so controllers can catch
  * the contract-level exception without importing this class.
  */
-public class CancelException extends OperationCancelledException
-{
-  public CancelException() { super(); }
+public class CancelException extends OperationCancelledException {
+    public CancelException() {
+        super();
+    }
 }

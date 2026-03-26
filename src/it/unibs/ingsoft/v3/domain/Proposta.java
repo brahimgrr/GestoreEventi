@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.util.*;
 
@@ -11,20 +12,19 @@ import java.util.*;
  * Represents an event proposal.
  *
  * <p>Lifecycle: BOZZA → VALIDA → APERTA → CONFERMATA → CONCLUSA
- *                                         → ANNULLATA</p>
+ * → ANNULLATA</p>
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public final class Proposta
-{
+public final class Proposta {
     private final List<Campo> campiBase;
     private final List<Campo> campiComuni;
-    private final Categoria             categoria;
-    private final Map<String, String>   valoriCampi;
-    private StatoProposta               stato;
-    private LocalDate                   dataPubblicazione;
-    private LocalDate                   termineIscrizione;
-    private LocalDate                   dataEvento;
-    private final List<String>          listaAderenti;
+    private final Categoria categoria;
+    private final Map<String, String> valoriCampi;
+    private StatoProposta stato;
+    private LocalDate dataPubblicazione;
+    private LocalDate termineIscrizione;
+    private LocalDate dataEvento;
+    private final List<String> listaAderenti;
     private final List<PropostaStateChange> stateHistory;
 
     /**
@@ -32,8 +32,7 @@ public final class Proposta
      *
      * @pre categoria != null
      */
-    public Proposta(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni)
-    {
+    public Proposta(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni) {
         if (categoria == null)
             throw new IllegalArgumentException("La categoria non può essere null.");
         this.categoria = new Categoria(categoria);
@@ -46,34 +45,35 @@ public final class Proposta
         this.valoriCampi = new LinkedHashMap<>();
         this.listaAderenti = new ArrayList<>();
         this.stateHistory = new ArrayList<>();
-        this.stato       = StatoProposta.BOZZA;
+        this.stato = StatoProposta.BOZZA;
         this.stateHistory.add(new PropostaStateChange(StatoProposta.BOZZA, LocalDate.now(AppConstants.clock)));
     }
 
-    /** Jackson deserialisation factory — reconstructs a fully populated (published) proposal. */
+    /**
+     * Jackson deserialisation factory — reconstructs a fully populated (published) proposal.
+     */
     @JsonCreator
     public static Proposta fromJson(
-            @JsonProperty("campiBase")         List<Campo>           campiBase,
-            @JsonProperty("campiComuni")         List<Campo>           campiComuni,
+            @JsonProperty("campiBase") List<Campo> campiBase,
+            @JsonProperty("campiComuni") List<Campo> campiComuni,
             @JsonProperty("categoria") Categoria categoria,
-            @JsonProperty("valoriCampi")       Map<String, String> valoriCampi,
+            @JsonProperty("valoriCampi") Map<String, String> valoriCampi,
             @JsonProperty("stato") StatoProposta stato,
-            @JsonProperty("dataPubblicazione") LocalDate           dataPubblicazione,
-            @JsonProperty("termineIscrizione") LocalDate           termineIscrizione,
-            @JsonProperty("dataEvento")        LocalDate           dataEvento,
-            @JsonProperty("listaAderenti")     List<String>        listaAderenti,
-            @JsonProperty("stateHistory")      List<PropostaStateChange> stateHistory)
-    {
+            @JsonProperty("dataPubblicazione") LocalDate dataPubblicazione,
+            @JsonProperty("termineIscrizione") LocalDate termineIscrizione,
+            @JsonProperty("dataEvento") LocalDate dataEvento,
+            @JsonProperty("listaAderenti") List<String> listaAderenti,
+            @JsonProperty("stateHistory") List<PropostaStateChange> stateHistory) {
         Proposta p = new Proposta(categoria, campiBase, campiComuni);
-        if (valoriCampi != null)      p.valoriCampi.putAll(valoriCampi);
-        if (stato != null)            p.stato             = stato;
+        if (valoriCampi != null) p.valoriCampi.putAll(valoriCampi);
+        if (stato != null) p.stato = stato;
         if (dataPubblicazione != null) p.dataPubblicazione = dataPubblicazione;
         if (termineIscrizione != null) p.termineIscrizione = termineIscrizione;
-        if (dataEvento != null)        p.dataEvento        = dataEvento;
-        
+        if (dataEvento != null) p.dataEvento = dataEvento;
+
         p.listaAderenti.clear();
-        if (listaAderenti != null)     p.listaAderenti.addAll(listaAderenti);
-        
+        if (listaAderenti != null) p.listaAderenti.addAll(listaAderenti);
+
         if (stateHistory != null && !stateHistory.isEmpty()) {
             p.stateHistory.clear();
             p.stateHistory.addAll(stateHistory);
@@ -117,7 +117,7 @@ public final class Proposta
     public List<String> getListaAderenti() {
         return Collections.unmodifiableList(listaAderenti);
     }
-    
+
     public void addAderente(String username) {
         if (stato != StatoProposta.APERTA)
             throw new IllegalStateException("Impossibile aggiungere aderenti: la proposta non è APERTA.");
@@ -151,8 +151,7 @@ public final class Proposta
     }
 
 
-    public void putAllValoriCampi(Map<String, String> valori)
-    {
+    public void putAllValoriCampi(Map<String, String> valori) {
         valoriCampi.putAll(valori);
 
         // Smart Reordering: maintain campiBase -> campiComuni -> campiSpecifici order
@@ -170,17 +169,24 @@ public final class Proposta
         valoriCampi.putAll(temp);
     }
 
-    public void setDataPubblicazione(LocalDate d) { this.dataPubblicazione = d; }
-    public void setTermineIscrizione(LocalDate d) { this.termineIscrizione = d; }
-    public void setDataEvento(LocalDate d)        { this.dataEvento = d; }
+    public void setDataPubblicazione(LocalDate d) {
+        this.dataPubblicazione = d;
+    }
+
+    public void setTermineIscrizione(LocalDate d) {
+        this.termineIscrizione = d;
+    }
+
+    public void setDataEvento(LocalDate d) {
+        this.dataEvento = d;
+    }
 
     /**
      * Transitions to the given state.
      *
      * @throws IllegalStateException if the transition is not allowed
      */
-    public void setStato(StatoProposta next)
-    {
+    public void setStato(StatoProposta next) {
         if (next == null)
             throw new IllegalArgumentException("Stato non può essere null.");
         if (!stato.canTransitionTo(next))
@@ -199,9 +205,9 @@ public final class Proposta
      */
     public static String chiaveIdentita(Map<String, String> valori) {
         return (valori.getOrDefault(AppConstants.CAMPO_TITOLO, "").trim() + "|"
-              + valori.getOrDefault(AppConstants.CAMPO_DATA,   "").trim() + "|"
-              + valori.getOrDefault(AppConstants.CAMPO_ORA,    "").trim() + "|"
-              + valori.getOrDefault(AppConstants.CAMPO_LUOGO,  "").trim()).toLowerCase();
+                + valori.getOrDefault(AppConstants.CAMPO_DATA, "").trim() + "|"
+                + valori.getOrDefault(AppConstants.CAMPO_ORA, "").trim() + "|"
+                + valori.getOrDefault(AppConstants.CAMPO_LUOGO, "").trim()).toLowerCase();
     }
 
     /**

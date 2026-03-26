@@ -12,18 +12,22 @@ import java.util.Map;
  */
 public final class PropostaImportDTO {
 
-    private final String              categoria;
+    private final String categoria;
     private final Map<String, String> valoriCampi;
 
     @JsonCreator
     public PropostaImportDTO(
-            @JsonProperty("categoria")   String              categoria,
-            @JsonProperty("valoriCampi") Map<String, String> valoriCampi)
-    {
-        this.categoria   = categoria;
+            @JsonProperty("categoria") String categoria,
+            @JsonProperty("valoriCampi") Map<String, String> valoriCampi) {
+        this.categoria = categoria;
         this.valoriCampi = valoriCampi != null ? valoriCampi : Collections.emptyMap();
     }
 
-    public String              getCategoria()   { return categoria; }
-    public Map<String, String> getValoriCampi() { return valoriCampi; }
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public Map<String, String> getValoriCampi() {
+        return valoriCampi;
+    }
 }

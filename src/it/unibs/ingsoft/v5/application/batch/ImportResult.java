@@ -15,17 +15,33 @@ public final class ImportResult {
     private int proposteImportate;
     private final List<String> errori = new ArrayList<>();
 
-    public void incrementCampiComuni()  { campiComuniImportati++; }
-    public void incrementCategorie()    { categorieImportate++; }
-    public void incrementProposte()     { proposteImportate++; }
+    public void incrementCampiComuni() {
+        campiComuniImportati++;
+    }
+
+    public void incrementCategorie() {
+        categorieImportate++;
+    }
+
+    public void incrementProposte() {
+        proposteImportate++;
+    }
 
     public void addErrore(String messaggio) {
         errori.add(messaggio);
     }
 
-    public int getCampiComuniImportati() { return campiComuniImportati; }
-    public int getCategorieImportate()   { return categorieImportate; }
-    public int getProposteImportate()    { return proposteImportate; }
+    public int getCampiComuniImportati() {
+        return campiComuniImportati;
+    }
+
+    public int getCategorieImportate() {
+        return categorieImportate;
+    }
+
+    public int getProposteImportate() {
+        return proposteImportate;
+    }
 
     public List<String> getErrori() {
         return Collections.unmodifiableList(errori);

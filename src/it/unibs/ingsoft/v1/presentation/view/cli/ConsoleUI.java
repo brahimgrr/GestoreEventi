@@ -9,34 +9,32 @@ import it.unibs.ingsoft.v1.presentation.view.contract.IAppView;
 import it.unibs.ingsoft.v1.presentation.view.contract.OperationCancelledException;
 
 import java.io.Console;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 /**
  * Console (stdin/stdout) implementation of {@link IAppView}.
- *
+ * <p>
  * UX design rules enforced here:
- *  - Every string read checks for CANCEL_KEYWORD / BACK_KEYWORD and throws accordingly.
- *  - Validation is inline (field-by-field), never deferred to post-submission.
- *  - Batch input (acquisisciListaNomi) shows a running count, detects duplicates inline,
- *    and requires an explicit review/confirm step before returning.
- *  - Password input uses System.console().readPassword() when available.
+ * - Every string read checks for CANCEL_KEYWORD / BACK_KEYWORD and throws accordingly.
+ * - Validation is inline (field-by-field), never deferred to post-submission.
+ * - Batch input (acquisisciListaNomi) shows a running count, detects duplicates inline,
+ * and requires an explicit review/confirm step before returning.
+ * - Password input uses System.console().readPassword() when available.
  */
 public final class ConsoleUI implements IAppView {
     public static final String CANCEL_KEYWORD = "annulla";
-    public static final String BACK_KEYWORD   = "indietro";
+    public static final String BACK_KEYWORD = "indietro";
 
-    /** Context hint shown at the start of every form that accepts free-text input. */
+    /**
+     * Context hint shown at the start of every form that accepts free-text input.
+     */
     public static final String HINT_ANNULLA =
             "Digita '" + CANCEL_KEYWORD + "' per annullare.";
 
-    private static final String SEPARATORE       = "-".repeat(60);
+    private static final String SEPARATORE = "-".repeat(60);
     private static final String SEPARATORE_DOPPIO = "═".repeat(60);
 
     private final Scanner scanner;
@@ -74,8 +72,7 @@ public final class ConsoleUI implements IAppView {
     }
 
     @Override
-    public void stampaCampi(List<Campo> campi)
-    {
+    public void stampaCampi(List<Campo> campi) {
         if (campi.isEmpty()) {
             stampa("    (nessuno campo)");
             return;
@@ -85,30 +82,25 @@ public final class ConsoleUI implements IAppView {
     }
 
     @Override
-    public void stampaCategorie(List<Categoria> categorie)
-    {
+    public void stampaCategorie(List<Categoria> categorie) {
         if (categorie.isEmpty()) {
             stampa("  (nessuna categoria)");
             return;
         }
-        for (Categoria cat : categorie)
-        {
-           stampa("  - " + cat.getNome());
+        for (Categoria cat : categorie) {
+            stampa("  - " + cat.getNome());
             for (Campo c : cat.getCampiSpecifici())
                 stampa("      - " + c);
         }
     }
 
     @Override
-    public void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi)
-    {
-        if (categorieConCampi.isEmpty())
-        {
+    public void stampaCategorieDettaglio(Map<String, List<String>> categorieConCampi) {
+        if (categorieConCampi.isEmpty()) {
             stampa("    (nessuna categoria)");
             return;
         }
-        for (Map.Entry<String, List<String>> entry : categorieConCampi.entrySet())
-        {
+        for (Map.Entry<String, List<String>> entry : categorieConCampi.entrySet()) {
             stampa("    - " + entry.getKey());
             if (entry.getValue().isEmpty())
                 stampa("          (nessun campo specifico)");
@@ -179,14 +171,13 @@ public final class ConsoleUI implements IAppView {
      * @throws BackException   if the trimmed input equals {@link #BACK_KEYWORD}   (case-insensitive)
      */
     @Override
-    public String acquisisciStringa(String prompt)
-    {
+    public String acquisisciStringa(String prompt) {
         System.out.print(prompt);
-        String line    = scanner.nextLine();
+        String line = scanner.nextLine();
         String trimmed = (line == null) ? "" : line.trim();
 
         if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
-        if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+        if (BACK_KEYWORD.equalsIgnoreCase(trimmed)) throw new BackException();
 
         return trimmed;
     }
@@ -197,11 +188,9 @@ public final class ConsoleUI implements IAppView {
 
     @Override
     public String acquisisciStringaConValidazione(String prompt,
-                                                   Predicate<String> validatore,
-                                                   String messaggioErrore)
-    {
-        while (true)
-        {
+                                                  Predicate<String> validatore,
+                                                  String messaggioErrore) {
+        while (true) {
             String val = acquisisciStringa(prompt);
             if (validatore.test(val)) return val;
             stampaErrore(messaggioErrore);
@@ -213,17 +202,15 @@ public final class ConsoleUI implements IAppView {
     // ---------------------------------------------------------------
 
     @Override
-    public String acquisisciPassword(String prompt)
-    {
+    public String acquisisciPassword(String prompt) {
         Console console = System.console();
-        if (console != null)
-        {
+        if (console != null) {
             char[] pwd = console.readPassword(prompt);
             String value = pwd != null ? new String(pwd) : "";
             String trimmed = value.trim();
 
             if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
-            if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+            if (BACK_KEYWORD.equalsIgnoreCase(trimmed)) throw new BackException();
 
             return value;
         }
@@ -236,32 +223,26 @@ public final class ConsoleUI implements IAppView {
     // ---------------------------------------------------------------
 
     @Override
-    public int acquisisciIntero(String prompt, int min, int max)
-    {
+    public int acquisisciIntero(String prompt, int min, int max) {
         while (true) {
             String s = acquisisciStringa(prompt);
-            try
-            {
+            try {
                 int v = Integer.parseInt(s);
 
-                if (v < min || v > max)
-                {
+                if (v < min || v > max) {
                     stampa("Inserisci un numero tra " + min + " e " + max + ".");
                     continue;
                 }
 
                 return v;
-            }
-            catch (NumberFormatException e)
-            {
+            } catch (NumberFormatException e) {
                 stampa("Inserisci un intero valido.");
             }
         }
     }
 
     @Override
-    public boolean acquisisciSiNo(String prompt)
-    {
+    public boolean acquisisciSiNo(String prompt) {
         while (true) {
             String s = acquisisciStringa(prompt + " (s/n): ").toLowerCase();
             if (s.equals("s") || s.equals("si") || s.equals("sì"))
@@ -274,8 +255,7 @@ public final class ConsoleUI implements IAppView {
     }
 
     @Override
-    public TipoDato acquisisciTipoDato(String prompt)
-    {
+    public TipoDato acquisisciTipoDato(String prompt) {
         TipoDato[] valori = TipoDato.values();
         stampa(prompt);
         for (int i = 0; i < valori.length; i++)
@@ -301,8 +281,7 @@ public final class ConsoleUI implements IAppView {
      * </ul>
      */
     @Override
-    public List<String> acquisisciListaNomi(String titolo)
-    {
+    public List<String> acquisisciListaNomi(String titolo) {
         while (true) {
             stampa(titolo);
             stampaInfo("Riga vuota per terminare. " + HINT_ANNULLA);
@@ -310,14 +289,13 @@ public final class ConsoleUI implements IAppView {
 
             List<String> list = new ArrayList<>();
 
-            while (true)
-            {
+            while (true) {
                 System.out.print("[" + list.size() + "] > ");
-                String line    = scanner.nextLine();
+                String line = scanner.nextLine();
                 String trimmed = (line == null) ? "" : line.trim();
 
                 if (CANCEL_KEYWORD.equalsIgnoreCase(trimmed)) throw new CancelException();
-                if (BACK_KEYWORD.equalsIgnoreCase(trimmed))   throw new BackException();
+                if (BACK_KEYWORD.equalsIgnoreCase(trimmed)) throw new BackException();
 
                 if (trimmed.isEmpty()) break;
 
@@ -330,8 +308,7 @@ public final class ConsoleUI implements IAppView {
                 list.add(trimmed);
             }
 
-            if (list.isEmpty())
-            {
+            if (list.isEmpty()) {
                 stampaAvviso("Nessun nome inserito.");
                 if (!acquisisciSiNo("Vuoi riprovare?")) return list;
                 newLine();
@@ -341,7 +318,7 @@ public final class ConsoleUI implements IAppView {
             // Review step
             String riepilogo = String.join(", ", list);
             stampaInfo(list.size() + " element" + (list.size() == 1 ? "o" : "i") +
-                       " inserit" + (list.size() == 1 ? "o" : "i") + ": " + riepilogo);
+                    " inserit" + (list.size() == 1 ? "o" : "i") + ": " + riepilogo);
 
             if (acquisisciSiNo("Confermare?")) return list;
 
@@ -355,10 +332,8 @@ public final class ConsoleUI implements IAppView {
     // ----------------------------------------------------------------
 
     @Override
-    public <T> Optional<T> selezionaElemento(String prompt, List<T> elementi)
-    {
-        if (elementi.isEmpty())
-        {
+    public <T> Optional<T> selezionaElemento(String prompt, List<T> elementi) {
+        if (elementi.isEmpty()) {
             stampa("  (nessun elemento disponibile)");
             return Optional.empty();
         }
@@ -369,23 +344,18 @@ public final class ConsoleUI implements IAppView {
         stampa("  0) Annulla");
         newLine();
 
-        try
-        {
+        try {
             int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
             return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
-        }
-        catch (OperationCancelledException e)
-        {
+        } catch (OperationCancelledException e) {
             return Optional.empty();
         }
     }
 
     @Override
     public <T> Optional<T> selezionaElementoConInfo(String prompt, List<T> elementi,
-                                                     Function<T, String> infoMapper)
-    {
-        if (elementi.isEmpty())
-        {
+                                                    Function<T, String> infoMapper) {
+        if (elementi.isEmpty()) {
             stampa("  (nessun elemento disponibile)");
             return Optional.empty();
         }
@@ -393,17 +363,14 @@ public final class ConsoleUI implements IAppView {
         stampa(prompt);
         for (int i = 0; i < elementi.size(); i++)
             stampa("  " + (i + 1) + ") " + elementi.get(i) +
-                   "  [" + infoMapper.apply(elementi.get(i)) + "]");
+                    "  [" + infoMapper.apply(elementi.get(i)) + "]");
         stampa("  0) Annulla");
         newLine();
 
-        try
-        {
+        try {
             int choice = acquisisciIntero("Scelta: ", 0, elementi.size());
             return choice == 0 ? Optional.empty() : Optional.of(elementi.get(choice - 1));
-        }
-        catch (OperationCancelledException e)
-        {
+        } catch (OperationCancelledException e) {
             return Optional.empty();
         }
     }

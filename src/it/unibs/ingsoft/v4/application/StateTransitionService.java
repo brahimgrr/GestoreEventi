@@ -61,7 +61,9 @@ public final class StateTransitionService {
         }
     }
 
-    /** Transizione manuale o indotta dal raggiungimento della capienza. */
+    /**
+     * Transizione manuale o indotta dal raggiungimento della capienza.
+     */
     public void confermaProposta(Proposta p) {
         lock.lock();
         try {

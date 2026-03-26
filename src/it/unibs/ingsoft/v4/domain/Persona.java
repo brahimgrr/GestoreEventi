@@ -3,18 +3,16 @@ package it.unibs.ingsoft.v4.domain;
 /**
  * Abstract base class for all application users.
  */
-public abstract class Persona
-{
+public abstract class Persona {
     private final String username;
 
     /**
-     * @pre  username != null &amp;&amp; !username.isBlank()
-     * @post getUsername().equals(username.trim())
-     * @post !getUsername().isBlank()
      * @throws IllegalArgumentException if username is null or blank
+     * @pre username != null &amp;&amp; !username.isBlank()
+     * @post getUsername().equals(username.trim ())
+     * @post !getUsername().isBlank()
      */
-    protected Persona(String username)
-    {
+    protected Persona(String username) {
         if (username == null || username.isBlank())
             throw new IllegalArgumentException("Lo username non può essere vuoto.");
         this.username = username.trim();
@@ -31,8 +29,7 @@ public abstract class Persona
      * are considered distinct entities, which is correct since they represent different user roles.
      */
     @Override
-    public final boolean equals(Object o)
-    {
+    public final boolean equals(Object o) {
         if (this == o)
             return true;
 
@@ -44,14 +41,12 @@ public abstract class Persona
     }
 
     @Override
-    public final int hashCode()
-    {
+    public final int hashCode() {
         return username.hashCode();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getClass().getSimpleName() + "[" + username + "]";
     }
 }

@@ -22,8 +22,7 @@ public final class Credenziali {
     @JsonCreator
     public static Credenziali fromJson(
             @JsonProperty("configuratori") Map<String, String> configuratori,
-            @JsonProperty("fruitori") Map<String, String> fruitori)
-    {
+            @JsonProperty("fruitori") Map<String, String> fruitori) {
         Credenziali d = new Credenziali();
         if (configuratori != null)
             d.configuratori.putAll(configuratori);
@@ -32,23 +31,19 @@ public final class Credenziali {
         return d;
     }
 
-    public Map<String, String> getConfiguratori()
-    {
+    public Map<String, String> getConfiguratori() {
         return Collections.unmodifiableMap(configuratori);
     }
 
-    public void addConfiguratore(String username, String password)
-    {
+    public void addConfiguratore(String username, String password) {
         configuratori.put(username.trim().toLowerCase(), password);
     }
 
-    public Map<String, String> getFruitori()
-    {
+    public Map<String, String> getFruitori() {
         return Collections.unmodifiableMap(fruitori);
     }
 
-    public void addFruitore(String username, String password)
-    {
+    public void addFruitore(String username, String password) {
         fruitori.put(username.trim().toLowerCase(), password);
     }
 }

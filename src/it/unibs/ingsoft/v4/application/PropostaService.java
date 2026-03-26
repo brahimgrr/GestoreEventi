@@ -19,55 +19,58 @@ import java.util.stream.Collectors;
  * The three static {@code is*Valido} methods are the single source of truth for
  * date boundary checks used by {@link #validaProposta}.
  */
-public final class PropostaService
-{
+public final class PropostaService {
     // ---- field-name constants — aliases of AppConstants (single source of truth in domain layer) ----
-    public static final String CAMPO_TITOLO              = AppConstants.CAMPO_TITOLO;
-    public static final String CAMPO_TERMINE_ISCRIZIONE  = AppConstants.CAMPO_TERMINE_ISCRIZIONE;
-    public static final String CAMPO_DATA                = AppConstants.CAMPO_DATA;
-    public static final String CAMPO_DATA_CONCLUSIVA     = AppConstants.CAMPO_DATA_CONCLUSIVA;
-    public static final String CAMPO_ORA                 = AppConstants.CAMPO_ORA;
-    public static final String CAMPO_LUOGO               = AppConstants.CAMPO_LUOGO;
-    public static final String CAMPO_QUOTA               = AppConstants.CAMPO_QUOTA;
-    public static final String CAMPO_NUM_PARTECIPANTI    = AppConstants.CAMPO_NUM_PARTECIPANTI;
+    public static final String CAMPO_TITOLO = AppConstants.CAMPO_TITOLO;
+    public static final String CAMPO_TERMINE_ISCRIZIONE = AppConstants.CAMPO_TERMINE_ISCRIZIONE;
+    public static final String CAMPO_DATA = AppConstants.CAMPO_DATA;
+    public static final String CAMPO_DATA_CONCLUSIVA = AppConstants.CAMPO_DATA_CONCLUSIVA;
+    public static final String CAMPO_ORA = AppConstants.CAMPO_ORA;
+    public static final String CAMPO_LUOGO = AppConstants.CAMPO_LUOGO;
+    public static final String CAMPO_QUOTA = AppConstants.CAMPO_QUOTA;
+    public static final String CAMPO_NUM_PARTECIPANTI = AppConstants.CAMPO_NUM_PARTECIPANTI;
 
     private final IBachecaRepository bachecaRepo;
 
-    /** In-memory list of valid but unpublished proposals (session-scoped, discarded on logout). */
+    /**
+     * In-memory list of valid but unpublished proposals (session-scoped, discarded on logout).
+     */
     private final List<Proposta> proposteValide = new ArrayList<>();
 
-    public PropostaService(IBachecaRepository bachecaRepo)
-    {
+    public PropostaService(IBachecaRepository bachecaRepo) {
         this.bachecaRepo = Objects.requireNonNull(bachecaRepo);
     }
+
     /**
      * Saves a valid proposal in memory for later publication.
      *
      * @pre p.getStato() == StatoProposta.VALIDA
      */
-    public void salvaProposta(Proposta p)
-    {
+    public void salvaProposta(Proposta p) {
         if (p.getStato() != StatoProposta.VALIDA)
             throw new IllegalStateException("Solo una proposta VALIDA può essere salvata.");
         rilevaDuplicatoAlSalvataggio(p);
         proposteValide.add(p);
     }
 
-    /** Returns the list of valid proposals saved in memory (not yet published). */
-    public List<Proposta> getProposteValide()
-    {
+    /**
+     * Returns the list of valid proposals saved in memory (not yet published).
+     */
+    public List<Proposta> getProposteValide() {
         return Collections.unmodifiableList(proposteValide);
     }
 
-    /** Removes a proposal from the in-memory valid list (e.g. after publication). */
-    public void rimuoviPropostaValida(Proposta p)
-    {
+    /**
+     * Removes a proposal from the in-memory valid list (e.g. after publication).
+     */
+    public void rimuoviPropostaValida(Proposta p) {
         proposteValide.remove(p);
     }
 
-    /** Discards all unpublished valid proposals (called on logout). */
-    public void clearProposteValide()
-    {
+    /**
+     * Discards all unpublished valid proposals (called on logout).
+     */
+    public void clearProposteValide() {
         proposteValide.clear();
     }
 
@@ -82,24 +85,21 @@ public final class PropostaService
     /**
      * True when {@code termine} is strictly after today (as required by spec).
      */
-    public static boolean isTermineIscrizioneValido(LocalDate termine)
-    {
+    public static boolean isTermineIscrizioneValido(LocalDate termine) {
         return termine != null && termine.isAfter(LocalDate.now(AppConstants.clock));
     }
 
     /**
      * True when {@code dataEvento} is at least 2 days after {@code termine}.
      */
-    public static boolean isDataEventoValida(LocalDate dataEvento, LocalDate termine)
-    {
+    public static boolean isDataEventoValida(LocalDate dataEvento, LocalDate termine) {
         return dataEvento != null && termine != null && dataEvento.isAfter(termine.plusDays(1));
     }
 
     /**
      * True when {@code conclusiva} is not before {@code data}.
      */
-    public static boolean isDataConclusivaValida(LocalDate conclusiva, LocalDate data)
-    {
+    public static boolean isDataConclusivaValida(LocalDate conclusiva, LocalDate data) {
         return conclusiva != null && data != null && !conclusiva.isBefore(data);
     }
 
@@ -112,8 +112,7 @@ public final class PropostaService
      *
      * @throws IllegalArgumentException if the category does not exist
      */
-    public Proposta creaProposta(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni)
-    {
+    public Proposta creaProposta(Categoria categoria, List<Campo> campiBase, List<Campo> campiComuni) {
         return new Proposta(categoria, campiBase, campiComuni);
     }
 
@@ -128,10 +127,9 @@ public final class PropostaService
      * before re-validation so the state always reflects the latest outcome.</p>
      *
      * @return empty list on success (proposal set to VALIDA);
-     *         list of error messages on failure (proposal reverted to BOZZA)
+     * list of error messages on failure (proposal reverted to BOZZA)
      */
-    public List<String> validaProposta(Proposta p)
-    {
+    public List<String> validaProposta(Proposta p) {
         // Revert to BOZZA silently (no history entry) so the method is idempotent
         p.revertToBozzaSilent();
 
@@ -155,9 +153,9 @@ public final class PropostaService
         }
 
         // 3. Date constraints
-        LocalDate oggi        = LocalDate.now(AppConstants.clock);
+        LocalDate oggi = LocalDate.now(AppConstants.clock);
         LocalDate termineIscr = parseData(valori.get(CAMPO_TERMINE_ISCRIZIONE));
-        LocalDate dataEvento  = parseData(valori.get(CAMPO_DATA));
+        LocalDate dataEvento = parseData(valori.get(CAMPO_DATA));
         LocalDate dataConclus = parseData(valori.get(CAMPO_DATA_CONCLUSIVA));
 
         if (termineIscr != null && !isTermineIscrizioneValido(termineIscr))
@@ -170,8 +168,7 @@ public final class PropostaService
         if (dataEvento != null && dataConclus != null && !isDataConclusivaValida(dataConclus, dataEvento))
             errori.add("\"" + CAMPO_DATA_CONCLUSIVA + "\" non può essere precedente a \"" + CAMPO_DATA + "\".");
 
-        if (errori.isEmpty())
-        {
+        if (errori.isEmpty()) {
             p.setTermineIscrizione(termineIscr);
             p.setDataEvento(dataEvento);
             p.setStato(StatoProposta.VALIDA);
@@ -184,19 +181,17 @@ public final class PropostaService
      * Validates a single field in the context of the current proposal values.
      * This is used during interactive entry to provide immediate business-rule feedback.
      */
-    public List<String> validaCampo(Proposta proposta, Map<String, String> valoriCorrenti, String nomeCampo, String valore)
-    {
+    public List<String> validaCampo(Proposta proposta, Map<String, String> valoriCorrenti, String nomeCampo, String valore) {
         Map<String, String> valori = new LinkedHashMap<>(proposta.getValoriCampi());
         valori.putAll(valoriCorrenti);
         valori.put(nomeCampo, valore);
 
         List<String> errori = new ArrayList<>();
         LocalDate termineIscr = parseData(valori.get(CAMPO_TERMINE_ISCRIZIONE));
-        LocalDate dataEvento  = parseData(valori.get(CAMPO_DATA));
+        LocalDate dataEvento = parseData(valori.get(CAMPO_DATA));
         LocalDate dataConclus = parseData(valori.get(CAMPO_DATA_CONCLUSIVA));
 
-        switch (nomeCampo)
-        {
+        switch (nomeCampo) {
             case CAMPO_TERMINE_ISCRIZIONE:
                 if (termineIscr != null && !isTermineIscrizioneValido(termineIscr))
                     errori.add("\"" + CAMPO_TERMINE_ISCRIZIONE + "\" deve essere successivo alla data odierna.");
@@ -225,12 +220,9 @@ public final class PropostaService
         return errori;
     }
 
-    private void controllaCampiObbligatori(List<Campo> campi, Map<String, String> valori, List<String> errori)
-    {
-        for (Campo c : campi)
-        {
-            if (c.isObbligatorio())
-            {
+    private void controllaCampiObbligatori(List<Campo> campi, Map<String, String> valori, List<String> errori) {
+        for (Campo c : campi) {
+            if (c.isObbligatorio()) {
                 String v = valori.get(c.getNome());
                 if (v == null || v.isBlank())
                     errori.add("Campo obbligatorio mancante: \"" + c.getNome() + "\".");
@@ -238,11 +230,13 @@ public final class PropostaService
         }
     }
 
-    private LocalDate parseData(String s)
-    {
+    private LocalDate parseData(String s) {
         if (s == null || s.isBlank()) return null;
-        try { return LocalDate.parse(s.trim(), AppConstants.DATE_FMT); }
-        catch (Exception e) { return null; }
+        try {
+            return LocalDate.parse(s.trim(), AppConstants.DATE_FMT);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ----------------------------------------------------------------
@@ -252,12 +246,11 @@ public final class PropostaService
     /**
      * Publishes a valid proposal to the bulletin board (VALIDA → APERTA) and persists it.
      *
-     * @pre p.getStato() == StatoProposta.VALIDA
      * @throws IllegalStateException if the proposal is not VALIDA, if the subscription
      *                               deadline has already passed, or if a duplicate exists
+     * @pre p.getStato() == StatoProposta.VALIDA
      */
-    public void pubblicaProposta(Proposta p)
-    {
+    public void pubblicaProposta(Proposta p) {
         if (p.getStato() != StatoProposta.VALIDA)
             throw new IllegalStateException("La proposta deve essere in stato VALIDA per essere pubblicata.");
 
@@ -265,7 +258,7 @@ public final class PropostaService
         if (p.getTermineIscrizione() != null && !p.getTermineIscrizione().isAfter(oggi))
             throw new IllegalStateException(
                     "Non è più possibile pubblicare: il termine di iscrizione ("
-                    + p.getTermineIscrizione() + ") è già scaduto. Rivalidare la proposta.");
+                            + p.getTermineIscrizione() + ") è già scaduto. Rivalidare la proposta.");
 
         rilevaDuplicato(p);
 
@@ -279,8 +272,7 @@ public final class PropostaService
      * Checks for duplicates at save time: against both published proposals (bacheca)
      * and in-memory VALIDA proposals. This protects both interactive and batch flows.
      */
-    private void rilevaDuplicatoAlSalvataggio(Proposta p)
-    {
+    private void rilevaDuplicatoAlSalvataggio(Proposta p) {
         String chiave = p.getChiaveIdentita();
 
         boolean inBacheca = bacheca().getProposte().stream()
@@ -293,9 +285,10 @@ public final class PropostaService
                     "Esiste già una proposta con lo stesso Titolo, Data, Ora e Luogo.");
     }
 
-    /** Checks for duplicates at publication time: against published proposals only. */
-    private void rilevaDuplicato(Proposta p)
-    {
+    /**
+     * Checks for duplicates at publication time: against published proposals only.
+     */
+    private void rilevaDuplicato(Proposta p) {
         String chiave = p.getChiaveIdentita();
 
         boolean duplicato = bacheca().getProposte().stream()
@@ -309,35 +302,38 @@ public final class PropostaService
     // BACHECA
     // ----------------------------------------------------------------
 
-    /** Returns all proposals (any state) as a flat list. */
-    public List<Proposta> getTutteLeProposte()
-    {
+    /**
+     * Returns all proposals (any state) as a flat list.
+     */
+    public List<Proposta> getTutteLeProposte() {
         return Collections.unmodifiableList(bacheca().getProposte());
     }
 
-    /** Returns all open (APERTA) proposals as a flat list. */
-    public List<Proposta> getBacheca()
-    {
+    /**
+     * Returns all open (APERTA) proposals as a flat list.
+     */
+    public List<Proposta> getBacheca() {
         return bacheca().getProposte().stream()
                 .filter(p -> p.getStato() == StatoProposta.APERTA)
                 .collect(Collectors.toList());
     }
 
-    /** Returns all proposals (any state) grouped by their current state. */
-    public Map<StatoProposta, List<Proposta>> getPropostePerStato()
-    {
+    /**
+     * Returns all proposals (any state) grouped by their current state.
+     */
+    public Map<StatoProposta, List<Proposta>> getPropostePerStato() {
         Map<StatoProposta, List<Proposta>> mappa = new LinkedHashMap<>();
         for (Proposta p : getTutteLeProposte())
             mappa.computeIfAbsent(p.getStato(), k -> new ArrayList<>()).add(p);
         return mappa;
     }
 
-    /** Returns all open (APERTA) proposals, grouped by category name. */
-    public Map<String, List<Proposta>> getBachecaPerCategoria()
-    {
+    /**
+     * Returns all open (APERTA) proposals, grouped by category name.
+     */
+    public Map<String, List<Proposta>> getBachecaPerCategoria() {
         Map<String, List<Proposta>> mappa = new LinkedHashMap<>();
-        for (Proposta p : bacheca().getProposte())
-        {
+        for (Proposta p : bacheca().getProposte()) {
             if (p.getStato() == StatoProposta.APERTA)
                 mappa.computeIfAbsent(p.getCategoria().getNome(), k -> new ArrayList<>()).add(p);
         }
@@ -351,8 +347,7 @@ public final class PropostaService
      * {@code "Data"} is not spuriously matched by an error message that
      * mentions {@code "Data conclusiva"}.</p>
      */
-    public List<Campo> getCampiConErrore(Proposta p, List<String> errori)
-    {
+    public List<Campo> getCampiConErrore(Proposta p, List<String> errori) {
         return p.getCampi().stream()
                 .filter(c -> {
                     String quoted = "\"" + c.getNome() + "\"";

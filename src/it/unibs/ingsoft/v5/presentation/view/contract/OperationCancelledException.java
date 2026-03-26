@@ -5,10 +5,8 @@ package it.unibs.ingsoft.v5.presentation.view.contract;
  * This exception lives in the view contract package so that controllers can catch it
  * without depending on any concrete view implementation (e.g., ConsoleUI).
  */
-public class OperationCancelledException extends RuntimeException
-{
-    public OperationCancelledException()
-    {
+public class OperationCancelledException extends RuntimeException {
+    public OperationCancelledException() {
         super("Operazione annullata dall'utente.");
     }
 }

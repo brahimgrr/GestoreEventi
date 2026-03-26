@@ -18,24 +18,23 @@ public final class Credenziali {
         this.configuratori = new HashMap<>();
     }
 
-    /** Jackson deserialisation factory. */
+    /**
+     * Jackson deserialisation factory.
+     */
     @JsonCreator
     public static Credenziali fromJson(
-            @JsonProperty("configuratori") Map<String, String> configuratori)
-    {
+            @JsonProperty("configuratori") Map<String, String> configuratori) {
         Credenziali d = new Credenziali();
         if (configuratori != null)
             d.configuratori.putAll(configuratori);
         return d;
     }
 
-    public Map<String, String> getConfiguratori()
-    {
+    public Map<String, String> getConfiguratori() {
         return Collections.unmodifiableMap(configuratori);
     }
 
-    public void addConfiguratore(String username, String password)
-    {
+    public void addConfiguratore(String username, String password) {
         configuratori.put(username.trim().toLowerCase(), password);
     }
 }

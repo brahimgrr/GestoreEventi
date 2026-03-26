@@ -2,6 +2,7 @@ package it.unibs.ingsoft.v3.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 
 public final class PropostaStateChange {
@@ -9,7 +10,7 @@ public final class PropostaStateChange {
     private final LocalDate dataCambio;
 
     @JsonCreator
-    public PropostaStateChange(@JsonProperty("stato") StatoProposta stato, 
+    public PropostaStateChange(@JsonProperty("stato") StatoProposta stato,
                                @JsonProperty("dataCambio") LocalDate dataCambio) {
         this.stato = stato;
         this.dataCambio = dataCambio;

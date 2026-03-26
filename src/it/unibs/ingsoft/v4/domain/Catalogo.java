@@ -18,19 +18,20 @@ public final class Catalogo {
 
     private boolean campiBaseFissati;
 
-    /** Jackson deserialization factory. */
+    /**
+     * Jackson deserialization factory.
+     */
     @JsonCreator
     public static Catalogo fromJson(
-            @JsonProperty("campiBase")        List<Campo>     campiBase,
-            @JsonProperty("campiBaseFissati") boolean         campiBaseFissati,
-            @JsonProperty("campiComuni")      List<Campo>     campiComuni,
-            @JsonProperty("categorie")        List<Categoria> categorie)
-    {
+            @JsonProperty("campiBase") List<Campo> campiBase,
+            @JsonProperty("campiBaseFissati") boolean campiBaseFissati,
+            @JsonProperty("campiComuni") List<Campo> campiComuni,
+            @JsonProperty("categorie") List<Categoria> categorie) {
         Catalogo d = new Catalogo();
-        if (campiBase   != null) d.campiBase.addAll(campiBase);
-        if (campiBaseFissati)    d.campiBaseFissati = true;
+        if (campiBase != null) d.campiBase.addAll(campiBase);
+        if (campiBaseFissati) d.campiBaseFissati = true;
         if (campiComuni != null) d.campiComuni.addAll(campiComuni);
-        if (categorie   != null) d.categorie.addAll(categorie);
+        if (categorie != null) d.categorie.addAll(categorie);
         return d;
     }
     // ---------------- CAMPI BASE ----------------

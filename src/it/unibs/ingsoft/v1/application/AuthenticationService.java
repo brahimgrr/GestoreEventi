@@ -1,8 +1,8 @@
 package it.unibs.ingsoft.v1.application;
 
 import it.unibs.ingsoft.v1.domain.Configuratore;
-import it.unibs.ingsoft.v1.persistence.api.ICredenzialiRepository;
 import it.unibs.ingsoft.v1.domain.Credenziali;
+import it.unibs.ingsoft.v1.persistence.api.ICredenzialiRepository;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -14,8 +14,7 @@ import java.util.Optional;
  * After login with those credentials, the controller forces the user to choose
  * personal credentials before allowing any operation.</p>
  */
-public final class AuthenticationService
-{
+public final class AuthenticationService {
     public static final String USERNAME_PREDEFINITO = "config";
     public static final String PASSWORD_PREDEFINITA = "config";
 
@@ -31,9 +30,8 @@ public final class AuthenticationService
     /**
      * @pre repo   != null
      */
-    public AuthenticationService(ICredenzialiRepository repo)
-    {
-        this.repo   = Objects.requireNonNull(repo);
+    public AuthenticationService(ICredenzialiRepository repo) {
+        this.repo = Objects.requireNonNull(repo);
     }
 
     /**
@@ -41,14 +39,13 @@ public final class AuthenticationService
      *
      * @return the logged-in configurator, or empty if credentials are invalid
      */
-    public Optional<Configuratore> login(String username, String password)
-    {
+    public Optional<Configuratore> login(String username, String password) {
         if (username == null || password == null)
             return Optional.empty();
 
         // Shared predefined credentials remain available for first access flows.
         if (USERNAME_PREDEFINITO.equals(username) &&
-            PASSWORD_PREDEFINITA.equals(password))
+                PASSWORD_PREDEFINITA.equals(password))
             return Optional.of(new Configuratore(USERNAME_PREDEFINITO));
 
         String key = username.trim().toLowerCase();
@@ -64,8 +61,7 @@ public final class AuthenticationService
      *
      * @throws IllegalArgumentException if credentials are reserved, duplicate, or too short
      */
-    public Configuratore registraNuovoConfiguratore(String username, String password)
-    {
+    public Configuratore registraNuovoConfiguratore(String username, String password) {
         validaNuovoAccount(username, password);
 
         String normalized = username.trim();
@@ -84,16 +80,16 @@ public final class AuthenticationService
             throw new IllegalArgumentException("Esiste già un utente (configuratore o fruitore) con username \"" + username + "\".");
     }
 
-    /** Returns true if an account with this username is already registered (either role). */
-    public boolean esisteUsername(String username)
-    {
+    /**
+     * Returns true if an account with this username is already registered (either role).
+     */
+    public boolean esisteUsername(String username) {
         if (username == null) return false;
         String u = username.trim().toLowerCase();
         return credenziali().getConfiguratori().containsKey(u);
     }
 
-    private static void validaCredenziali(String username, String password)
-    {
+    private static void validaCredenziali(String username, String password) {
         if (username == null || username.isBlank())
             throw new IllegalArgumentException("Username non valido.");
 
